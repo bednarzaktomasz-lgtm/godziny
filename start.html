@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zegar</title>
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(10px, 2vmin, 20px);
+      text-decoration: none;
+      color: #f0f0f0;
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      font-size: clamp(1rem, 2.2vmin, 1.8rem);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      aspect-ratio: 1 / 1;
+    }
+    .nav-btn:hover,
+    .nav-btn:active {
+      background: #1a1a1a;
+      border-color: var(--accent-color, #d82928);
+    }
+    .nav-btn .icon {
+      font-size: clamp(2rem, 5vmin, 4.5rem);
+    }
+    .nav-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(12px, 2.5vmin, 32px);
+      width: calc(var(--nav-width) * 0.8);
+    }
+    /* placeholder so topbar icons align symmetrically */
+    .topbar-spacer {
+      width: var(--icon-size);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <button class="help-btn" id="helpBtn">?</button>
+      <a href="ustawienia.html" class="icon-btn settings-icon" title="Ustawienia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="100%" height="100%">
+          <line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+          <line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+          <line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="feedback-bar" id="hintArea">Wybierz tryb gry</div>
+
+  <div class="nav-buttons">
+    <a href="nauka.html" class="nav-btn" data-hint="Swobodnie przestawiaj wskazówki zegara palcem i obserwuj czas na wyświetlaczu cyfrowym.">
+      <span class="icon">🎓</span>
+      Tryb Nauki
+    </a>
+
+    <a href="godziny.html" class="nav-btn" data-hint="Odczytaj godzinę z zegara analogowego i wybierz poprawną odpowiedź spośród trzech podanych.">
+      <span class="icon">⏱️</span>
+      Tryb Quizu
+    </a>
+
+    <a href="wpisz.html" class="nav-btn" data-hint="Odczytaj godzinę z zegara analogowego i wpisz ją samodzielnie cyframi na klawiaturze.">
+      <span class="icon">⌨️</span>
+      Wpisz Godzinę
+    </a>
+
+    <a href="ustaw.html" class="nav-btn" data-hint="Przestaw wskazówki zegara tak, aby pokazywały podaną godzinę, a następnie zatwierdź odpowiedź.">
+      <span class="icon">🎯</span>
+      Ustaw Godzinę
+    </a>
+  </div>
+
+  <script>
+    const handColor = localStorage.getItem('zegar_handColor') || 'white';
+    const colorMap = { white: '#f0f0f0', blue: '#2563eb', red: '#d82928' };
+    document.documentElement.style.setProperty('--accent-color', colorMap[handColor] || '#f0f0f0');
+
+    const helpBtn = document.getElementById('helpBtn');
+    const hintArea = document.getElementById('hintArea');
+    const defaultHint = 'Wybierz tryb gry';
+    let helpActive = false;
+
+    helpBtn.addEventListener('click', () => {
+      helpActive = !helpActive;
+      helpBtn.classList.toggle('active', helpActive);
+      hintArea.textContent = defaultHint;
+      hintArea.classList.toggle('active', helpActive);
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        hintArea.textContent = btn.dataset.hint;
+        hintArea.classList.add('active');
+      });
+      btn.addEventListener('mouseleave', () => {
+        hintArea.textContent = defaultHint;
+        hintArea.classList.toggle('active', helpActive);
+      });
+    });
+  </script>
+
+<script src="transitions.js"></script>
+</body>
+</html>

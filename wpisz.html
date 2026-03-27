@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Wpisz Godzinę</title>
+		<link rel="stylesheet" href="clock-styles.css" />
+		<link rel="stylesheet" href="layout.css" />
+		<style>
+			/* Digital display */
+			.digital-input-display {
+				width: 100%;
+				min-height: var(--btn-height);
+				background: #111;
+				border: 2px solid #222;
+				border-radius: var(--btn-radius);
+				font-size: clamp(2rem, 5vmin, 4rem);
+				font-weight: 700;
+				color: #f0f0f0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				letter-spacing: 0.1em;
+				font-family: "Consolas", "Courier New", monospace;
+				transition: border-color 0.2s, background 0.2s;
+				cursor: pointer;
+				-webkit-tap-highlight-color: transparent;
+			}
+			.digital-input-display:not(.correct):not(.wrong):hover { border-color: #444; }
+			.digital-input-display.correct { background: #16a34a; border-color: #16a34a; }
+			.digital-input-display.wrong   { background: #dc2626; border-color: #dc2626; }
+			.digital-input-display .cursor { animation: blink 1s infinite; }
+			@keyframes blink {
+				0%, 50% { opacity: 1; }
+				51%, 100% { opacity: 0; }
+			}
+
+			/* Keyboard */
+			.keyboard {
+				display: flex;
+				flex-direction: column;
+				gap: clamp(8px, 1.5vmin, 16px);
+				width: 100%;
+			}
+			.keyboard-row {
+				display: flex;
+				gap: clamp(8px, 1.5vmin, 16px);
+				justify-content: center;
+			}
+			.key {
+				flex: 1;
+				min-height: clamp(56px, 9vmin, 100px);
+				background: #111;
+				border: 2px solid #222;
+				border-radius: clamp(10px, 1.5vmin, 16px);
+				font-size: clamp(1.2rem, 2.8vmin, 2.4rem);
+				font-weight: 600;
+				cursor: pointer;
+				color: #f0f0f0;
+				transition: background 0.2s, border-color 0.2s;
+				-webkit-tap-highlight-color: transparent;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.key:hover  { background: #1a1a1a; border-color: #444; }
+			.key:active { background: #222; }
+			.key.key-confirm,
+			.key.key-delete { background: #333; }
+			.key.key-confirm:hover,
+			.key.key-delete:hover { background: #444; }
+		</style>
+	</head>
+	<body>
+
+		<div class="topbar">
+			<a href="start.html" title="Wróć do menu">
+				<svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="15 18 9 12 15 6"></polyline>
+				</svg>
+			</a>
+				</svg>
+			</a>
+			<div class="topbar-right">
+				<button class="help-btn" id="helpBtn">?</button>
+				<svg class="icon-btn settings-icon" id="settingsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+					<line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+					<line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+					<line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+				</svg>
+			</div>
+		</div>
+
+		<div class="feedback-bar" id="hintArea">Odczytaj godzinę z zegara i wpisz ją na klawiaturze cyfrowej. Zatwierdź przyciskiem OK.</div>
+
+		<div class="result-bar">
+			<div class="feedback" id="feedback"></div>
+			<div class="score" id="score">0 / 0</div>
+		</div>
+
+		<div class="clock-wrap" id="clockContainer"></div>
+
+		<div class="content-area">
+			<div class="digital-input-display" id="digitalDisplay">--:--</div>
+
+			<div class="keyboard">
+				<div class="keyboard-row">
+					<button class="key" data-key="1">1</button>
+					<button class="key" data-key="2">2</button>
+					<button class="key" data-key="3">3</button>
+				</div>
+				<div class="keyboard-row">
+					<button class="key" data-key="4">4</button>
+					<button class="key" data-key="5">5</button>
+					<button class="key" data-key="6">6</button>
+				</div>
+				<div class="keyboard-row">
+					<button class="key" data-key="7">7</button>
+					<button class="key" data-key="8">8</button>
+					<button class="key" data-key="9">9</button>
+				</div>
+				<div class="keyboard-row">
+					<button class="key key-delete" data-key="delete">⌫</button>
+					<button class="key" data-key="0">0</button>
+					<button class="key key-confirm" data-key="ok">OK</button>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="modal" id="settingsModal">
+			<div class="modal-content">
+				<div class="modal-modes">
+					<button class="mode-toggle active" data-mode="full">Pełne godziny</button>
+					<button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
+					<button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
+					<button class="mode-toggle" data-mode="five">Co 5 minut</button>
+					<button class="mode-toggle" data-mode="any">Każda minuta</button>
+				</div>
+				<div class="sound-toggle" id="soundToggleRow">
+					<span>Dźwięki</span>
+					<div class="toggle-switch active" id="soundToggle"></div>
+				</div>
+			</div>
+		</div>
+
+		<script src="clock-renderer.js"></script>
+		<script>
+			// ==================== Load Global Settings ====================
+			const STORAGE_KEYS = {
+				activeModes: 'zegar_activeModes',
+				soundEnabled: 'zegar_soundEnabled',
+				clockBg: 'zegar_clockBg',
+				handColor: 'zegar_handColor',
+				numberStyle: 'zegar_numberStyle',
+				hourFormat: 'zegar_hourFormat',
+			};
+
+			function loadGlobalSettings() {
+				return {
+					activeModes: JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
+					soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
+					clockBg: localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
+					handColor: localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
+					numberStyle: localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic',
+					hourFormat: localStorage.getItem(STORAGE_KEYS.hourFormat) || '12',
+				};
+			}
+
+			const globalSettings = loadGlobalSettings();
+
+			// Initialize clock using the module
+			const clockContainer = document.getElementById("clockContainer");
+			const clock = new ClockRenderer(clockContainer, {
+				size: 'sm',
+				interactive: false,
+				showBrand: true,
+				showDigital: true,
+				showDate: true,
+				showAmPm: globalSettings.hourFormat === '24',
+				showSecondHand: false,
+				showBgControls: false,
+				handColor: globalSettings.handColor,
+			});
+
+			// Apply saved background
+			clock.setBackground(globalSettings.clockBg);
+			clock.setNumberStyle(globalSettings.numberStyle);
+
+			const feedbackEl = document.getElementById("feedback");
+			const scoreEl = document.getElementById("score");
+			const digitalDisplay = document.getElementById("digitalDisplay");
+
+			let currentTime = { hour: 12, minute: 0 };
+			let inputValue = "";
+			let totalAnswers = 0;
+			let correctAnswers = 0;
+			let activeModes = new Set(globalSettings.activeModes);
+			let soundEnabled = globalSettings.soundEnabled;
+			let hourFormat = globalSettings.hourFormat;
+			let audioContext = null;
+			let isChecking = false;
+			let attempts = 0;
+
+			// Sync mode toggles UI to match loaded settings
+			document.querySelectorAll('.mode-toggle').forEach(btn => {
+				btn.classList.toggle('active', activeModes.has(btn.dataset.mode));
+			});
+
+			// Sync sound toggle UI
+			const soundToggleInit = document.getElementById('soundToggle');
+			soundToggleInit.classList.toggle('active', soundEnabled);
+
+			function initAudioContext() {
+				if (!audioContext) {
+					audioContext = new (window.AudioContext || window.webkitAudioContext)();
+				}
+				if (audioContext.state === 'suspended') {
+					audioContext.resume();
+				}
+			}
+
+			function playBeep(frequency, duration) {
+				if (!soundEnabled) return;
+				initAudioContext();
+				const oscillator = audioContext.createOscillator();
+				const gainNode = audioContext.createGain();
+				oscillator.connect(gainNode);
+				gainNode.connect(audioContext.destination);
+				oscillator.frequency.value = frequency;
+				oscillator.type = 'sine';
+				gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+				gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+				oscillator.start(audioContext.currentTime);
+				oscillator.stop(audioContext.currentTime + duration / 1000);
+			}
+
+			function playSuccess() { playBeep(880, 150); }
+			function playError()   { playBeep(220, 300); }
+			function playClick()   { playBeep(440, 50); }
+
+			const MODE_MINUTES = {
+				full: [0],
+				half: [30],
+				quarter: [15, 45],
+				five: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+				any: Array.from({ length: 60 }, (_, i) => i),
+			};
+
+			function formatTime(hour, minute) {
+				const h = String(hour).padStart(2, "0");
+				const m = String(minute).padStart(2, "0");
+				return `${h}:${m}`;
+			}
+
+			function randomMinute() {
+				const allMinutes = new Set();
+				activeModes.forEach((mode) => {
+					MODE_MINUTES[mode].forEach((m) => allMinutes.add(m));
+				});
+				const minutesArray = Array.from(allMinutes);
+				return minutesArray[Math.floor(Math.random() * minutesArray.length)];
+			}
+
+			function randomHour() {
+				return hourFormat === '24' ? Math.floor(Math.random() * 23) + 1 : Math.floor(Math.random() * 12) + 1;
+			}
+
+			function updateDisplay() {
+				// Format input as HH:MM
+				let display = "";
+				const digits = inputValue.padEnd(4, "-");
+				display = digits.slice(0, 2) + ":" + digits.slice(2, 4);
+				digitalDisplay.textContent = display;
+			}
+
+			function setNewQuestion() {
+				const hour = randomHour();
+				const minute = randomMinute();
+				currentTime = { hour, minute };
+
+				// Use clock renderer to display time
+				clock.setTime(hour, minute);
+				if (hourFormat === '24') clock.setAmPm(hour >= 13);
+				inputValue = "";
+				isChecking = false;
+				updateDisplay();
+
+				digitalDisplay.classList.remove("correct", "wrong");
+				feedbackEl.textContent = "";
+				feedbackEl.className = "feedback";
+			}
+
+			function handleKeyPress(key) {
+				if (isChecking) return;
+
+				if (key === "delete") {
+					if (inputValue.length > 0) {
+						inputValue = inputValue.slice(0, -1);
+						playClick();
+					}
+				} else if (key === "ok") {
+					checkAnswer();
+				} else if (inputValue.length < 4) {
+					inputValue += key;
+					playClick();
+				}
+
+				updateDisplay();
+			}
+
+			function checkAnswer() {
+				if (inputValue.length !== 4 || isChecking) return;
+
+				const inputHour = parseInt(inputValue.slice(0, 2), 10);
+				const inputMinute = parseInt(inputValue.slice(2, 4), 10);
+				const correctTimeText = formatTime(currentTime.hour, currentTime.minute);
+
+				const isCorrect = (inputHour === currentTime.hour || (hourFormat === '12' && inputHour === 0 && currentTime.hour === 12))
+					&& inputMinute === currentTime.minute;
+
+				if (isCorrect) {
+					isChecking = true;
+					if (attempts === 0) {
+						totalAnswers += 1;
+						correctAnswers += 1;
+						scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+					}
+					feedbackEl.textContent = `Dobrze! ${correctTimeText}.`;
+					feedbackEl.className = "feedback ok";
+					digitalDisplay.classList.add("correct");
+					playSuccess();
+					setTimeout(setNewQuestion, 2000);
+				} else {
+					playError();
+					if (attempts === 0) {
+						totalAnswers += 1;
+						scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+						attempts = 1;
+						digitalDisplay.classList.add("wrong");
+						feedbackEl.textContent = `Spróbuj jeszcze raz!`;
+						feedbackEl.className = "feedback bad";
+						setTimeout(() => {
+							digitalDisplay.classList.remove("wrong");
+							inputValue = "";
+							updateDisplay();
+						}, 600);
+					} else {
+						isChecking = true;
+						digitalDisplay.classList.add("wrong");
+						feedbackEl.textContent = `Prawidłowa: ${correctTimeText}.`;
+						feedbackEl.className = "feedback bad";
+						setTimeout(setNewQuestion, 2500);
+					}
+				}
+			}
+
+			// Keyboard event listeners
+			document.querySelectorAll('.key').forEach(key => {
+				key.addEventListener('click', () => {
+					handleKeyPress(key.dataset.key);
+				});
+			});
+
+			// Click on digital display to confirm
+			digitalDisplay.addEventListener('click', () => {
+				handleKeyPress('ok');
+			});
+
+			// Physical keyboard support
+			document.addEventListener('keydown', (e) => {
+				if (e.key >= '0' && e.key <= '9') {
+					handleKeyPress(e.key);
+				} else if (e.key === 'Backspace') {
+					handleKeyPress('delete');
+				} else if (e.key === 'Enter') {
+					handleKeyPress('ok');
+				}
+			});
+
+			const settingsIcon = document.getElementById("settingsIcon");
+			const settingsModal = document.getElementById("settingsModal");
+
+			settingsIcon.addEventListener("click", () => {
+				settingsModal.classList.add("active");
+			});
+
+			settingsModal.addEventListener("click", (e) => {
+				if (e.target === settingsModal) {
+					settingsModal.classList.remove("active");
+				}
+			});
+
+			document.addEventListener("keydown", (e) => {
+				if (e.key === "Escape") {
+					settingsModal.classList.remove("active");
+				}
+			});
+
+			document.querySelectorAll(".mode-toggle").forEach((btn) => {
+				btn.addEventListener("click", () => {
+					const mode = btn.dataset.mode;
+					if (activeModes.has(mode)) {
+						if (activeModes.size > 1) {
+							activeModes.delete(mode);
+							btn.classList.remove("active");
+						}
+					} else {
+						activeModes.add(mode);
+						btn.classList.add("active");
+					}
+					setNewQuestion();
+				});
+			});
+
+			const soundToggle = document.getElementById("soundToggle");
+			soundToggle.addEventListener("click", () => {
+				soundEnabled = !soundEnabled;
+				soundToggle.classList.toggle("active");
+				if (soundEnabled) {
+					initAudioContext();
+					playBeep(660, 100);
+				}
+			});
+
+			const helpBtn = document.getElementById('helpBtn');
+			const hintArea = document.getElementById('hintArea');
+			helpBtn.addEventListener('click', () => {
+				hintArea.classList.toggle('active');
+				helpBtn.classList.toggle('active');
+			});
+
+			setNewQuestion();
+		</script>
+	<script src="transitions.js"></script>
+	</body>
+</html>

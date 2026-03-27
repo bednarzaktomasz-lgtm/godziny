@@ -1,0 +1,289 @@
+/* ============================================================
+   layout.css  —  Zbyszek Clock App: shared layout & base styles
+   Responsive: works on phones, tablets and large screens
+   ============================================================ */
+
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ---------- CSS variables ---------- */
+:root {
+  --clock-size: clamp(280px, 60vmin, 700px);
+  --content-width: calc(var(--clock-size) * 0.8);
+  --nav-width: min(1100px, 96vw);
+  --gap: clamp(16px, 3vmin, 48px);
+  --btn-height: clamp(72px, 9vmin, 140px);
+  --btn-radius: clamp(14px, 2vmin, 24px);
+  --btn-font: clamp(1.1rem, 2.5vmin, 2.4rem);
+  --icon-size: clamp(36px, 5vmin, 56px);
+  --feedback-font: clamp(1rem, 2vmin, 1.8rem);
+  --accent-color: #f0f0f0;
+}
+
+/* ---------- Body layout ---------- */
+body {
+  background: #000;
+  color: #f0f0f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  padding: clamp(16px, 3vmin, 48px) 0 clamp(20px, 4vmin, 64px);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+body.page-loaded {
+  opacity: 1;
+}
+
+/* ---------- Top navigation bar ---------- */
+.topbar {
+  width: var(--nav-width);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vmin, 16px);
+}
+
+/* ---------- Icon buttons (SVG / links) ---------- */
+.icon-btn {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  cursor: pointer;
+  color: #555;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.icon-btn:hover { color: #f0f0f0; }
+
+.settings-icon {
+  transition: color 0.2s;
+}
+.settings-icon:hover {
+  color: #f0f0f0;
+}
+
+/* ---------- Help / ? button ---------- */
+.help-btn {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: clamp(1.4rem, 3vmin, 2.8rem);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  line-height: 1;
+}
+.help-btn:hover,
+.help-btn.active {
+  color: #f0f0f0;
+}
+
+/* ---------- Feedback bar (below topbar) ---------- */
+.feedback-bar {
+  width: var(--nav-width);
+  min-height: clamp(24px, 3vmin, 40px);
+  text-align: center;
+  color: #888;
+  font-size: clamp(0.85rem, 1.8vmin, 1.3rem);
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.feedback-bar.active { opacity: 1; }
+
+/* ---------- Clock container ---------- */
+.clock-wrap {
+  width: var(--clock-size);
+  height: var(--clock-size);
+  flex-shrink: 0;
+}
+
+/* Override ClockRenderer inner .clock to always fill .clock-wrap */
+.clock-wrap .clock {
+  width: var(--clock-size) !important;
+  height: var(--clock-size) !important;
+}
+
+/* Scale inner text proportionally */
+.clock-wrap .clock .numbers .num {
+  font-size: clamp(16px, 4.8vmin, 42px) !important;
+}
+.clock-wrap .clock .digital-time {
+  font-size: clamp(8px, 1.8vmin, 18px) !important;
+}
+.clock-wrap .clock .digital-date {
+  font-size: clamp(5px, 1vmin, 10px)  !important;
+}
+.clock-wrap .clock .brand {
+  font-size: clamp(10px, 2.2vmin, 22px) !important;
+}
+
+/* ---------- Content area (below clock) ---------- */
+.content-area {
+  width: var(--content-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  margin-top: clamp(52px, 7vmin, 88px);
+}
+
+/* ---------- Shared panel / display boxes ---------- */
+.panel-box {
+  width: 100%;
+  min-height: var(--btn-height);
+  background: #111;
+  border: 2px solid #222;
+  border-radius: var(--btn-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f0f0f0;
+  font-size: var(--btn-font);
+  font-weight: 600;
+}
+
+/* ---------- Result bar (answer feedback + score) ---------- */
+.result-bar {
+  width: var(--nav-width);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@keyframes feedbackIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.feedback {
+  font-size: var(--feedback-font);
+  font-weight: 600;
+  min-height: clamp(28px, 4vmin, 48px);
+}
+.feedback.ok,
+.feedback.success { color: #16a34a; animation: feedbackIn 0.25s ease forwards; }
+.feedback.bad,
+.feedback.error   { color: #dc2626; animation: feedbackIn 0.25s ease forwards; }
+
+.score {
+  font-size: var(--feedback-font);
+  font-weight: 600;
+  color: #555;
+}
+
+/* ---------- Shared modal ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  transition: background 0.22s ease, visibility 0s 0.22s;
+}
+.modal.active {
+  background: rgba(0, 0, 0, 0.7);
+  visibility: visible;
+  transition: background 0.22s ease, visibility 0s 0s;
+}
+.modal-content {
+  background: #111;
+  border: 2px solid #222;
+  border-radius: 24px;
+  padding: clamp(24px, 4vmin, 48px);
+  width: var(--content-width);
+  display: grid;
+  gap: 20px;
+  opacity: 0;
+  transform: scale(0.92) translateY(16px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.modal.active .modal-content {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.modal-modes {
+  display: grid;
+  gap: 16px;
+}
+.mode-toggle {
+  padding: clamp(12px, 2vmin, 24px) clamp(14px, 2.5vmin, 28px);
+  border: 2px solid #333;
+  background: #1a1a1a;
+  border-radius: 16px;
+  font-size: clamp(0.9rem, 1.8vmin, 1.2rem);
+  font-weight: 600;
+  cursor: pointer;
+  color: #f0f0f0;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode-toggle:hover  { background: #222; }
+.mode-toggle.active { background: #2563eb; border-color: #2563eb; color: white; }
+
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(12px, 2vmin, 24px) clamp(14px, 2.5vmin, 28px);
+  background: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 16px;
+  font-size: clamp(1rem, 2vmin, 1.4rem);
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-switch {
+  width: clamp(48px, 7vmin, 72px);
+  height: clamp(26px, 3.6vmin, 36px);
+  background: #333;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-switch.active { background: #16a34a; }
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: clamp(18px, 2.8vmin, 28px);
+  height: clamp(18px, 2.8vmin, 28px);
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  transition: left 0.2s;
+}
+.toggle-switch.active::after {
+  left: calc(100% - clamp(18px, 2.8vmin, 28px) - 4px);
+}

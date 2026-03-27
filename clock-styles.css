@@ -1,0 +1,289 @@
+/* ZbyszekX Clock Face Styles */
+
+/* Main Watch Container */
+.clock {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  box-shadow: 
+    0 0 35px rgba(0,0,0,0.9), 
+    inset 0 0 15px rgba(255,255,255,0.05);
+  border: 4px solid #1c1c1c;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.clock.interactive {
+  cursor: grab;
+  touch-action: none;
+}
+
+.clock.interactive:active {
+  cursor: grabbing;
+}
+
+/* Size variants */
+.clock.clock-sm {
+  width: 300px;
+  height: 300px;
+}
+
+.clock.clock-lg {
+  width: 500px;
+  height: 500px;
+}
+
+/* Background Layers */
+.clock .bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+  z-index: 1;
+}
+
+.clock .bg-layer.active {
+  opacity: 1;
+}
+
+/* 1. Solid Black */
+.clock .bg-solid {
+  background-color: #030303;
+  background-image: radial-gradient(circle at center, #0a0a0a 0%, #000 70%);
+}
+
+/* 2. Spiral Aperture */
+.clock .bg-spiral {
+  background: 
+    radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 100%),
+    conic-gradient(from 0deg at 50% 50%, #000 0deg, #151515 5deg, #000 10deg, #151515 15deg, #000 20deg, #151515 25deg, #000 30deg, #151515 35deg, #000 40deg, #151515 45deg, #000 50deg, #151515 55deg, #000 60deg, #151515 65deg, #000 70deg, #151515 75deg, #000 80deg, #151515 85deg, #000 90deg, #151515 95deg, #000 100deg, #151515 105deg, #000 110deg, #151515 115deg, #000 120deg, #151515 125deg, #000 130deg, #151515 135deg, #000 140deg, #151515 145deg, #000 150deg, #151515 155deg, #000 160deg, #151515 165deg, #000 170deg, #151515 175deg, #000 180deg, #151515 185deg, #000 190deg, #151515 195deg, #000 200deg, #151515 205deg, #000 210deg, #151515 215deg, #000 220deg, #151515 225deg, #000 230deg, #151515 235deg, #000 240deg, #151515 245deg, #000 250deg, #151515 255deg, #000 260deg, #151515 265deg, #000 270deg, #151515 275deg, #000 280deg, #151515 285deg, #000 290deg, #151515 295deg, #000 300deg, #151515 305deg, #000 310deg, #151515 315deg, #000 320deg, #151515 325deg, #000 330deg, #151515 335deg, #000 340deg, #151515 345deg, #000 350deg, #151515 355deg, #000 360deg);
+}
+
+/* 3. Carbon Grid */
+.clock .bg-grid {
+  background-color: #080808;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+.clock .bg-grid::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 90%);
+}
+
+/* 4. Tech Circuit */
+.clock .bg-tech {
+  background-color: #050505;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1.5px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1.5px),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px;
+  background-position: -1px -1px;
+}
+.clock .bg-tech::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%);
+}
+
+/* Brand Typography */
+.clock .brand {
+  position: absolute;
+  top: 27%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #999;
+  font-family: "Georgia", serif;
+  font-style: italic;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}
+
+.clock.clock-sm .brand {
+  font-size: 14px;
+  top: 26%;
+}
+
+/* Digital Right Sub-dial */
+.clock .digital-display {
+  position: absolute;
+  top: 42%;
+  left: 62%;
+  width: 16%;
+  height: 16%;
+  background-color: rgba(20, 21, 20, 0.8);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.clock .ampm-display {
+  position: absolute;
+  top: 42%;
+  left: 22%;
+  width: 16%;
+  height: 16%;
+  background-color: rgba(20, 21, 20, 0.8);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.clock .ampm-display svg {
+  width: 55%;
+  height: 55%;
+}
+
+.clock .ampm-display[style*="pointer"]:hover {
+  background-color: rgba(40, 42, 40, 0.95);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.clock .digital-time {
+  color: #f0f0f0;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  font-family: "Trebuchet MS", sans-serif;
+}
+
+.clock .digital-date {
+  color: #d82928;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.clock.clock-sm .digital-time {
+  font-size: 12px;
+}
+
+.clock.clock-sm .digital-date {
+  font-size: 7px;
+}
+
+/* Numbers */
+.clock .numbers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.clock .numbers .num {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 34px;
+  font-weight: 900;
+  font-family: "Impact", sans-serif;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.clock.clock-sm .numbers .num {
+  font-size: 26px;
+}
+
+/* Number positions (percentage based) */
+.clock .num.n12 { top: 12%; left: 50%; }
+.clock .num.n1  { top: 17.1%; left: 69%; }
+.clock .num.n2  { top: 31%; left: 82.9%; }
+.clock .num.n3  { top: 50%; left: 88%; }
+.clock .num.n4  { top: 69%; left: 82.9%; }
+.clock .num.n5  { top: 82.9%; left: 69%; }
+.clock .num.n6  { top: 88%; left: 50%; }
+.clock .num.n7  { top: 82.9%; left: 31%; }
+.clock .num.n8  { top: 69%; left: 17.1%; }
+.clock .num.n9  { top: 50%; left: 12%; }
+.clock .num.n10 { top: 31%; left: 17.1%; }
+.clock .num.n11 { top: 17.1%; left: 31%; }
+
+/* Hand transitions */
+.clock .hour-hand,
+.clock .minute-hand {
+  transform-origin: 200px 200px;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.clock.dragging .hour-hand,
+.clock.dragging .minute-hand {
+  transition: none;
+}
+
+/* SVG Overlays */
+.clock svg.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+}
+
+/* Background Selector Buttons */
+.bg-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.bg-controls .bg-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+
+.bg-controls .bg-btn:hover {
+  transform: scale(1.1);
+  border-color: #d82928;
+}
+
+.bg-controls .bg-btn.active {
+  border-color: #d82928;
+  box-shadow: 0 0 10px rgba(216, 41, 40, 0.4);
+}
+
+/* Button Mini-Previews */
+.bg-controls .p-solid { background: radial-gradient(circle, #222, #000); }
+.bg-controls .p-spiral { background: conic-gradient(#000, #333, #000); }
+.bg-controls .p-grid { background-image: radial-gradient(#444 1px, transparent 0); background-size: 4px 4px; }
+.bg-controls .p-tech { background-image: linear-gradient(#333 1px, transparent 0), linear-gradient(90deg, #333 1px, transparent 0); background-size: 10px 10px; }
+
+/* Ghost hands for showing correct answer */
+.clock .ghost-hour,
+.clock .ghost-minute {
+  opacity: 0.5;
+}
+
+.clock .ghost-hour polygon,
+.clock .ghost-minute polygon {
+  fill: #16a34a !important;
+}

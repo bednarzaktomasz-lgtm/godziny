@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ustawienia</title>
+  <link rel="stylesheet" href="clock-styles.css" />
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    /* ---- Controls row: bg icons + hand color icons ---- */
+    .controls-row {
+      width: 80vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(32px, 8vmin, 100px);
+    }
+
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(10px, 1.5vmin, 18px);
+    }
+
+    .controls-label {
+      color: #888;
+      font-size: clamp(0.8rem, 1.5vmin, 1.2rem);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* Override bg-btn size for the settings page */
+    #bgControlsContainer .bg-controls {
+      margin-top: 0;
+      gap: clamp(10px, 2vmin, 20px);
+    }
+
+    #bgControlsContainer .bg-controls .bg-btn {
+      width: clamp(40px, 6vmin, 64px);
+      height: clamp(40px, 6vmin, 64px);
+    }
+
+    /* Hand color dots */
+    .hand-controls {
+      display: flex;
+      gap: clamp(10px, 2vmin, 20px);
+    }
+
+    .hand-btn {
+      width: clamp(40px, 6vmin, 64px);
+      height: clamp(40px, 6vmin, 64px);
+      border-radius: 50%;
+      border: 2px solid #333;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hand-btn:hover {
+      transform: scale(1.1);
+      border-color: #d82928;
+    }
+
+    .hand-btn.active {
+      border-color: #d82928;
+      box-shadow: 0 0 10px rgba(216, 41, 40, 0.4);
+    }
+
+    .hand-btn.h-white { background: #f0f0f0; }
+    .hand-btn.h-blue  { background: #2563eb; }
+    .hand-btn.h-red   { background: #d82928; }
+
+    /* ---- Settings panel ---- */
+    .settings-panel {
+      width: 80vw;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(20px, 3.5vmin, 36px);
+    }
+
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1.5vmin, 16px);
+    }
+
+    .settings-section-label {
+      color: #888;
+      font-size: clamp(0.8rem, 1.5vmin, 1.2rem);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding-bottom: clamp(8px, 1.2vmin, 12px);
+      border-bottom: 1px solid #222;
+    }
+
+    .mode-toggles {
+      display: flex;
+      gap: clamp(8px, 1.5vmin, 16px);
+      flex-wrap: wrap;
+    }
+
+    .mode-toggle {
+      flex: 1;
+      min-width: clamp(80px, 14vw, 160px);
+      min-height: clamp(56px, 8vmin, 100px);
+      background: #111;
+      border: 2px solid #222;
+      border-radius: clamp(10px, 1.5vmin, 16px);
+      color: #888;
+      font-size: clamp(0.75rem, 1.6vmin, 1.4rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mode-toggle:hover  { background: #222; color: #f0f0f0; }
+    .mode-toggle.active { background: #2563eb; border-color: #2563eb; color: white; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: clamp(52px, 7vmin, 80px);
+      background: #111;
+      border: 2px solid #222;
+      border-radius: clamp(10px, 1.5vmin, 16px);
+      padding: 0 clamp(16px, 3vmin, 36px);
+    }
+
+    .toggle-row span {
+      color: #f0f0f0;
+      font-size: clamp(1rem, 2.2vmin, 1.6rem);
+      font-weight: 600;
+    }
+
+    /* Larger toggle switch on settings page */
+    .toggle-row .toggle-switch {
+      width: clamp(56px, 8vmin, 80px);
+      height: clamp(30px, 4.4vmin, 44px);
+    }
+    .toggle-row .toggle-switch::after {
+      width: clamp(22px, 3.6vmin, 36px);
+      height: clamp(22px, 3.6vmin, 36px);
+    }
+    .toggle-row .toggle-switch.active {
+      background: #2563eb;
+    }
+    .toggle-row .toggle-switch.active::after {
+      left: calc(100% - clamp(22px, 3.6vmin, 36px) - 4px);
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="start.html" title="Wróć do menu">
+    <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </a>
+  <div class="topbar-right">
+    <button class="help-btn" id="helpBtn">?</button>
+  </div>
+</div>
+
+<div class="feedback-bar" id="hintArea">Ustaw domyślne opcje dla trybu quizu i ustawiania godziny.</div>
+
+<div class="clock-wrap" id="clockContainer"></div>
+
+<div class="controls-row">
+  <div class="controls-group">
+    <div class="controls-label">Tarcza</div>
+    <div id="bgControlsContainer"></div>
+  </div>
+  <div class="controls-group">
+    <div class="controls-label">Wskazówki</div>
+    <div class="hand-controls">
+      <div class="hand-btn h-white active" data-color="white" title="Białe"></div>
+      <div class="hand-btn h-blue" data-color="blue" title="Niebieskie"></div>
+      <div class="hand-btn h-red" data-color="red" title="Czerwone"></div>
+    </div>
+  </div>
+</div>
+
+<div class="settings-panel">
+
+  <div class="settings-section">
+    <div class="settings-section-label">Tryb czasu</div>
+    <div class="mode-toggles">
+      <button class="mode-toggle active" data-mode="full">Pełne godziny</button>
+      <button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
+      <button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
+      <button class="mode-toggle" data-mode="five">Co 5 minut</button>
+      <button class="mode-toggle" data-mode="any">Każda minuta</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Cyfry na tarczy</div>
+    <div class="mode-toggles">
+      <button class="mode-toggle" data-numbers="arabic">Arabskie</button>
+      <button class="mode-toggle" data-numbers="roman">Rzymskie</button>
+      <button class="mode-toggle" data-numbers="none">Bez cyfr</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Opcje</div>
+    <div class="toggle-row">
+      <span>Dźwięki</span>
+      <div class="toggle-switch active" id="soundToggle"></div>
+    </div>
+    <div class="toggle-row">
+      <span>Podpowiedź czasu</span>
+      <div class="toggle-switch active" id="timeHintToggle"></div>
+    </div>
+    <div class="toggle-row">
+      <span>Format 24-godzinny</span>
+      <div class="toggle-switch" id="hourFormatToggle"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="clock-renderer.js"></script>
+<script>
+  // ==================== localStorage Keys ====================
+  const STORAGE_KEYS = {
+    activeModes: 'zegar_activeModes',
+    soundEnabled: 'zegar_soundEnabled',
+    showTimeHint: 'zegar_showTimeHint',
+    clockBg: 'zegar_clockBg',
+    handColor: 'zegar_handColor',
+    numberStyle: 'zegar_numberStyle',
+    hourFormat: 'zegar_hourFormat',
+  };
+
+  // ==================== Defaults ====================
+  const DEFAULTS = {
+    activeModes: ['full'],
+    soundEnabled: true,
+    showTimeHint: true,
+    clockBg: 'solid',
+    handColor: 'white',
+    numberStyle: 'arabic',
+    hourFormat: '12',
+  };
+
+  // ==================== Load Settings ====================
+  function loadSettings() {
+    return {
+      activeModes: JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || DEFAULTS.activeModes,
+      soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
+      showTimeHint: localStorage.getItem(STORAGE_KEYS.showTimeHint) !== 'false',
+      clockBg: localStorage.getItem(STORAGE_KEYS.clockBg) || DEFAULTS.clockBg,
+      handColor: localStorage.getItem(STORAGE_KEYS.handColor) || DEFAULTS.handColor,
+      numberStyle: localStorage.getItem(STORAGE_KEYS.numberStyle) || DEFAULTS.numberStyle,
+      hourFormat: localStorage.getItem(STORAGE_KEYS.hourFormat) || DEFAULTS.hourFormat,
+    };
+  }
+
+  // ==================== DOM References ====================
+  const clockContainer = document.getElementById("clockContainer");
+  const bgControlsContainer = document.getElementById("bgControlsContainer");
+  const modeToggles = document.querySelectorAll('[data-mode]');
+  const numberBtns = document.querySelectorAll('[data-numbers]');
+  const handBtns = document.querySelectorAll('.hand-btn');
+  const soundToggle = document.getElementById('soundToggle');
+  const timeHintToggle = document.getElementById('timeHintToggle');
+  const hourFormatToggle = document.getElementById('hourFormatToggle');
+  const helpBtn = document.getElementById('helpBtn');
+  const hintArea = document.getElementById('hintArea');
+
+  // ==================== Initialize Settings ====================
+  const settings = loadSettings();
+
+  // ==================== Initialize Clock ====================
+  const clock = new ClockRenderer(clockContainer, {
+    size: 'normal',
+    interactive: true,
+    showBrand: true,
+    showDigital: true,
+    showDate: true,
+    showSecondHand: true,
+    showBgControls: true,
+    bgControlsContainer: bgControlsContainer,
+    handColor: settings.handColor,
+  });
+
+  // ==================== Apply Settings to UI ====================
+  // Mode toggles
+  modeToggles.forEach(btn => {
+    btn.classList.toggle('active', settings.activeModes.includes(btn.dataset.mode));
+  });
+
+  // Hand color buttons
+  handBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color === settings.handColor);
+  });
+
+  // Background buttons (rendered by ClockRenderer)
+  setTimeout(() => {
+    const bgBtns = bgControlsContainer.querySelectorAll('.bg-btn');
+    bgBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.bg === settings.clockBg);
+    });
+    clock.setBackground(settings.clockBg);
+  }, 0);
+
+  // Number style buttons
+  numberBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.numbers === settings.numberStyle);
+  });
+  clock.setNumberStyle(settings.numberStyle);
+
+  // Toggle switches
+  soundToggle.classList.toggle('active', settings.soundEnabled);
+  timeHintToggle.classList.toggle('active', settings.showTimeHint);
+  hourFormatToggle.classList.toggle('active', settings.hourFormat === '24');
+
+  // ==================== Event Listeners ====================
+
+  // Mode toggles (multi-select)
+  modeToggles.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      const activeModes = Array.from(modeToggles)
+        .filter(b => b.classList.contains('active'))
+        .map(b => b.dataset.mode);
+      // Ensure at least one mode is active
+      if (activeModes.length === 0) {
+        btn.classList.add('active');
+        activeModes.push(btn.dataset.mode);
+      }
+      localStorage.setItem(STORAGE_KEYS.activeModes, JSON.stringify(activeModes));
+    });
+  });
+
+  // Number style buttons (single-select)
+  numberBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      numberBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const style = btn.dataset.numbers;
+      localStorage.setItem(STORAGE_KEYS.numberStyle, style);
+      clock.setNumberStyle(style);
+    });
+  });
+
+  // Hand color buttons (single-select)
+  handBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      handBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const color = btn.dataset.color;
+      localStorage.setItem(STORAGE_KEYS.handColor, color);
+      clock.setHandColor(color);
+    });
+  });
+
+  // Background buttons — inject listener after ClockRenderer creates them
+  setTimeout(() => {
+    const bgBtns = bgControlsContainer.querySelectorAll('.bg-btn');
+    bgBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        localStorage.setItem(STORAGE_KEYS.clockBg, btn.dataset.bg);
+      });
+    });
+  }, 0);
+
+  // Sound toggle
+  soundToggle.addEventListener('click', () => {
+    soundToggle.classList.toggle('active');
+    const enabled = soundToggle.classList.contains('active');
+    localStorage.setItem(STORAGE_KEYS.soundEnabled, enabled);
+  });
+
+  // Time hint toggle
+  timeHintToggle.addEventListener('click', () => {
+    timeHintToggle.classList.toggle('active');
+    const enabled = timeHintToggle.classList.contains('active');
+    localStorage.setItem(STORAGE_KEYS.showTimeHint, enabled);
+  });
+
+  // Hour format toggle
+  hourFormatToggle.addEventListener('click', () => {
+    hourFormatToggle.classList.toggle('active');
+    const format = hourFormatToggle.classList.contains('active') ? '24' : '12';
+    localStorage.setItem(STORAGE_KEYS.hourFormat, format);
+  });
+
+  // Help button
+  helpBtn.addEventListener('click', () => {
+    hintArea.classList.toggle('active');
+    helpBtn.classList.toggle('active');
+  });
+</script>
+
+<script src="transitions.js"></script>
+</body>
+</html>

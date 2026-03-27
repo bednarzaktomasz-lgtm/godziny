@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Quiz ABC</title>
+		<link rel="stylesheet" href="clock-styles.css" />
+		<link rel="stylesheet" href="layout.css" />
+		<style>
+			/* Answer buttons */
+			.answers-grid {
+				display: flex;
+				flex-direction: column;
+				gap: var(--gap);
+				width: 100%;
+			}
+
+			.answer-btn {
+				width: 100%;
+				min-height: var(--btn-height);
+				background: #111;
+				border: 2px solid #222;
+				border-radius: var(--btn-radius);
+				font-size: var(--btn-font);
+				font-weight: 600;
+				cursor: pointer;
+				color: #f0f0f0;
+				transition: background 0.2s, border-color 0.2s;
+				-webkit-tap-highlight-color: transparent;
+			}
+
+			.answer-btn:hover {
+				background: #1a1a1a;
+				border-color: #444;
+			}
+
+			.answer-btn.correct {
+				background: #16a34a;
+				border-color: #16a34a;
+				color: white;
+			}
+
+			.answer-btn.wrong {
+				background: #dc2626;
+				border-color: #dc2626;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="topbar">
+			<a href="start.html" title="Wróć do menu">
+				<svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="15 18 9 12 15 6"></polyline>
+				</svg>
+			</a>
+			<div class="topbar-right">
+				<button class="help-btn" id="helpBtn">?</button>
+				<svg class="icon-btn settings-icon" id="settingsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+					<line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+					<line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+					<line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+				</svg>
+			</div>
+		</div>
+
+		<div class="feedback-bar" id="hintArea">Odczytaj godzinę z zegara i wybierz poprawną odpowiedź spośród trzech opcji.</div>
+
+		<div class="result-bar">
+			<div class="feedback" id="feedback"></div>
+			<div class="score" id="score">0 / 0</div>
+		</div>
+
+		<div class="clock-wrap" id="clockContainer"></div>
+
+		<div class="content-area">
+			<div class="answers-grid">
+				<button class="answer-btn" id="ans0">--:--</button>
+				<button class="answer-btn" id="ans1">--:--</button>
+				<button class="answer-btn" id="ans2">--:--</button>
+			</div>
+		</div>
+
+		<div class="modal" id="settingsModal">
+			<div class="modal-content">
+				<div class="modal-modes">
+					<button class="mode-toggle active" data-mode="full">Pełne godziny</button>
+					<button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
+					<button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
+					<button class="mode-toggle" data-mode="five">Co 5 minut</button>
+					<button class="mode-toggle" data-mode="any">Każda minuta</button>
+				</div>
+				<div class="sound-toggle" id="soundToggleRow">
+					<span>Dźwięki</span>
+					<div class="toggle-switch active" id="soundToggle"></div>
+				</div>
+			</div>
+		</div>
+
+		<script src="clock-renderer.js"></script>
+		<script>
+			// ==================== Load Global Settings ====================
+			const STORAGE_KEYS = {
+				activeModes: 'zegar_activeModes',
+				soundEnabled: 'zegar_soundEnabled',
+				clockBg: 'zegar_clockBg',
+				handColor: 'zegar_handColor',
+				numberStyle: 'zegar_numberStyle',
+				hourFormat: 'zegar_hourFormat',
+			};
+
+			function loadGlobalSettings() {
+				return {
+					activeModes: JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
+					soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
+					clockBg: localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
+					handColor: localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
+					numberStyle: localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic',
+					hourFormat: localStorage.getItem(STORAGE_KEYS.hourFormat) || '12',
+				};
+			}
+
+			const globalSettings = loadGlobalSettings();
+
+			// Initialize clock using the module
+			const clockContainer = document.getElementById("clockContainer");
+			const clock = new ClockRenderer(clockContainer, {
+				size: 'sm',
+				interactive: false,
+				showBrand: true,
+				showDigital: true,
+				showDate: true,
+				showAmPm: globalSettings.hourFormat === '24',
+				showSecondHand: false,
+				showBgControls: false,
+				handColor: globalSettings.handColor,
+			});
+
+			// Apply saved background
+			clock.setBackground(globalSettings.clockBg);
+			clock.setNumberStyle(globalSettings.numberStyle);
+
+			const feedbackEl = document.getElementById("feedback");
+			const scoreEl = document.getElementById("score");
+
+			const answerButtons = [
+				document.getElementById("ans0"),
+				document.getElementById("ans1"),
+				document.getElementById("ans2"),
+			];
+
+			let currentTime = { hour: 12, minute: 0 };
+			let correctIndex = 0;
+			let totalAnswers = 0;
+			let correctAnswers = 0;
+			let attempts = 0;
+			let activeModes = new Set(globalSettings.activeModes);
+			let soundEnabled = globalSettings.soundEnabled;
+			let hourFormat = globalSettings.hourFormat;
+			let audioContext = null;
+
+			// Sync mode toggles UI to match loaded settings
+			document.querySelectorAll('.mode-toggle').forEach(btn => {
+				btn.classList.toggle('active', activeModes.has(btn.dataset.mode));
+			});
+
+			// Sync sound toggle UI
+			const soundToggleInit = document.getElementById('soundToggle');
+			soundToggleInit.classList.toggle('active', soundEnabled);
+
+			function initAudioContext() {
+				if (!audioContext) {
+					audioContext = new (window.AudioContext || window.webkitAudioContext)();
+				}
+				if (audioContext.state === 'suspended') {
+					audioContext.resume();
+				}
+			}
+
+			function playBeep(frequency, duration) {
+				if (!soundEnabled) return;
+				initAudioContext();
+				const oscillator = audioContext.createOscillator();
+				const gainNode = audioContext.createGain();
+				oscillator.connect(gainNode);
+				gainNode.connect(audioContext.destination);
+				oscillator.frequency.value = frequency;
+				oscillator.type = 'sine';
+				gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+				gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+				oscillator.start(audioContext.currentTime);
+				oscillator.stop(audioContext.currentTime + duration / 1000);
+			}
+
+			function playSuccess() { playBeep(880, 150); }
+			function playError()   { playBeep(220, 300); }
+
+			const MODE_MINUTES = {
+				full: [0],
+				half: [30],
+				quarter: [15, 45],
+				five: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+				any: Array.from({ length: 60 }, (_, i) => i),
+			};
+
+			function formatTime(hour, minute) {
+				const h = String(hour).padStart(2, "0");
+				const m = String(minute).padStart(2, "0");
+				return `${h}:${m}`;
+			}
+
+			function randomMinute() {
+				const allMinutes = new Set();
+				activeModes.forEach((mode) => {
+					MODE_MINUTES[mode].forEach((m) => allMinutes.add(m));
+				});
+				const minutesArray = Array.from(allMinutes);
+				return minutesArray[Math.floor(Math.random() * minutesArray.length)];
+			}
+
+			function randomHour() {
+				return hourFormat === '24' ? Math.floor(Math.random() * 23) + 1 : Math.floor(Math.random() * 12) + 1;
+			}
+
+			function generateOptions(correctTime) {
+				const mirrorHour = correctTime.hour > 12 ? correctTime.hour - 12 : correctTime.hour + 12;
+				const options = new Set([formatTime(correctTime.hour, correctTime.minute)]);
+				while (options.size < 3) {
+					const hour = randomHour();
+					const minute = randomMinute();
+					// Skip mirror hour with same minute — visually identical on clock
+					if (hourFormat === '24' && hour === mirrorHour && minute === correctTime.minute) continue;
+					options.add(formatTime(hour, minute));
+				}
+				return Array.from(options);
+			}
+
+			function shuffle(array) {
+				for (let i = array.length - 1; i > 0; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[array[i], array[j]] = [array[j], array[i]];
+				}
+				return array;
+			}
+
+			function setNewQuestion() {
+				const hour = randomHour();
+				const minute = randomMinute();
+				currentTime = { hour, minute };
+
+				// Use clock renderer to display time
+				clock.setTime(hour, minute);
+				if (hourFormat === '24') clock.setAmPm(hour >= 13);
+
+				const options = shuffle(generateOptions(currentTime));
+				correctIndex = options.indexOf(formatTime(hour, minute));
+
+				options.forEach((value, idx) => {
+					const btn = answerButtons[idx];
+					btn.textContent = value;
+					btn.className = "answer-btn";
+					btn.disabled = false;
+					btn.onclick = () => checkAnswer(idx);
+				});
+
+				attempts = 0;
+				feedbackEl.textContent = "";
+				feedbackEl.className = "feedback";
+			}
+
+			function checkAnswer(selectedIndex) {
+				const correctTimeText = formatTime(currentTime.hour, currentTime.minute);
+
+				if (selectedIndex === correctIndex) {
+					answerButtons.forEach(btn => btn.disabled = true);
+					feedbackEl.textContent = `Dobrze! ${correctTimeText}.`;
+					feedbackEl.className = "feedback ok";
+					answerButtons[selectedIndex].classList.add("correct");
+					playSuccess();
+					if (attempts === 0) {
+						totalAnswers += 1;
+						correctAnswers += 1;
+						scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+					}
+					setTimeout(setNewQuestion, 2000);
+				} else {
+					answerButtons[selectedIndex].classList.add("wrong");
+					answerButtons[selectedIndex].disabled = true;
+					playError();
+					if (attempts === 0) {
+						totalAnswers += 1;
+						scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+						attempts = 1;
+						feedbackEl.textContent = `Spróbuj jeszcze raz!`;
+						feedbackEl.className = "feedback bad";
+					} else {
+						answerButtons.forEach(btn => btn.disabled = true);
+						answerButtons[correctIndex].classList.add("correct");
+						feedbackEl.textContent = `Prawidłowa: ${correctTimeText}.`;
+						feedbackEl.className = "feedback bad";
+						setTimeout(setNewQuestion, 2500);
+					}
+				}
+			}
+
+			const settingsIcon = document.getElementById("settingsIcon");
+			const settingsModal = document.getElementById("settingsModal");
+
+			settingsIcon.addEventListener("click", () => {
+				settingsModal.classList.add("active");
+			});
+
+			settingsModal.addEventListener("click", (e) => {
+				if (e.target === settingsModal) {
+					settingsModal.classList.remove("active");
+				}
+			});
+
+			document.addEventListener("keydown", (e) => {
+				if (e.key === "Escape") {
+					settingsModal.classList.remove("active");
+				}
+			});
+
+			document.querySelectorAll(".mode-toggle").forEach((btn) => {
+				btn.addEventListener("click", () => {
+					const mode = btn.dataset.mode;
+					if (activeModes.has(mode)) {
+						if (activeModes.size > 1) {
+							activeModes.delete(mode);
+							btn.classList.remove("active");
+						}
+					} else {
+						activeModes.add(mode);
+						btn.classList.add("active");
+					}
+					setNewQuestion();
+				});
+			});
+
+			const soundToggle = document.getElementById("soundToggle");
+			soundToggle.addEventListener("click", () => {
+				soundEnabled = !soundEnabled;
+				soundToggle.classList.toggle("active");
+				if (soundEnabled) {
+					initAudioContext();
+					playBeep(660, 100);
+				}
+			});
+
+			const helpBtn = document.getElementById('helpBtn');
+			const hintArea = document.getElementById('hintArea');
+			helpBtn.addEventListener('click', () => {
+				hintArea.classList.toggle('active');
+				helpBtn.classList.toggle('active');
+			});
+
+			setNewQuestion();
+		</script>
+	<script src="transitions.js"></script>
+	</body>
+</html>

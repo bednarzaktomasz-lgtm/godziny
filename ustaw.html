@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ustaw Godzinę</title>
+    <link rel="stylesheet" href="clock-styles.css" />
+    <link rel="stylesheet" href="layout.css" />
+    <style>
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: var(--gap);
+            width: 100%;
+        }
+
+        .target-display {
+            background: #111;
+            border: 2px solid #222;
+            border-radius: var(--btn-radius);
+            text-align: center;
+            color: #f0f0f0;
+            min-height: var(--btn-height);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(4px, 1vmin, 8px);
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .target-display:hover  { background: #1a1a1a; border-color: #444; }
+        .target-display:active { background: #222; }
+        .target-display.correct { background: #16a34a; border-color: #16a34a; }
+        .target-display.wrong   { background: #dc2626; border-color: #dc2626; }
+
+        .target-label {
+            font-size: clamp(0.75rem, 1.5vmin, 1.2rem);
+            opacity: 0.9;
+            font-weight: 600;
+        }
+        .target-time {
+            font-size: clamp(1.6rem, 4vmin, 3.2rem);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .user-time-display {
+            text-align: center;
+            min-height: clamp(56px, 8vmin, 100px);
+            background: #111;
+            border: 2px solid #222;
+            border-radius: var(--btn-radius);
+            font-size: clamp(0.9rem, 2vmin, 1.6rem);
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: opacity 0.3s;
+        }
+        .user-time-display.hidden { opacity: 0; pointer-events: none; }
+        .user-time-display strong { color: #f0f0f0; font-size: clamp(1rem, 2.5vmin, 2rem); }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="start.html" title="Wróć do menu">
+            <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </a>
+        <div class="topbar-right">
+            <button class="help-btn" id="helpBtn">?</button>
+            <svg class="icon-btn settings-icon" id="settingsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+                <line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+                <line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+            </svg>
+            </svg>
+        </div>
+    </div>
+
+    <div class="feedback-bar" id="hintArea">Ustaw wskazówki zegara na podaną godzinę, a następnie kliknij przycisk z godziną, aby sprawdzić.</div>
+
+    <div class="result-bar">
+        <div class="feedback" id="feedback"></div>
+        <div class="score" id="score">0 / 0</div>
+    </div>
+
+    <div class="clock-wrap" id="clockContainer"></div>
+
+    <div class="content-area">
+        <div class="info-panel">
+            <div class="target-display" id="targetDisplay">
+                <div class="target-time" id="targetTime">12:00</div>
+            </div>
+
+            <div class="user-time-display" id="userTimeDisplay">
+                Twoja godzina: <strong id="userTime">12:00</strong>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-modes">
+                <button class="mode-toggle active" data-mode="full">Pełne godziny</button>
+                <button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
+                <button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
+                <button class="mode-toggle" data-mode="five">Co 5 minut</button>
+                <button class="mode-toggle" data-mode="any">Każda minuta</button>
+            </div>
+            <div class="sound-toggle" id="soundToggleRow">
+                <span>Dźwięki</span>
+                <div class="toggle-switch active" id="soundToggle"></div>
+            </div>
+            <div class="sound-toggle" id="timeHintToggleRow">
+                <span>Podpowiedź czasu</span>
+                <div class="toggle-switch active" id="timeHintToggle"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="clock-renderer.js"></script>
+    <script>
+        // ==================== Load Global Settings ====================
+        const STORAGE_KEYS = {
+            activeModes: 'zegar_activeModes',
+            soundEnabled: 'zegar_soundEnabled',
+            showTimeHint: 'zegar_showTimeHint',
+            clockBg: 'zegar_clockBg',
+            handColor: 'zegar_handColor',
+            numberStyle: 'zegar_numberStyle',
+            hourFormat: 'zegar_hourFormat',
+        };
+
+        function loadGlobalSettings() {
+            return {
+                activeModes: JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
+                soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
+                showTimeHint: localStorage.getItem(STORAGE_KEYS.showTimeHint) !== 'false',
+                clockBg: localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
+                handColor: localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
+                numberStyle: localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic',
+                hourFormat: localStorage.getItem(STORAGE_KEYS.hourFormat) || '12',
+            };
+        }
+
+        const globalSettings = loadGlobalSettings();
+
+        // ==================== Initialize Clock ====================
+        const clockContainer = document.getElementById("clockContainer");
+        let hasMovedHand = false;
+        let isChecked = false;
+
+        const clock = new ClockRenderer(clockContainer, {
+            size: 'normal',
+            interactive: true,
+            showBrand: true,
+            showDigital: true,
+            showDate: true,
+            showSecondHand: false,
+            showBgControls: false,
+            handColor: globalSettings.handColor,
+            onTimeChange: (h, m) => {
+                if (!hasMovedHand) {
+                    hasMovedHand = true;
+                }
+                updateUserTimeDisplay();
+            }
+        });
+
+        // Apply saved background
+        clock.setBackground(globalSettings.clockBg);
+        clock.setNumberStyle(globalSettings.numberStyle);
+        let targetTime = { h: 12, m: 0 };
+        let correctAnswers = 0;
+        let totalAnswers = 0;
+        let attempts = 0;
+        let soundEnabled = globalSettings.soundEnabled;
+        let showTimeHint = globalSettings.showTimeHint;
+        let activeModes = new Set(globalSettings.activeModes);
+        let hourFormat = globalSettings.hourFormat;
+        let audioContext = null;
+
+        // ==================== Mode Configuration ====================
+        const MODE_MINUTES = {
+            full: [0],
+            half: [30],
+            quarter: [15, 45],
+            five: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+            any: Array.from({ length: 60 }, (_, i) => i),
+        };
+
+        const TOLERANCE_MAP = {
+            full: 5,
+            half: 4,
+            quarter: 3,
+            five: 2,
+            any: 2,
+        };
+
+        // ==================== DOM Elements ====================
+        const targetTimeEl = document.getElementById("targetTime");
+        const targetDisplay = document.getElementById("targetDisplay");
+        const userTimeEl = document.getElementById("userTime");
+        const feedbackEl = document.getElementById("feedback");
+        const scoreEl = document.getElementById("score");
+        const settingsIcon = document.getElementById("settingsIcon");
+        const settingsModal = document.getElementById("settingsModal");
+        const soundToggle = document.getElementById("soundToggle");
+        const timeHintToggle = document.getElementById("timeHintToggle");
+        const userTimeDisplay = document.getElementById("userTimeDisplay");
+
+        // ==================== Sync UI to Global Settings ====================
+        document.querySelectorAll('.mode-toggle').forEach(btn => {
+            btn.classList.toggle('active', activeModes.has(btn.dataset.mode));
+        });
+        soundToggle.classList.toggle('active', soundEnabled);
+        timeHintToggle.classList.toggle('active', showTimeHint);
+        userTimeDisplay.classList.toggle('hidden', !showTimeHint);
+
+        // ==================== Audio Setup ====================
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        function playBeep(frequency, duration) {
+            if (!soundEnabled) return;
+            
+            initAudioContext();
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+        }
+
+        function playSuccess() { playBeep(880, 150); }
+        function playError() { playBeep(220, 300); }
+
+        // ==================== Time Functions ====================
+        function formatTime(hour, minute) {
+            const h = String(hour).padStart(2, "0");
+            const m = String(minute).padStart(2, "0");
+            return `${h}:${m}`;
+        }
+
+        function randomMinute() {
+            const allMinutes = new Set();
+            activeModes.forEach((mode) => {
+                MODE_MINUTES[mode].forEach((m) => allMinutes.add(m));
+            });
+            const minutesArray = Array.from(allMinutes);
+            return minutesArray[Math.floor(Math.random() * minutesArray.length)];
+        }
+
+        function randomHour() {
+            return hourFormat === '24' ? Math.floor(Math.random() * 23) + 1 : Math.floor(Math.random() * 12) + 1;
+        }
+
+        function getCurrentTolerance() {
+            let minTolerance = 10;
+            activeModes.forEach((mode) => {
+                if (TOLERANCE_MAP[mode] < minTolerance) {
+                    minTolerance = TOLERANCE_MAP[mode];
+                }
+            });
+            return minTolerance;
+        }
+
+        function checkAnswerWithTolerance(userH, userM, correctH, correctM, toleranceMinutes) {
+            const userTotal = ((userH - 1) % 12 + 1) === 12 ? (userM === 0 ? 0 : 12 * 60 + userM) : ((userH - 1) % 12) * 60 + userM;
+            const correctTotal = ((correctH - 1) % 12 + 1) === 12 ? (correctM === 0 ? 0 : 12 * 60 + correctM) : ((correctH - 1) % 12) * 60 + correctM;
+            
+            let diff = Math.abs(userTotal - correctTotal);
+            if (diff > 360) diff = 720 - diff;
+            
+            return diff <= toleranceMinutes;
+        }
+
+        function updateUserTimeDisplay() {
+            const time = clock.getTime();
+            userTimeEl.textContent = formatTime(time.h, time.m);
+        }
+
+        // ==================== Game Logic ====================
+        function startNewQuestion() {
+            const hour = randomHour();
+            const minute = randomMinute();
+            targetTime = { h: hour, m: minute };
+            
+            // Reset clock to 12:00
+            clock.setTime(12, 0);
+            clock.hideGhostHands();
+            
+            // Update displays
+            targetTimeEl.textContent = formatTime(targetTime.h, targetTime.m);
+            updateUserTimeDisplay();
+            
+            // Reset UI
+            isChecked = false;
+            hasMovedHand = false;
+            attempts = 0;
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'feedback';
+            targetDisplay.classList.remove('correct', 'wrong');
+        }
+
+        function handleCheck() {
+            if (isChecked || !hasMovedHand) return;
+
+            initAudioContext();
+
+            const userTime = clock.getTime();
+            const tolerance = getCurrentTolerance();
+            const isCorrect = checkAnswerWithTolerance(
+                userTime.h, userTime.m,
+                targetTime.h, targetTime.m,
+                tolerance
+            );
+            const correctTimeText = formatTime(targetTime.h, targetTime.m);
+
+            if (isCorrect) {
+                isChecked = true;
+                if (attempts === 0) {
+                    totalAnswers++;
+                    correctAnswers++;
+                    scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+                }
+                feedbackEl.textContent = `🎉 Świetnie!`;
+                feedbackEl.className = 'feedback success';
+                targetDisplay.classList.add('correct');
+                playSuccess();
+                setTimeout(startNewQuestion, 2000);
+            } else {
+                playError();
+                if (attempts === 0) {
+                    totalAnswers++;
+                    scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+                    attempts = 1;
+                    feedbackEl.textContent = `Spróbuj jeszcze raz!`;
+                    feedbackEl.className = 'feedback bad';
+                    targetDisplay.classList.add('wrong');
+                    setTimeout(() => {
+                        targetDisplay.classList.remove('wrong');
+                        hasMovedHand = false;
+                        feedbackEl.textContent = '';
+                        feedbackEl.className = 'feedback';
+                    }, 800);
+                } else {
+                    isChecked = true;
+                    feedbackEl.textContent = `Prawidłowa: ${correctTimeText}.`;
+                    feedbackEl.className = 'feedback error';
+                    targetDisplay.classList.add('wrong');
+                    clock.showGhostHands(targetTime.h, targetTime.m);
+                    setTimeout(startNewQuestion, 2500);
+                }
+            }
+        }
+
+        // ==================== Click target to check ====================
+        targetDisplay.addEventListener("click", handleCheck);
+
+        // ==================== Modal & Settings ====================
+        settingsIcon.addEventListener("click", () => {
+            settingsModal.classList.add("active");
+        });
+
+        settingsModal.addEventListener("click", (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove("active");
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                settingsModal.classList.remove("active");
+            }
+        });
+
+        document.querySelectorAll(".mode-toggle").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const mode = btn.dataset.mode;
+                if (activeModes.has(mode)) {
+                    if (activeModes.size > 1) {
+                        activeModes.delete(mode);
+                        btn.classList.remove("active");
+                    }
+                } else {
+                    activeModes.add(mode);
+                    btn.classList.add("active");
+                }
+            });
+        });
+
+        soundToggle.addEventListener("click", () => {
+            soundEnabled = !soundEnabled;
+            soundToggle.classList.toggle("active");
+            if (soundEnabled) {
+                initAudioContext();
+                playBeep(660, 100);
+            }
+        });
+
+        timeHintToggle.addEventListener("click", () => {
+            showTimeHint = !showTimeHint;
+            timeHintToggle.classList.toggle("active");
+            userTimeDisplay.classList.toggle("hidden", !showTimeHint);
+        });
+
+        const helpBtn = document.getElementById('helpBtn');
+        const hintArea = document.getElementById('hintArea');
+        helpBtn.addEventListener('click', () => {
+            hintArea.classList.toggle('active');
+            helpBtn.classList.toggle('active');
+        });
+
+        // ==================== Initialize ====================
+        startNewQuestion();
+    </script>
+<script src="transitions.js"></script>
+</body>
+</html>
