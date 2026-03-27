@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Nauka Godzin</title>
+
+  <!-- ============================================================
+       STYLE: clock-styles.css (inline)
+       ============================================================ -->
+  <style>
+/* ----------------------------------------------------------------
+   CLOCK FACE STYLES
+   ---------------------------------------------------------------- */
+.clock {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  box-shadow: 0 0 35px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,255,255,0.05);
+  border: 4px solid #1c1c1c;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.clock.interactive { cursor: grab; touch-action: none; }
+.clock.interactive:active { cursor: grabbing; }
+.clock.clock-sm { width: 300px; height: 300px; }
+.clock.clock-lg { width: 500px; height: 500px; }
+.clock .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.4s ease; opacity: 0; z-index: 1; }
+.clock .bg-layer.active { opacity: 1; }
+.clock .bg-solid { background-color: #030303; background-image: radial-gradient(circle at center, #0a0a0a 0%, #000 70%); }
+.clock .bg-spiral {
+  background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 100%),
+    conic-gradient(from 0deg at 50% 50%, #000 0deg, #151515 5deg, #000 10deg, #151515 15deg, #000 20deg, #151515 25deg, #000 30deg, #151515 35deg, #000 40deg, #151515 45deg, #000 50deg, #151515 55deg, #000 60deg, #151515 65deg, #000 70deg, #151515 75deg, #000 80deg, #151515 85deg, #000 90deg, #151515 95deg, #000 100deg, #151515 105deg, #000 110deg, #151515 115deg, #000 120deg, #151515 125deg, #000 130deg, #151515 135deg, #000 140deg, #151515 145deg, #000 150deg, #151515 155deg, #000 160deg, #151515 165deg, #000 170deg, #151515 175deg, #000 180deg, #151515 185deg, #000 190deg, #151515 195deg, #000 200deg, #151515 205deg, #000 210deg, #151515 215deg, #000 220deg, #151515 225deg, #000 230deg, #151515 235deg, #000 240deg, #151515 245deg, #000 250deg, #151515 255deg, #000 260deg, #151515 265deg, #000 270deg, #151515 275deg, #000 280deg, #151515 285deg, #000 290deg, #151515 295deg, #000 300deg, #151515 305deg, #000 310deg, #151515 315deg, #000 320deg, #151515 325deg, #000 330deg, #151515 335deg, #000 340deg, #151515 345deg, #000 350deg, #151515 355deg, #000 360deg);
+}
+.clock .bg-grid { background-color: #080808; background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 8px 8px; }
+.clock .bg-grid::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 90%); }
+.clock .bg-tech { background-color: #050505; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1.5px), linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px; background-position: -1px -1px; }
+.clock .bg-tech::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%); }
+.clock .brand { position: absolute; top: 27%; left: 0; width: 100%; text-align: center; color: #999; font-family: "Georgia", serif; font-style: italic; font-size: 18px; letter-spacing: 0.5px; z-index: 10; }
+.clock.clock-sm .brand { font-size: 14px; top: 26%; }
+.clock .digital-display { position: absolute; top: 42%; left: 62%; width: 16%; height: 16%; background-color: rgba(20,21,20,0.8); border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); z-index: 10; backdrop-filter: blur(2px); }
+.clock .ampm-display { position: absolute; top: 42%; left: 22%; width: 16%; height: 16%; background-color: rgba(20,21,20,0.8); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); z-index: 10; backdrop-filter: blur(2px); }
+.clock .ampm-display svg { width: 55%; height: 55%; }
+.clock .digital-time { color: #f0f0f0; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 2px; font-family: "Trebuchet MS", sans-serif; }
+.clock .digital-date { color: #d82928; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; }
+.clock.clock-sm .digital-time { font-size: 12px; }
+.clock.clock-sm .digital-date { font-size: 7px; }
+.clock .numbers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+.clock .numbers .num { position: absolute; transform: translate(-50%, -50%); color: white; font-size: 34px; font-weight: 900; font-family: "Impact", sans-serif; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.clock.clock-sm .numbers .num { font-size: 26px; }
+.clock .num.n12 { top: 12%; left: 50%; }
+.clock .num.n1  { top: 17.1%; left: 69%; }
+.clock .num.n2  { top: 31%; left: 82.9%; }
+.clock .num.n3  { top: 50%; left: 88%; }
+.clock .num.n4  { top: 69%; left: 82.9%; }
+.clock .num.n5  { top: 82.9%; left: 69%; }
+.clock .num.n6  { top: 88%; left: 50%; }
+.clock .num.n7  { top: 82.9%; left: 31%; }
+.clock .num.n8  { top: 69%; left: 17.1%; }
+.clock .num.n9  { top: 50%; left: 12%; }
+.clock .num.n10 { top: 31%; left: 17.1%; }
+.clock .num.n11 { top: 17.1%; left: 31%; }
+.clock .hour-hand, .clock .minute-hand { transform-origin: 200px 200px; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.clock.dragging .hour-hand, .clock.dragging .minute-hand { transition: none; }
+.clock svg.overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; }
+.bg-controls { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+.bg-controls .bg-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: transform 0.2s, border-color 0.2s; overflow: hidden; position: relative; background: #000; }
+.bg-controls .bg-btn:hover { transform: scale(1.1); border-color: #d82928; }
+.bg-controls .bg-btn.active { border-color: #d82928; box-shadow: 0 0 10px rgba(216,41,40,0.4); }
+.bg-controls .p-solid { background: radial-gradient(circle, #222, #000); }
+.bg-controls .p-spiral { background: conic-gradient(#000, #333, #000); }
+.bg-controls .p-grid { background-image: radial-gradient(#444 1px, transparent 0); background-size: 4px 4px; }
+.bg-controls .p-tech { background-image: linear-gradient(#333 1px, transparent 0), linear-gradient(90deg, #333 1px, transparent 0); background-size: 10px 10px; }
+.clock .ghost-hour, .clock .ghost-minute { opacity: 0.5; }
+.clock .ghost-hour polygon, .clock .ghost-minute polygon { fill: #16a34a !important; }
+
+/* ----------------------------------------------------------------
+   LAYOUT STYLES
+   ---------------------------------------------------------------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --clock-size: clamp(240px, 50vmin, 600px);
+  --content-width: calc(var(--clock-size) * 0.85);
+  --nav-width: min(1100px, 96vw);
+  --gap: clamp(10px, 2vmin, 36px);
+  --btn-height: clamp(60px, 8vmin, 120px);
+  --btn-radius: clamp(12px, 1.8vmin, 22px);
+  --btn-font: clamp(1rem, 2.2vmin, 2.2rem);
+  --icon-size: clamp(32px, 4.5vmin, 52px);
+  --feedback-font: clamp(0.95rem, 1.8vmin, 1.7rem);
+  --accent-color: #f0f0f0;
+}
+
+body {
+  background: #000;
+  color: #f0f0f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* ---- Top navigation bar ---- */
+.topbar {
+  width: var(--nav-width);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  padding: clamp(10px, 2vmin, 24px) 0 0;
+}
+.topbar-right { display: flex; align-items: center; gap: clamp(6px, 1.2vmin, 14px); }
+.icon-btn { width: var(--icon-size); height: var(--icon-size); cursor: pointer; color: #555; transition: color 0.2s; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+.icon-btn:hover { color: #f0f0f0; }
+.settings-icon { transition: color 0.2s; }
+.settings-icon:hover { color: #f0f0f0; }
+.help-btn { width: var(--icon-size); height: var(--icon-size); border: none; background: transparent; color: #555; font-size: clamp(1.2rem, 2.8vmin, 2.6rem); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s; -webkit-tap-highlight-color: transparent; padding: 0; line-height: 1; }
+.help-btn:hover, .help-btn.active { color: #f0f0f0; }
+
+/* ---- Feedback bar ---- */
+.feedback-bar { width: var(--nav-width); min-height: clamp(20px, 2.5vmin, 36px); text-align: center; color: #888; font-size: clamp(0.8rem, 1.6vmin, 1.2rem); font-weight: 500; line-height: 1.5; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.feedback-bar.active { opacity: 1; }
+
+/* ---- Clock wrap ---- */
+.clock-wrap { width: var(--clock-size); height: var(--clock-size); flex-shrink: 0; }
+.clock-wrap .clock { width: var(--clock-size) !important; height: var(--clock-size) !important; }
+.clock-wrap .clock .numbers .num { font-size: clamp(14px, 4.2vmin, 38px) !important; }
+.clock-wrap .clock .digital-time { font-size: clamp(7px, 1.6vmin, 16px) !important; }
+.clock-wrap .clock .digital-date { font-size: clamp(4px, 0.9vmin, 9px) !important; }
+.clock-wrap .clock .brand { font-size: clamp(9px, 2vmin, 20px) !important; }
+
+/* ---- Content area ---- */
+.content-area { width: var(--content-width); display: flex; flex-direction: column; align-items: center; gap: var(--gap); }
+
+/* ---- Panel box ---- */
+.panel-box { width: 100%; min-height: var(--btn-height); background: #111; border: 2px solid #222; border-radius: var(--btn-radius); display: flex; align-items: center; justify-content: center; color: #f0f0f0; font-size: var(--btn-font); font-weight: 600; }
+
+/* ---- Result bar ---- */
+.result-bar { width: var(--nav-width); display: flex; justify-content: space-between; align-items: center; }
+@keyframes feedbackIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.feedback { font-size: var(--feedback-font); font-weight: 600; min-height: clamp(24px, 3.5vmin, 44px); }
+.feedback.ok, .feedback.success { color: #16a34a; animation: feedbackIn 0.25s ease forwards; }
+.feedback.bad, .feedback.error  { color: #dc2626; animation: feedbackIn 0.25s ease forwards; }
+.score { font-size: var(--feedback-font); font-weight: 600; color: #555; }
+
+/* ---- Modal ---- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0); z-index: 1000; display: flex; align-items: center; justify-content: center; visibility: hidden; transition: background 0.22s ease, visibility 0s 0.22s; }
+.modal.active { background: rgba(0,0,0,0.7); visibility: visible; transition: background 0.22s ease, visibility 0s 0s; }
+.modal-content { background: #111; border: 2px solid #222; border-radius: 24px; padding: clamp(20px, 3.5vmin, 44px); width: var(--content-width); display: grid; gap: 16px; opacity: 0; transform: scale(0.92) translateY(16px); transition: opacity 0.22s ease, transform 0.22s ease; max-height: 90vh; overflow-y: auto; }
+.modal.active .modal-content { opacity: 1; transform: scale(1) translateY(0); }
+.modal-modes { display: grid; gap: 12px; }
+.mode-toggle { padding: clamp(10px, 1.8vmin, 22px) clamp(12px, 2vmin, 24px); border: 2px solid #333; background: #1a1a1a; border-radius: 14px; font-size: clamp(0.85rem, 1.6vmin, 1.1rem); font-weight: 600; cursor: pointer; color: #f0f0f0; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+.mode-toggle:hover { background: #222; }
+.mode-toggle.active { background: #2563eb; border-color: #2563eb; color: white; }
+.sound-toggle { display: flex; align-items: center; justify-content: space-between; padding: clamp(10px, 1.8vmin, 22px) clamp(12px, 2vmin, 24px); background: #1a1a1a; border: 2px solid #333; border-radius: 14px; font-size: clamp(0.95rem, 1.8vmin, 1.3rem); font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.toggle-switch { width: clamp(44px, 6.5vmin, 68px); height: clamp(24px, 3.4vmin, 34px); background: #333; border-radius: 999px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle-switch.active { background: #16a34a; }
+.toggle-switch::after { content: ''; position: absolute; width: clamp(16px, 2.6vmin, 26px); height: clamp(16px, 2.6vmin, 26px); background: white; border-radius: 50%; top: 50%; left: 4px; transform: translateY(-50%); transition: left 0.2s; }
+.toggle-switch.active::after { left: calc(100% - clamp(16px, 2.6vmin, 26px) - 4px); }
+
+/* ================================================================
+   APP-SPECIFIC STYLES
+   ================================================================ */
+
+/* ---- Tab bar ---- */
+#app { display: flex; flex-direction: column; align-items: center; width: 100%; gap: var(--gap); padding-bottom: clamp(16px, 3vmin, 40px); }
+
+.tab-bar {
+  width: var(--nav-width);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(4px, 1vmin, 10px);
+  background: #0a0a0a;
+  border-radius: var(--btn-radius);
+  padding: clamp(4px, 0.8vmin, 8px);
+  border: 1px solid #1a1a1a;
+}
+.tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.5vmin, 6px);
+  padding: clamp(8px, 1.2vmin, 14px) 4px;
+  border-radius: calc(var(--btn-radius) - 4px);
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: clamp(0.65rem, 1.3vmin, 1rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-btn .tab-icon { font-size: clamp(1.2rem, 2.8vmin, 2.4rem); line-height: 1; }
+.tab-btn:hover { background: #111; color: #aaa; }
+.tab-btn.active { background: #1a1a1a; color: #f0f0f0; border-bottom: 2px solid var(--accent-color, #f0f0f0); }
+
+/* ---- Views ---- */
+.view { display: none; flex-direction: column; align-items: center; gap: var(--gap); width: 100%; }
+.view.active { display: flex; }
+
+/* ---- Nauka (learning mode) ---- */
+#timeDisplay {
+  width: 100%;
+  min-height: var(--btn-height);
+  background: #111;
+  border: 2px solid #222;
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-font);
+  font-weight: 600;
+  color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Quiz (ABC) ---- */
+.answers-grid { display: flex; flex-direction: column; gap: var(--gap); width: 100%; }
+.answer-btn { width: 100%; min-height: var(--btn-height); background: #111; border: 2px solid #222; border-radius: var(--btn-radius); font-size: var(--btn-font); font-weight: 600; cursor: pointer; color: #f0f0f0; transition: background 0.2s, border-color 0.2s; -webkit-tap-highlight-color: transparent; }
+.answer-btn:hover { background: #1a1a1a; border-color: #444; }
+.answer-btn.correct { background: #16a34a; border-color: #16a34a; color: white; }
+.answer-btn.wrong { background: #dc2626; border-color: #dc2626; color: white; }
+
+/* ---- Wpisz (type answer) ---- */
+.digital-input-display {
+  width: 100%;
+  min-height: var(--btn-height);
+  background: #111;
+  border: 2px solid #222;
+  border-radius: var(--btn-radius);
+  font-size: clamp(1.8rem, 4.5vmin, 3.8rem);
+  font-weight: 700;
+  color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.1em;
+  font-family: "Consolas", "Courier New", monospace;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.digital-input-display:not(.correct):not(.wrong):hover { border-color: #444; }
+.digital-input-display.correct { background: #16a34a; border-color: #16a34a; }
+.digital-input-display.wrong { background: #dc2626; border-color: #dc2626; }
+.digital-input-display .cursor { animation: blink 1s infinite; }
+@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+.keyboard { display: flex; flex-direction: column; gap: clamp(6px, 1.2vmin, 14px); width: 100%; }
+.keyboard-row { display: flex; gap: clamp(6px, 1.2vmin, 14px); justify-content: center; }
+.key { flex: 1; min-height: clamp(50px, 8vmin, 96px); background: #111; border: 2px solid #222; border-radius: clamp(8px, 1.4vmin, 14px); font-size: clamp(1.1rem, 2.6vmin, 2.2rem); font-weight: 600; cursor: pointer; color: #f0f0f0; transition: background 0.2s, border-color 0.2s; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; }
+.key:hover { background: #1a1a1a; border-color: #444; }
+.key:active { background: #222; }
+.key.key-confirm, .key.key-delete { background: #333; }
+.key.key-confirm:hover, .key.key-delete:hover { background: #444; }
+
+/* ---- Ustaw (set the clock) ---- */
+.target-display {
+  background: #111;
+  border: 2px solid #222;
+  border-radius: var(--btn-radius);
+  text-align: center;
+  color: #f0f0f0;
+  min-height: var(--btn-height);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, 0.8vmin, 7px);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.target-display:hover { background: #1a1a1a; border-color: #444; }
+.target-display.correct { background: #16a34a; border-color: #16a34a; }
+.target-display.wrong { background: #dc2626; border-color: #dc2626; }
+.target-label { font-size: clamp(0.7rem, 1.4vmin, 1.1rem); opacity: 0.9; font-weight: 600; }
+.target-time { font-size: clamp(1.4rem, 3.5vmin, 3rem); font-weight: 700; letter-spacing: 0.05em; }
+.user-time-display { text-align: center; min-height: clamp(48px, 7vmin, 90px); background: #111; border: 2px solid #222; border-radius: var(--btn-radius); font-size: clamp(0.85rem, 1.8vmin, 1.5rem); color: #555; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity 0.3s; width: 100%; }
+.user-time-display.hidden { opacity: 0; pointer-events: none; }
+.user-time-display strong { color: #f0f0f0; font-size: clamp(0.95rem, 2.2vmin, 1.8rem); }
+
+/* ---- Settings page inside modal ---- */
+.modal-section-label { color: #888; font-size: clamp(0.75rem, 1.4vmin, 1.1rem); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid #222; }
+
+/* ---- Clock size controls ---- */  
+.controls-row-mini { display: flex; gap: clamp(20px, 5vmin, 60px); align-items: center; justify-content: center; }
+.controls-group-mini { display: flex; flex-direction: column; align-items: center; gap: clamp(8px, 1.2vmin, 14px); }
+.controls-label-mini { color: #888; font-size: clamp(0.72rem, 1.3vmin, 1.1rem); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.hand-controls { display: flex; gap: clamp(8px, 1.5vmin, 18px); }
+.hand-btn { width: clamp(36px, 5.5vmin, 58px); height: clamp(36px, 5.5vmin, 58px); border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: transform 0.2s, border-color 0.2s; -webkit-tap-highlight-color: transparent; }
+.hand-btn:hover { transform: scale(1.1); border-color: #d82928; }
+.hand-btn.active { border-color: #d82928; box-shadow: 0 0 10px rgba(216,41,40,0.4); }
+.hand-btn.h-white { background: #f0f0f0; }
+.hand-btn.h-blue  { background: #2563eb; }
+.hand-btn.h-red   { background: #d82928; }
+
+/* bg-btn overrides inside modal */
+.modal-content .bg-controls { margin-top: 0; gap: clamp(8px, 1.5vmin, 16px); }
+.modal-content .bg-controls .bg-btn { width: clamp(36px, 5.5vmin, 58px); height: clamp(36px, 5.5vmin, 58px); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== TOP BAR ===== -->
+  <div class="topbar">
+    <div style="width: var(--icon-size)"></div><!-- spacer -->
+    <div class="topbar-right">
+      <button class="help-btn" id="helpBtn">?</button>
+      <svg class="icon-btn settings-icon" id="globalSettingsBtn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" title="Ustawienia">
+        <line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+        <line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+        <line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ===== HINT BAR ===== -->
+  <div class="feedback-bar" id="hintArea"></div>
+
+  <!-- ===== TAB BAR ===== -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="nauka">
+      <span class="tab-icon">🎓</span>Tryb Nauki
+    </button>
+    <button class="tab-btn" data-tab="quiz">
+      <span class="tab-icon">⏱️</span>Quiz ABC
+    </button>
+    <button class="tab-btn" data-tab="wpisz">
+      <span class="tab-icon">⌨️</span>Wpisz
+    </button>
+    <button class="tab-btn" data-tab="ustaw">
+      <span class="tab-icon">🎯</span>Ustaw
+    </button>
+  </div>
+
+  <!-- ===== RESULT BAR ===== -->
+  <div class="result-bar" id="resultBar" style="visibility:hidden">
+    <div class="feedback" id="feedback"></div>
+    <div class="score" id="score">0 / 0</div>
+  </div>
+
+  <!-- ===== CLOCK ===== -->
+  <div class="clock-wrap" id="clockContainer"></div>
+
+  <!-- ================================================================
+       VIEW: NAUKA
+       ================================================================ -->
+  <div class="view active content-area" id="view-nauka">
+    <p id="timeDisplay">12:00</p>
+  </div>
+
+  <!-- ================================================================
+       VIEW: QUIZ ABC
+       ================================================================ -->
+  <div class="view content-area" id="view-quiz">
+    <div class="answers-grid">
+      <button class="answer-btn" id="ans0">--:--</button>
+      <button class="answer-btn" id="ans1">--:--</button>
+      <button class="answer-btn" id="ans2">--:--</button>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       VIEW: WPISZ
+       ================================================================ -->
+  <div class="view content-area" id="view-wpisz">
+    <div class="digital-input-display" id="digitalDisplay">--:--</div>
+    <div class="keyboard">
+      <div class="keyboard-row">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key key-delete" data-key="delete">⌫</button>
+        <button class="key" data-key="0">0</button>
+        <button class="key key-confirm" data-key="ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       VIEW: USTAW
+       ================================================================ -->
+  <div class="view content-area" id="view-ustaw">
+    <div class="target-display" id="targetDisplay">
+      <div class="target-label">Ustaw wskazówki na godzinę:</div>
+      <div class="target-time" id="targetTime">12:00</div>
+    </div>
+    <div class="user-time-display" id="userTimeDisplay">
+      Twoja godzina: <strong id="userTime">12:00</strong>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ================================================================
+     SETTINGS MODAL
+     ================================================================ -->
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+
+    <!-- Clock appearance -->
+    <div class="modal-section-label">Wygląd zegara</div>
+    <div class="controls-row-mini">
+      <div class="controls-group-mini">
+        <div class="controls-label-mini">Tarcza</div>
+        <div id="bgControlsContainer"></div>
+      </div>
+      <div class="controls-group-mini">
+        <div class="controls-label-mini">Wskazówki</div>
+        <div class="hand-controls">
+          <div class="hand-btn h-white active" data-color="white" title="Białe"></div>
+          <div class="hand-btn h-blue" data-color="blue" title="Niebieskie"></div>
+          <div class="hand-btn h-red" data-color="red" title="Czerwone"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Number style -->
+    <div class="modal-section-label">Cyfry na tarczy</div>
+    <div class="modal-modes" id="numberStyleToggles">
+      <button class="mode-toggle active" data-numstyle="arabic">Arabskie (1–12)</button>
+      <button class="mode-toggle" data-numstyle="roman">Rzymskie (I–XII)</button>
+      <button class="mode-toggle" data-numstyle="none">Brak cyfr</button>
+    </div>
+
+    <!-- Hour format -->
+    <div class="modal-section-label">Format godziny</div>
+    <div class="modal-modes" id="hourFormatToggles">
+      <button class="mode-toggle active" data-hourformat="12">12-godzinny (1–12)</button>
+      <button class="mode-toggle" data-hourformat="24">24-godzinny (1–23)</button>
+    </div>
+
+    <!-- Quiz difficulty modes -->
+    <div class="modal-section-label">Trudność (quiz, wpisz, ustaw)</div>
+    <div class="modal-modes" id="modeToggles">
+      <button class="mode-toggle active" data-mode="full">Pełne godziny</button>
+      <button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
+      <button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
+      <button class="mode-toggle" data-mode="five">Co 5 minut</button>
+      <button class="mode-toggle" data-mode="any">Każda minuta</button>
+    </div>
+
+    <!-- Time hint (ustaw mode) -->
+    <div class="sound-toggle" id="timeHintToggleRow">
+      <span>Podpowiedź czasu (Ustaw)</span>
+      <div class="toggle-switch active" id="timeHintToggle"></div>
+    </div>
+
+    <!-- Sound -->
+    <div class="sound-toggle" id="soundToggleRow">
+      <span>Dźwięki</span>
+      <div class="toggle-switch active" id="soundToggle"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================================================================
+     CLOCK RENDERER (inline — was clock-renderer.js)
+     ================================================================ -->
+<script>
+class ClockRenderer {
+  static HAND_COLORS = { white: '#f0f0f0', blue: '#2563eb', red: '#d82928' };
+
+  constructor(container, options = {}) {
+    this.container = container;
+    this.options = {
+      size: options.size || 'normal',
+      interactive: options.interactive || false,
+      showBrand: options.showBrand !== false,
+      showDigital: options.showDigital !== false,
+      showDate: options.showDate !== false,
+      showAmPm: options.showAmPm || false,
+      showSecondHand: options.showSecondHand || false,
+      showBgControls: options.showBgControls || false,
+      bgControlsContainer: options.bgControlsContainer || null,
+      onTimeChange: options.onTimeChange || null,
+      handColor: options.handColor || 'white',
+    };
+    this.time = { h: 12, m: 0 };
+    this.isDragging = false;
+    this.activeHand = null;
+    this.ghostTime = null;
+    this.secondInterval = null;
+    this._hourDeg = null;
+    this._minuteDeg = null;
+    this.init();
+  }
+
+  init() {
+    this.render();
+    this.cacheElements();
+    this.generateTicks();
+    this.updateDate();
+    if (this.options.interactive) this.setupInteraction();
+    if (this.options.showSecondHand) this.startSecondHand();
+    if (this.options.showBgControls) this.renderBgControls();
+    this.updateHands();
+    this.setHandColor(this.options.handColor);
+  }
+
+  render() {
+    const sizeClass = this.options.size === 'sm' ? 'clock-sm' : this.options.size === 'lg' ? 'clock-lg' : '';
+    const interactiveClass = this.options.interactive ? 'interactive' : '';
+    const cid = this.container.id || 'clk';
+    this.container.innerHTML = `
+      <div class="clock ${sizeClass} ${interactiveClass}">
+        <div class="bg-layer bg-solid active" data-bg="solid"></div>
+        <div class="bg-layer bg-spiral" data-bg="spiral"></div>
+        <div class="bg-layer bg-grid" data-bg="grid"></div>
+        <div class="bg-layer bg-tech" data-bg="tech"></div>
+        ${this.options.showBrand ? '<div class="brand">ZbyszekX</div>' : ''}
+        ${this.options.showAmPm ? '<div class="ampm-display"></div>' : ''}
+        ${this.options.showDigital ? `<div class="digital-display"><div class="digital-time"></div>${this.options.showDate ? '<div class="digital-date"></div>' : ''}</div>` : ''}
+        <div class="numbers">
+          <div class="num n12">12</div><div class="num n1">1</div><div class="num n2">2</div>
+          <div class="num n3">3</div><div class="num n4">4</div><div class="num n5">5</div>
+          <div class="num n6">6</div><div class="num n7">7</div><div class="num n8">8</div>
+          <div class="num n9">9</div><div class="num n10">10</div><div class="num n11">11</div>
+        </div>
+        <svg class="overlay" viewBox="0 0 400 400">
+          <defs>
+            <line id="t_min_${cid}" x1="200" y1="6" x2="200" y2="14" stroke="#dddddd" stroke-width="1.5"/>
+            <line id="t_hour_${cid}" x1="200" y1="6" x2="200" y2="22" stroke="#ffffff" stroke-width="5"/>
+          </defs>
+          <g class="ticks"></g>
+          <g class="ghost-hands" style="display:none">
+            <g class="ghost-hour"><polygon points="190,200 210,200 202,88 198,88" fill="#16a34a"/></g>
+            <g class="ghost-minute">
+              <polygon points="194,200 206,200 210,248 190,248" fill="#16a34a"/>
+              <polygon points="194,200 206,200 202,24 198,24" fill="#16a34a"/>
+            </g>
+          </g>
+          <g class="main-hands">
+            <g class="hour-hand" transform="rotate(0,200,200)">
+              <polygon class="hand-fill" points="190,200 210,200 202,88 198,88" fill="${ClockRenderer.HAND_COLORS[this.options.handColor]}"/>
+            </g>
+            <g class="minute-hand" transform="rotate(0,200,200)">
+              <polygon points="194,200 206,200 210,248 190,248" fill="#2c3531"/>
+              <polygon class="hand-fill" points="194,200 206,200 202,24 198,24" fill="${ClockRenderer.HAND_COLORS[this.options.handColor]}"/>
+              <circle cx="200" cy="200" r="22" fill="#2c3531"/>
+              <circle cx="200" cy="200" r="10" fill="#0b0b0b"/>
+            </g>
+            ${this.options.showSecondHand ? `<g class="second-hand" transform="rotate(0,200,200)"><rect x="199" y="24" width="2" height="176" fill="#ffffff"/><rect x="199" y="200" width="2" height="36" fill="#ffffff"/><circle cx="200" cy="200" r="4" fill="#ffffff"/><circle cx="200" cy="200" r="2" fill="#0b0b0b"/></g>` : ''}
+          </g>
+        </svg>
+      </div>`;
+  }
+
+  cacheElements() {
+    this.clockEl = this.container.querySelector('.clock');
+    this.hourHand = this.container.querySelector('.hour-hand');
+    this.minuteHand = this.container.querySelector('.minute-hand');
+    this.secondHand = this.container.querySelector('.second-hand');
+    this.digitalTime = this.container.querySelector('.digital-time');
+    this.digitalDate = this.container.querySelector('.digital-date');
+    this.ampmDisplay = this.container.querySelector('.ampm-display');
+    this.ghostHands = this.container.querySelector('.ghost-hands');
+    this.ghostHourHand = this.container.querySelector('.ghost-hour');
+    this.ghostMinuteHand = this.container.querySelector('.ghost-minute');
+    this.bgLayers = this.container.querySelectorAll('.bg-layer');
+    this.handFills = this.container.querySelectorAll('.hand-fill');
+  }
+
+  generateTicks() {
+    const ticksGroup = this.container.querySelector('.ticks');
+    const cid = this.container.id || 'clk';
+    for (let i = 0; i < 60; i++) {
+      const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+      use.setAttribute("href", i % 5 === 0 ? `#t_hour_${cid}` : `#t_min_${cid}`);
+      use.setAttribute("transform", `rotate(${i * 6}, 200, 200)`);
+      ticksGroup.appendChild(use);
+    }
+  }
+
+  updateDate() {
+    const now = new Date();
+    const days = ['Ndz','Pon','Wto','Śro','Czw','Pią','Sob'];
+    const months = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+    if (this.digitalTime) this.digitalTime.textContent = days[now.getDay()];
+    if (this.digitalDate) this.digitalDate.textContent = `${months[now.getMonth()]} ${now.getDate()}`;
+  }
+
+  renderBgControls() {
+    const target = this.options.bgControlsContainer || this.container;
+    const html = `<div class="bg-controls">
+      <div class="bg-btn p-solid active" data-bg="solid" title="Czarne tło"></div>
+      <div class="bg-btn p-spiral" data-bg="spiral" title="Spirala"></div>
+      <div class="bg-btn p-grid" data-bg="grid" title="Siatka"></div>
+      <div class="bg-btn p-tech" data-bg="tech" title="Tech"></div>
+    </div>`;
+    if (this.options.bgControlsContainer) { target.innerHTML = html; }
+    else { this.container.insertAdjacentHTML('beforeend', html); }
+    target.querySelectorAll('.bg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setBackground(btn.dataset.bg);
+        target.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  }
+
+  setBackground(type) {
+    this.bgLayers.forEach(l => l.classList.toggle('active', l.dataset.bg === type));
+  }
+
+  setHandColor(color) {
+    const hex = ClockRenderer.HAND_COLORS[color];
+    if (!hex) return;
+    this.options.handColor = color;
+    this.handFills.forEach(p => p.setAttribute('fill', hex));
+    if (this.digitalDate) this.digitalDate.style.color = hex;
+  }
+
+  getHandColor() { return this.options.handColor; }
+
+  setTime(hour, minute) {
+    this.time.h = hour;
+    this.time.m = minute;
+    this.updateHands();
+  }
+
+  getTime() { return { ...this.time }; }
+
+  updateHands() {
+    const totalHour = (this.time.h % 12) + this.time.m / 60;
+    const rawH = (totalHour / 12) * 360;
+    const rawM = (this.time.m / 60) * 360;
+    if (this._hourDeg === null || this.isDragging) {
+      this._hourDeg = rawH; this._minuteDeg = rawM;
+    } else {
+      const nH = ((this._hourDeg % 360) + 360) % 360;
+      let dH = rawH - nH;
+      if (dH > 180) dH -= 360; if (dH < -180) dH += 360;
+      this._hourDeg += dH;
+      const nM = ((this._minuteDeg % 360) + 360) % 360;
+      let dM = rawM - nM;
+      if (dM > 180) dM -= 360; if (dM < -180) dM += 360;
+      this._minuteDeg += dM;
+    }
+    this.hourHand.style.transform = `rotate(${this._hourDeg}deg)`;
+    this.minuteHand.style.transform = `rotate(${this._minuteDeg}deg)`;
+  }
+
+  startSecondHand() {
+    if (!this.secondHand) return;
+    const upd = () => { const s = new Date().getSeconds(); this.secondHand.setAttribute('transform', `rotate(${(s/60)*360}, 200, 200)`); };
+    upd(); this.secondInterval = setInterval(upd, 1000);
+  }
+
+  stopSecondHand() { if (this.secondInterval) { clearInterval(this.secondInterval); this.secondInterval = null; } }
+
+  showGhostHands(hour, minute) {
+    if (!this.ghostHands) return;
+    this.ghostHands.style.display = 'block';
+    const hDeg = ((hour % 12 + minute/60) / 12) * 360;
+    const mDeg = (minute / 60) * 360;
+    this.ghostHourHand.setAttribute('transform', `rotate(${hDeg}, 200, 200)`);
+    this.ghostMinuteHand.setAttribute('transform', `rotate(${mDeg}, 200, 200)`);
+  }
+
+  hideGhostHands() { if (this.ghostHands) this.ghostHands.style.display = 'none'; }
+
+  setupInteraction() {
+    this.clockEl.addEventListener("mousedown", e => this.handleStart(e));
+    this.clockEl.addEventListener("mousemove", e => this.handleMove(e));
+    window.addEventListener("mouseup", () => this.handleEnd());
+    this.clockEl.addEventListener("touchstart", e => this.handleStart(e), { passive: false });
+    this.clockEl.addEventListener("touchmove", e => this.handleMove(e), { passive: false });
+    window.addEventListener("touchend", () => this.handleEnd());
+    this.clockEl.addEventListener("click", e => {
+      if (!this.ampmDisplay) return;
+      const pos = this.getMousePos(e);
+      if (Math.sqrt((pos.x+80)**2 + pos.y**2) <= 32) this.ampmDisplay.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    });
+  }
+
+  getMousePos(evt) {
+    const rect = this.clockEl.getBoundingClientRect();
+    const scale = 400 / rect.width;
+    const cx = evt.touches ? evt.touches[0].clientX : evt.clientX;
+    const cy = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    return { x: (cx - rect.left) * scale - 200, y: (cy - rect.top) * scale - 200 };
+  }
+
+  handleStart(evt) {
+    if (this.ampmDisplay) {
+      const pos = this.getMousePos(evt);
+      if (Math.sqrt((pos.x+80)**2 + pos.y**2) <= 32) return;
+    }
+    evt.preventDefault();
+    const pos = this.getMousePos(evt);
+    const dist = Math.sqrt(pos.x**2 + pos.y**2);
+    if (dist < 180) {
+      const mouse = this.getAngle(pos.x, pos.y);
+      const mA = (this.time.m * Math.PI) / 30;
+      const hA = ((this.time.h % 12 + this.time.m/60) * Math.PI) / 6;
+      const dM = this.angleDist(mouse, mA);
+      const dH = this.angleDist(mouse, hA);
+      if (dM < 0.4 && dist > 180 * 0.4) { this.isDragging = true; this.activeHand = 'minute'; this.clockEl.classList.add('dragging'); }
+      else if (dH < 0.4 && dist < 180 * 0.65) { this.isDragging = true; this.activeHand = 'hour'; this.clockEl.classList.add('dragging'); }
+    }
+  }
+
+  handleMove(evt) {
+    if (!this.isDragging) return;
+    evt.preventDefault();
+    this.updateTimeFromAngle(this.getAngle(...Object.values(this.getMousePos(evt))));
+  }
+
+  handleEnd() { this.isDragging = false; this.activeHand = null; if (this.clockEl) this.clockEl.classList.remove('dragging'); }
+
+  getAngle(x, y) { let a = Math.atan2(y, x) + Math.PI / 2; if (a < 0) a += Math.PI * 2; return a; }
+  angleDist(a1, a2) { let d = Math.abs(a1 - a2); return Math.min(d, Math.PI * 2 - d); }
+
+  updateTimeFromAngle(angle) {
+    if (this.activeHand === 'minute') {
+      const prev = this.time.m;
+      this.time.m = Math.round((angle / (Math.PI * 2)) * 60) % 60;
+      const diff = this.time.m - prev;
+      if (diff < -30) { this.time.h = (this.time.h % 12) + 1; }
+      else if (diff > 30) { this.time.h--; if (this.time.h === 0) this.time.h = 12; }
+    } else if (this.activeHand === 'hour') {
+      let h = Math.round((angle / (Math.PI * 2)) * 12);
+      if (h === 0) h = 12;
+      this.time.h = h;
+    }
+    this.updateHands();
+    if (this.options.onTimeChange) this.options.onTimeChange(this.time.h, this.time.m);
+  }
+
+  setNumberStyle(style) {
+    const ROMAN = {1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI',7:'VII',8:'VIII',9:'IX',10:'X',11:'XI',12:'XII'};
+    this.container.querySelectorAll('.numbers .num').forEach(el => {
+      if (style === 'none') { el.style.visibility = 'hidden'; }
+      else {
+        el.style.visibility = '';
+        const n = parseInt(el.className.match(/n(\d+)/)[1]);
+        el.textContent = style === 'roman' ? ROMAN[n] : n;
+      }
+    });
+  }
+
+  setAmPm(isPm) {
+    if (!this.ampmDisplay) return;
+    if (isPm) {
+      this.ampmDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="#b0c8e8" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    } else {
+      this.ampmDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#f9d44a" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4" fill="#f9d44a" stroke="none"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="19.78" y1="4.22" x2="17.66" y2="6.34"/><line x1="6.34" y1="17.66" x2="4.22" y2="19.78"/></svg>`;
+    }
+  }
+
+  formatTime(hour = this.time.h, minute = this.time.m) {
+    return String(hour).padStart(2,'0') + ':' + String(minute).padStart(2,'0');
+  }
+
+  destroy() { this.stopSecondHand(); this.container.innerHTML = ''; }
+}
+</script>
+
+<!-- ================================================================
+     APP LOGIC
+     ================================================================ -->
+<script>
+// ============================================================
+// STORAGE & GLOBAL SETTINGS
+// ============================================================
+const SK = {
+  activeModes:  'zegar_activeModes',
+  soundEnabled: 'zegar_soundEnabled',
+  showTimeHint: 'zegar_showTimeHint',
+  clockBg:      'zegar_clockBg',
+  handColor:    'zegar_handColor',
+  numberStyle:  'zegar_numberStyle',
+  hourFormat:   'zegar_hourFormat',
+  activeTab:    'zegar_activeTab',
+};
+
+function loadSettings() {
+  return {
+    activeModes:  JSON.parse(localStorage.getItem(SK.activeModes)) || ['full'],
+    soundEnabled: localStorage.getItem(SK.soundEnabled) !== 'false',
+    showTimeHint: localStorage.getItem(SK.showTimeHint) !== 'false',
+    clockBg:      localStorage.getItem(SK.clockBg) || 'solid',
+    handColor:    localStorage.getItem(SK.handColor) || 'white',
+    numberStyle:  localStorage.getItem(SK.numberStyle) || 'arabic',
+    hourFormat:   localStorage.getItem(SK.hourFormat) || '12',
+    activeTab:    localStorage.getItem(SK.activeTab) || 'nauka',
+  };
+}
+
+let gs = loadSettings();
+
+// ============================================================
+// ACCENT COLOR
+// ============================================================
+const COLOR_MAP = { white: '#f0f0f0', blue: '#2563eb', red: '#d82928' };
+function applyAccent() {
+  document.documentElement.style.setProperty('--accent-color', COLOR_MAP[gs.handColor] || '#f0f0f0');
+}
+applyAccent();
+
+// ============================================================
+// CLOCK RENDERER INIT
+// ============================================================
+const clockContainer = document.getElementById('clockContainer');
+
+const clock = new ClockRenderer(clockContainer, {
+  size: 'normal',
+  interactive: false,   // toggled per tab
+  showBrand: true,
+  showDigital: true,
+  showDate: true,
+  showAmPm: false,
+  showSecondHand: false,
+  showBgControls: false,
+  handColor: gs.handColor,
+  onTimeChange: (h, m) => onClockMove(h, m),
+});
+
+clock.setBackground(gs.clockBg);
+clock.setNumberStyle(gs.numberStyle);
+
+// ============================================================
+// TABS
+// ============================================================
+const HINTS = {
+  nauka: 'Przeciągnij wskazówki zegara palcem. Wskazówka minutowa jest dłuższa, godzinowa krótsza.',
+  quiz:  'Odczytaj godzinę z zegara i wybierz poprawną odpowiedź spośród trzech opcji.',
+  wpisz: 'Odczytaj godzinę z zegara i wpisz ją na klawiaturze cyfrowej. Zatwierdź przyciskiem OK.',
+  ustaw: 'Ustaw wskazówki zegara na podaną godzinę, a następnie kliknij przycisk z godziną, aby sprawdzić.',
+};
+
+let activeTab = gs.activeTab;
+
+function switchTab(tab) {
+  activeTab = tab;
+  localStorage.setItem(SK.activeTab, tab);
+
+  // tabs UI
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === `view-${tab}`));
+
+  // result bar
+  const resultBar = document.getElementById('resultBar');
+  resultBar.style.visibility = tab === 'nauka' ? 'hidden' : 'visible';
+
+  // reset hint
+  const hintArea = document.getElementById('hintArea');
+  hintArea.classList.remove('active');
+
+  // clock interactivity
+  const isInteractive = (tab === 'nauka' || tab === 'ustaw');
+  clock.options.interactive = isInteractive;
+  clock.clockEl.classList.toggle('interactive', isInteractive);
+  if (isInteractive) {
+    if (!clock._interactionSetup) { clock.setupInteraction(); clock._interactionSetup = true; }
+  }
+
+  // AM/PM sub-dial: only nauka tab
+  const ampmEl = clockContainer.querySelector('.ampm-display');
+  if (ampmEl) ampmEl.style.display = tab === 'nauka' ? '' : 'none';
+
+  // init each tab
+  if (tab === 'nauka') initNauka();
+  else if (tab === 'quiz') initQuizQuestion();
+  else if (tab === 'wpisz') initWpiszQuestion();
+  else if (tab === 'ustaw') initUstawQuestion();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// ============================================================
+// HELP BUTTON
+// ============================================================
+const helpBtn = document.getElementById('helpBtn');
+const hintArea = document.getElementById('hintArea');
+
+helpBtn.addEventListener('click', () => {
+  const isActive = hintArea.classList.toggle('active');
+  helpBtn.classList.toggle('active', isActive);
+  if (isActive) hintArea.textContent = HINTS[activeTab];
+});
+
+// ============================================================
+// AUDIO
+// ============================================================
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playBeep(freq, dur) {
+  if (!gs.soundEnabled) return;
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.frequency.value = freq; osc.type = 'sine';
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur/1000);
+  osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + dur/1000);
+}
+function playSuccess() { playBeep(880, 150); }
+function playError()   { playBeep(220, 300); }
+function playClick()   { playBeep(440, 50); }
+
+// ============================================================
+// SHARED HELPERS
+// ============================================================
+const MODE_MINUTES = {
+  full: [0], half: [30], quarter: [15, 45],
+  five: [0,5,10,15,20,25,30,35,40,45,50,55],
+  any: Array.from({length:60},(_,i)=>i),
+};
+
+function randomMinute() {
+  const all = new Set();
+  gs.activeModes.forEach(m => MODE_MINUTES[m].forEach(v => all.add(v)));
+  const arr = Array.from(all);
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function randomHour() {
+  return gs.hourFormat === '24'
+    ? Math.floor(Math.random() * 23) + 1
+    : Math.floor(Math.random() * 12) + 1;
+}
+function fmt(h, m) { return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'); }
+
+const feedbackEl = document.getElementById('feedback');
+const scoreEl = document.getElementById('score');
+
+function clearFeedback() { feedbackEl.textContent = ''; feedbackEl.className = 'feedback'; }
+function showFeedback(text, cls) { feedbackEl.textContent = text; feedbackEl.className = `feedback ${cls}`; }
+
+// ============================================================
+// VIEW: NAUKA
+// ============================================================
+const timeDisplay = document.getElementById('timeDisplay');
+let isPm = false;
+
+function initNauka() {
+  clearFeedback();
+  clock.setAmPm(isPm);
+  const t = clock.getTime();
+  updateNaukaDisplay(t.h, t.m);
+
+  // AM/PM click
+  const ampmEl = clockContainer.querySelector('.ampm-display');
+  if (ampmEl) {
+    ampmEl.style.cursor = 'pointer';
+    ampmEl.title = 'Kliknij, aby zmienić rano / po południu';
+    // remove old listeners by cloning
+    const fresh = ampmEl.cloneNode(true);
+    ampmEl.parentNode.replaceChild(fresh, ampmEl);
+    fresh.addEventListener('click', () => {
+      isPm = !isPm;
+      clock.setAmPm(isPm);
+      const tt = clock.getTime();
+      updateNaukaDisplay(tt.h, tt.m);
+    });
+  }
+}
+
+function updateNaukaDisplay(h, m) {
+  const dh = isPm && h < 12 ? h + 12 : h;
+  timeDisplay.textContent = String(dh).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+function onClockMove(h, m) {
+  if (activeTab === 'nauka') updateNaukaDisplay(h, m);
+  else if (activeTab === 'ustaw') updateUstawUserDisplay();
+}
+
+// ============================================================
+// VIEW: QUIZ ABC
+// ============================================================
+let quizCurrent  = { hour: 12, minute: 0 };
+let quizCorrect  = 0;
+let quizTotal    = 0;
+let quizAttempts = 0;
+let quizScore    = { correct: 0, total: 0 };
+
+const answerBtns = [
+  document.getElementById('ans0'),
+  document.getElementById('ans1'),
+  document.getElementById('ans2'),
+];
+
+function initQuizQuestion() {
+  clearFeedback();
+  const h = randomHour();
+  const m = randomMinute();
+  quizCurrent = { hour: h, minute: m };
+  clock.setTime(h, m);
+  if (gs.hourFormat === '24') clock.setAmPm(h >= 13);
+
+  const options = shuffle(generateQuizOptions(h, m));
+  quizCorrect = options.indexOf(fmt(h, m));
+  quizAttempts = 0;
+
+  answerBtns.forEach((btn, i) => {
+    btn.textContent = options[i];
+    btn.className = 'answer-btn';
+    btn.disabled = false;
+    btn.onclick = () => checkQuiz(i);
+  });
+  scoreEl.textContent = `${quizScore.correct} / ${quizScore.total}`;
+}
+
+function generateQuizOptions(h, m) {
+  const mirror = h > 12 ? h - 12 : h + 12;
+  const set = new Set([fmt(h, m)]);
+  while (set.size < 3) {
+    const rh = randomHour(); const rm = randomMinute();
+    if (gs.hourFormat === '24' && rh === mirror && rm === m) continue;
+    set.add(fmt(rh, rm));
+  }
+  return Array.from(set);
+}
+
+function checkQuiz(idx) {
+  const correct = fmt(quizCurrent.hour, quizCurrent.minute);
+  if (idx === quizCorrect) {
+    answerBtns.forEach(b => b.disabled = true);
+    answerBtns[idx].classList.add('correct');
+    showFeedback(`Dobrze! ${correct}.`, 'ok');
+    playSuccess();
+    if (quizAttempts === 0) { quizScore.correct++; quizScore.total++; }
+    setTimeout(initQuizQuestion, 2000);
+  } else {
+    answerBtns[idx].classList.add('wrong');
+    answerBtns[idx].disabled = true;
+    playError();
+    if (quizAttempts === 0) {
+      quizScore.total++;
+      scoreEl.textContent = `${quizScore.correct} / ${quizScore.total}`;
+      quizAttempts = 1;
+      showFeedback('Spróbuj jeszcze raz!', 'bad');
+    } else {
+      answerBtns.forEach(b => b.disabled = true);
+      answerBtns[quizCorrect].classList.add('correct');
+      showFeedback(`Prawidłowa: ${correct}.`, 'bad');
+      setTimeout(initQuizQuestion, 2500);
+    }
+  }
+}
+
+// ============================================================
+// VIEW: WPISZ
+// ============================================================
+let wpiszCurrent  = { hour: 12, minute: 0 };
+let wpiszInput    = '';
+let wpiszChecking = false;
+let wpiszAttempts = 0;
+let wpiszScore    = { correct: 0, total: 0 };
+
+const digitalDisplay = document.getElementById('digitalDisplay');
+
+function initWpiszQuestion() {
+  clearFeedback();
+  const h = randomHour();
+  const m = randomMinute();
+  wpiszCurrent = { hour: h, minute: m };
+  clock.setTime(h, m);
+  if (gs.hourFormat === '24') clock.setAmPm(h >= 13);
+  wpiszInput = ''; wpiszChecking = false; wpiszAttempts = 0;
+  updateWpiszDisplay();
+  digitalDisplay.classList.remove('correct', 'wrong');
+  scoreEl.textContent = `${wpiszScore.correct} / ${wpiszScore.total}`;
+}
+
+function updateWpiszDisplay() {
+  const d = wpiszInput.padEnd(4, '-');
+  digitalDisplay.textContent = d.slice(0,2) + ':' + d.slice(2,4);
+}
+
+function handleKey(key) {
+  if (wpiszChecking) return;
+  if (key === 'delete') { if (wpiszInput.length > 0) { wpiszInput = wpiszInput.slice(0,-1); playClick(); } }
+  else if (key === 'ok') { checkWpisz(); return; }
+  else if (wpiszInput.length < 4) { wpiszInput += key; playClick(); }
+  updateWpiszDisplay();
+}
+
+function checkWpisz() {
+  if (wpiszInput.length !== 4 || wpiszChecking) return;
+  const ih = parseInt(wpiszInput.slice(0,2), 10);
+  const im = parseInt(wpiszInput.slice(2,4), 10);
+  const correct = fmt(wpiszCurrent.hour, wpiszCurrent.minute);
+  const ok = (ih === wpiszCurrent.hour || (gs.hourFormat === '12' && ih === 0 && wpiszCurrent.hour === 12)) && im === wpiszCurrent.minute;
+  if (ok) {
+    wpiszChecking = true;
+    if (wpiszAttempts === 0) { wpiszScore.correct++; wpiszScore.total++; }
+    showFeedback(`Dobrze! ${correct}.`, 'ok');
+    digitalDisplay.classList.add('correct');
+    playSuccess();
+    setTimeout(initWpiszQuestion, 2000);
+  } else {
+    playError();
+    if (wpiszAttempts === 0) {
+      wpiszScore.total++;
+      scoreEl.textContent = `${wpiszScore.correct} / ${wpiszScore.total}`;
+      wpiszAttempts = 1;
+      digitalDisplay.classList.add('wrong');
+      showFeedback('Spróbuj jeszcze raz!', 'bad');
+      setTimeout(() => { digitalDisplay.classList.remove('wrong'); wpiszInput = ''; updateWpiszDisplay(); }, 600);
+    } else {
+      wpiszChecking = true;
+      digitalDisplay.classList.add('wrong');
+      showFeedback(`Prawidłowa: ${correct}.`, 'bad');
+      setTimeout(initWpiszQuestion, 2500);
+    }
+  }
+}
+
+document.querySelectorAll('.key').forEach(k => {
+  k.addEventListener('click', () => { if (activeTab === 'wpisz') handleKey(k.dataset.key); });
+});
+digitalDisplay.addEventListener('click', () => { if (activeTab === 'wpisz') handleKey('ok'); });
+
+document.addEventListener('keydown', e => {
+  if (activeTab !== 'wpisz') return;
+  if (e.key >= '0' && e.key <= '9') handleKey(e.key);
+  else if (e.key === 'Backspace') handleKey('delete');
+  else if (e.key === 'Enter') handleKey('ok');
+});
+
+// ============================================================
+// VIEW: USTAW
+// ============================================================
+const TOLERANCE_MAP = { full:5, half:4, quarter:3, five:2, any:2 };
+
+let ustawTarget  = { h: 12, m: 0 };
+let ustawMoved   = false;
+let ustawChecked = false;
+let ustawAttempts = 0;
+let ustawScore   = { correct: 0, total: 0 };
+let showTimeHint = gs.showTimeHint;
+
+const targetDisplay  = document.getElementById('targetDisplay');
+const targetTimeEl   = document.getElementById('targetTime');
+const userTimeDisplay= document.getElementById('userTimeDisplay');
+const userTimeEl     = document.getElementById('userTime');
+
+function initUstawQuestion() {
+  clearFeedback();
+  const h = randomHour();
+  const m = randomMinute();
+  ustawTarget = { h, m };
+  clock.setTime(12, 0);
+  targetTimeEl.textContent = fmt(h, m);
+  targetDisplay.className = 'target-display';
+  ustawMoved = false; ustawChecked = false; ustawAttempts = 0;
+  updateUstawUserDisplay();
+  userTimeDisplay.classList.toggle('hidden', !showTimeHint);
+  scoreEl.textContent = `${ustawScore.correct} / ${ustawScore.total}`;
+}
+
+function updateUstawUserDisplay() {
+  const t = clock.getTime();
+  userTimeEl.textContent = fmt(t.h, t.m);
+}
+
+function checkUstaw() {
+  if (ustawChecked) return;
+  const t = clock.getTime();
+  const tol = getCurrentTolerance();
+  const ok = checkWithTolerance(t.h, t.m, ustawTarget.h, ustawTarget.m, tol);
+  const correct = fmt(ustawTarget.h, ustawTarget.m);
+  if (ok) {
+    ustawChecked = true;
+    if (ustawAttempts === 0) { ustawScore.correct++; ustawScore.total++; }
+    targetDisplay.classList.add('correct');
+    showFeedback(`Dobrze! ${correct}.`, 'ok');
+    playSuccess();
+    clock.showGhostHands(ustawTarget.h, ustawTarget.m);
+    setTimeout(() => { clock.hideGhostHands(); initUstawQuestion(); }, 2500);
+  } else {
+    playError();
+    if (ustawAttempts === 0) {
+      ustawScore.total++;
+      scoreEl.textContent = `${ustawScore.correct} / ${ustawScore.total}`;
+      ustawAttempts = 1;
+      targetDisplay.classList.add('wrong');
+      showFeedback('Spróbuj jeszcze raz!', 'bad');
+      setTimeout(() => targetDisplay.classList.remove('wrong'), 600);
+    } else {
+      ustawChecked = true;
+      targetDisplay.classList.add('wrong');
+      showFeedback(`Prawidłowa: ${correct}.`, 'bad');
+      clock.showGhostHands(ustawTarget.h, ustawTarget.m);
+      setTimeout(() => { clock.hideGhostHands(); initUstawQuestion(); }, 3000);
+    }
+  }
+}
+
+targetDisplay.addEventListener('click', () => { if (activeTab === 'ustaw') checkUstaw(); });
+
+function getCurrentTolerance() {
+  let t = 10;
+  gs.activeModes.forEach(m => { if (TOLERANCE_MAP[m] < t) t = TOLERANCE_MAP[m]; });
+  return t;
+}
+
+function checkWithTolerance(uh, um, ch, cm, tol) {
+  const u = ((uh-1)%12+1) === 12 ? (um === 0 ? 0 : 12*60+um) : ((uh-1)%12)*60+um;
+  const c = ((ch-1)%12+1) === 12 ? (cm === 0 ? 0 : 12*60+cm) : ((ch-1)%12)*60+cm;
+  let diff = Math.abs(u - c);
+  if (diff > 360) diff = 720 - diff;
+  return diff <= tol;
+}
+
+// ============================================================
+// SETTINGS MODAL
+// ============================================================
+const settingsModal = document.getElementById('settingsModal');
+document.getElementById('globalSettingsBtn').addEventListener('click', () => settingsModal.classList.add('active'));
+settingsModal.addEventListener('click', e => { if (e.target === settingsModal) settingsModal.classList.remove('active'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') settingsModal.classList.remove('active'); });
+
+// Background controls (render inside modal)
+clock.options.bgControlsContainer = document.getElementById('bgControlsContainer');
+clock.renderBgControls();
+// Mark active bg button
+const savedBg = gs.clockBg;
+document.querySelectorAll('#bgControlsContainer .bg-btn').forEach(b => {
+  b.classList.toggle('active', b.dataset.bg === savedBg);
+});
+// Override bg-controls to also persist
+document.querySelectorAll('#bgControlsContainer .bg-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    gs.clockBg = b.dataset.bg;
+    localStorage.setItem(SK.clockBg, gs.clockBg);
+    clock.setBackground(gs.clockBg);
+    document.querySelectorAll('#bgControlsContainer .bg-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+  });
+});
+
+// Hand color
+document.querySelectorAll('.hand-btn').forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.color === gs.handColor);
+  btn.addEventListener('click', () => {
+    gs.handColor = btn.dataset.color;
+    localStorage.setItem(SK.handColor, gs.handColor);
+    clock.setHandColor(gs.handColor);
+    applyAccent();
+    document.querySelectorAll('.hand-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Number style
+document.querySelectorAll('[data-numstyle]').forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.numstyle === gs.numberStyle);
+  btn.addEventListener('click', () => {
+    gs.numberStyle = btn.dataset.numstyle;
+    localStorage.setItem(SK.numberStyle, gs.numberStyle);
+    clock.setNumberStyle(gs.numberStyle);
+    document.querySelectorAll('[data-numstyle]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Hour format
+document.querySelectorAll('[data-hourformat]').forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.hourformat === gs.hourFormat);
+  btn.addEventListener('click', () => {
+    gs.hourFormat = btn.dataset.hourformat;
+    localStorage.setItem(SK.hourFormat, gs.hourFormat);
+    document.querySelectorAll('[data-hourformat]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Refresh current quiz tab
+    if (activeTab === 'quiz') initQuizQuestion();
+    else if (activeTab === 'wpisz') initWpiszQuestion();
+    else if (activeTab === 'ustaw') initUstawQuestion();
+  });
+});
+
+// Difficulty modes
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.classList.toggle('active', gs.activeModes.includes(btn.dataset.mode));
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    const set = new Set(gs.activeModes);
+    if (set.has(mode)) { if (set.size > 1) { set.delete(mode); btn.classList.remove('active'); } }
+    else { set.add(mode); btn.classList.add('active'); }
+    gs.activeModes = Array.from(set);
+    localStorage.setItem(SK.activeModes, JSON.stringify(gs.activeModes));
+    if (activeTab === 'quiz') initQuizQuestion();
+    else if (activeTab === 'wpisz') initWpiszQuestion();
+    else if (activeTab === 'ustaw') initUstawQuestion();
+  });
+});
+
+// Time hint toggle
+const timeHintToggle = document.getElementById('timeHintToggle');
+timeHintToggle.classList.toggle('active', showTimeHint);
+timeHintToggle.addEventListener('click', () => {
+  showTimeHint = !showTimeHint;
+  timeHintToggle.classList.toggle('active', showTimeHint);
+  localStorage.setItem(SK.showTimeHint, showTimeHint);
+  userTimeDisplay.classList.toggle('hidden', !showTimeHint);
+});
+
+// Sound toggle
+const soundToggle = document.getElementById('soundToggle');
+soundToggle.classList.toggle('active', gs.soundEnabled);
+soundToggle.addEventListener('click', () => {
+  gs.soundEnabled = !gs.soundEnabled;
+  soundToggle.classList.toggle('active', gs.soundEnabled);
+  localStorage.setItem(SK.soundEnabled, gs.soundEnabled);
+  if (gs.soundEnabled) { initAudio(); playBeep(660, 100); }
+});
+
+// ============================================================
+// UTILS
+// ============================================================
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ============================================================
+// BOOT — restore last tab and start
+// ============================================================
+switchTab(gs.activeTab);
+
+// Page load fade-in
+document.body.style.opacity = '0';
+document.body.style.transition = 'opacity 0.22s ease';
+requestAnimationFrame(() => { document.body.style.opacity = '1'; });
+</script>
+
+</body>
+</html>
