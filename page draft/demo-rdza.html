@@ -145,8 +145,52 @@
     .label-rusty { color: var(--rust); }
 
     .clock-wrap-demo {
-      width: clamp(100px, 28vmin, 170px);
+      /* Prezentacyjna szerokość kafelka — zegar skalowany do niej */
+      --demo-clock-size: clamp(110px, 26vmin, 160px);
+      width: var(--demo-clock-size);
+      height: var(--demo-clock-size);
       position: relative;
+      flex-shrink: 0;
+    }
+
+    /* Overlay rdzy — kryje cały wrapper */
+    .rust-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      background: radial-gradient(
+        circle at 30% 30%,
+        rgba(139,69,19, 0.28) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        circle at 70% 70%,
+        rgba(101,50,10, 0.22) 0%,
+        transparent 55%
+      );
+    }
+    .rust-overlay.visible { opacity: 1; }
+
+    /* Skalowanie zegara clock-sm (300px) do rozmiaru wrappera */
+    .clock-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 50%;
+      transition: filter 1.2s ease;
+    }
+    .clock-inner .clock {
+      /* Skaluj proporcjonalnie: wrapper / rozmiar clock-sm */
+      transform-origin: center center;
+      transform: scale(calc(var(--demo-clock-size) / 300px));
+      flex-shrink: 0;
     }
 
     /* ===== EFEKT RDZY ===== */
@@ -161,29 +205,7 @@
     }
     .clean-filter {
       filter: none;
-      transition: filter 1.2s ease;
     }
-
-    /* Winietowanie rdzy — nakładka na zegarze */
-    .rust-overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.8s ease;
-      background: radial-gradient(
-        circle at 30% 30%,
-        rgba(139,69,19, 0.18) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        circle at 70% 70%,
-        rgba(101,50,10, 0.15) 0%,
-        transparent 55%
-      );
-    }
-    .rust-overlay.visible { opacity: 1; }
 
     /* Podpis pod zegarem */
     .clock-panel-note {
@@ -349,8 +371,8 @@
       <!-- Czysty -->
       <div class="clock-panel">
         <div class="clock-panel-label label-clean">✓ Czysty zegar</div>
-        <div class="clock-wrap-demo" id="clockCleanWrap">
-          <canvas id="clockClean"></canvas>
+        <div class="clock-wrap-demo">
+          <div class="clock-inner" id="clockCleanWrap"></div>
         </div>
         <div class="clock-panel-note">
           <div class="time-since clean">Grałeś dziś</div>
@@ -361,9 +383,10 @@
       <!-- Zardzewiali -->
       <div class="clock-panel">
         <div class="clock-panel-label label-rusty" id="rustyLabel">⚙️ Zardzewiali zegar</div>
-        <div class="clock-wrap-demo" id="clockRustyWrap">
+        <!-- Wrapper z filtrem — NIE zawiera overlay jako dziecko ClockRenderer -->
+        <div class="clock-wrap-demo">
           <div class="rust-overlay" id="rustOverlay"></div>
-          <canvas id="clockRusty"></canvas>
+          <div class="clock-inner" id="clockRustyInner"></div>
         </div>
         <div class="clock-panel-note">
           <div class="time-since rusty" id="rustyTimeSince">52 godz. bez gry</div>
@@ -407,7 +430,6 @@
     let clockClean, clockRusty;
 
     function initClocks() {
-      // Zegar czysty (lewy)
       clockClean = new ClockRenderer(document.getElementById('clockCleanWrap'), {
         size: 'sm',
         interactive: false,
@@ -420,15 +442,14 @@
       clockClean.setBackground('solid');
       clockClean.setNumberStyle('arabic');
 
-      // Zegar rdzewiejący (prawy) — ten sam wygląd, CSS filter nakładany z zewnątrz
-      clockRusty = new ClockRenderer(document.getElementById('clockRustyWrap'), {
+      clockRusty = new ClockRenderer(document.getElementById('clockRustyInner'), {
         size: 'sm',
         interactive: false,
         showBrand: false,
         showDigital: false,
         showDate: false,
         showSecondHand: true,
-        handColor: 'white',
+        handColor: 'blue',   /* niebieski — żeby odróżnić od czystego */
       });
       clockRusty.setBackground('solid');
       clockRusty.setNumberStyle('arabic');
@@ -490,9 +511,9 @@
       const banner = document.getElementById('rustBanner');
       banner.classList.toggle('hidden', d.bannerHidden);
 
-      // Efekt rdzy na zegarze (prawy)
-      const rustyWrap = document.getElementById('clockRustyWrap');
-      rustyWrap.className = 'clock-wrap-demo ' + (d.rusty ? 'rusty-filter' : 'clean-filter');
+      // Efekt rdzy na zegarze (prawy) — filter na inner, nie na wrapperze z overlayem
+      const rustyInner = document.getElementById('clockRustyInner');
+      rustyInner.className = 'clock-inner ' + (d.rusty ? 'rusty-filter' : 'clean-filter');
 
       // Overlay rdzy
       const overlay = document.getElementById('rustOverlay');
@@ -530,11 +551,11 @@
       fixAnimating = true;
 
       // Animacja czyszczenia rdzy
-      const rustyWrap = document.getElementById('clockRustyWrap');
+      const rustyInner = document.getElementById('clockRustyInner');
       const overlay   = document.getElementById('rustOverlay');
       const banner    = document.getElementById('rustBanner');
 
-      rustyWrap.className = 'clock-wrap-demo clean-filter';
+      rustyInner.className = 'clock-inner clean-filter';
       overlay.className   = 'rust-overlay';
       banner.classList.add('hidden');
 
