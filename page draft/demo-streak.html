@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo — Streak &amp; Kalendarz</title>
+  <link rel="stylesheet" href="../layout.css" />
+  <style>
+    /* ===== KOLORY (te same co cała apka) ===== */
+    :root {
+      --accent:   #bb86fc;
+      --gold:     #ffd700;
+      --success:  #16a34a;
+      --fire:     #f97316;   /* pomarańcz — ogień streaka */
+      --fire-dim: #7c3319;   /* przygaszone tło badge streaka */
+    }
+
+    body {
+      gap: 0;
+      padding: 0 0 clamp(32px, 6vmin, 64px);
+    }
+
+    /* ===== TOPBAR (uproszczony — tylko dla demo) ===== */
+    .topbar {
+      width: 100%;
+      position: sticky;
+      top: 0;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #222;
+      z-index: 100;
+      padding: clamp(10px,2vmin,20px) clamp(14px,3vw,32px);
+      flex-shrink: 0;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .avatar-link {
+      font-size: clamp(1.3rem,3vmin,1.9rem);
+      background: #111;
+      border: 2px solid #222;
+      border-radius: 50%;
+      width: clamp(34px,5vmin,48px); height: clamp(34px,5vmin,48px);
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .player-info    { display: flex; flex-direction: column; gap: 2px; }
+    .player-name    { font-size: clamp(0.82rem,1.7vmin,1.05rem); font-weight: 700; }
+    .xp-bar-wrap    { display: flex; align-items: center; gap: 6px; }
+    .xp-label       { font-size: clamp(0.62rem,1.1vmin,0.78rem); color: #888; white-space: nowrap; }
+    .xp-bar         { width: clamp(55px,11vw,110px); height: 5px; background: #222; border-radius: 3px; overflow: hidden; }
+    .xp-fill        { height: 100%; background: var(--accent); border-radius: 3px; }
+    .seconds-badge  {
+      display: flex; align-items: center; gap: 5px;
+      background: #111; border: 1px solid #222; border-radius: 20px;
+      padding: clamp(4px,.7vmin,7px) clamp(8px,1.3vmin,14px);
+      font-size: clamp(0.78rem,1.5vmin,.95rem); font-weight: 700; color: var(--gold);
+    }
+
+    /* ===== GŁÓWNA TREŚĆ ===== */
+    .hub-content {
+      width: min(560px, 96vw);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2.5vmin, 20px);
+      padding: clamp(20px, 4vmin, 40px) 0;
+    }
+
+    .section-label {
+      font-size: clamp(0.72rem, 1.3vmin, 0.88rem);
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 0 clamp(4px, 1vmin, 8px);
+    }
+
+    /* ===== KARTA STREAKA ===== */
+    .streak-card {
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      padding: clamp(16px, 3vmin, 28px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 2.5vmin, 22px);
+    }
+
+    /* Górny rząd: ikona ognia + licznik + rekord */
+    .streak-top {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 2.5vmin, 20px);
+    }
+
+    .streak-fire-wrap {
+      position: relative;
+      width: clamp(52px, 9vmin, 72px);
+      height: clamp(52px, 9vmin, 72px);
+      flex-shrink: 0;
+    }
+    .streak-fire-bg {
+      width: 100%; height: 100%;
+      background: color-mix(in srgb, var(--fire) 12%, transparent);
+      border: 2px solid color-mix(in srgb, var(--fire) 30%, transparent);
+      border-radius: clamp(12px, 2vmin, 20px);
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(1.8rem, 4.5vmin, 2.6rem);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .streak-fire-bg.alive {
+      background: color-mix(in srgb, var(--fire) 18%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--fire) 30%, transparent);
+    }
+
+    .streak-numbers {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .streak-value {
+      font-size: clamp(1.6rem, 4vmin, 2.4rem);
+      font-weight: 700;
+      color: var(--fire);
+      line-height: 1;
+    }
+    .streak-value.zero { color: #555; }
+    .streak-sublabel {
+      font-size: clamp(0.72rem, 1.3vmin, 0.88rem);
+      color: #888;
+    }
+
+    .streak-divider {
+      width: 1px;
+      height: clamp(32px, 5vmin, 48px);
+      background: #222;
+      flex-shrink: 0;
+    }
+
+    .streak-best {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .streak-best-value {
+      font-size: clamp(1rem, 2.2vmin, 1.4rem);
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    /* Napis "Dzień X podróży" */
+    .journey-day {
+      font-size: clamp(0.78rem, 1.4vmin, 0.95rem);
+      color: color-mix(in srgb, var(--accent) 80%, #fff);
+      font-weight: 600;
+      text-align: center;
+      padding: clamp(6px, 1vmin, 10px) 0 0;
+    }
+
+    /* ===== KALENDARZ 28 DNI ===== */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cal-title {
+      font-size: clamp(0.82rem, 1.5vmin, 0.98rem);
+      font-weight: 700;
+      color: #888;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: clamp(4px, 0.8vmin, 7px);
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.58rem, 1.1vmin, 0.75rem);
+      font-weight: 700;
+      color: #555;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      transition: background 0.2s;
+      position: relative;
+    }
+    /* Aktywny (grał tego dnia) */
+    .cal-day.active {
+      background: color-mix(in srgb, var(--success) 22%, #000);
+      border-color: color-mix(in srgb, var(--success) 45%, transparent);
+      color: var(--success);
+    }
+    /* Dzisiaj — specjalne obramowanie */
+    .cal-day.today {
+      background: color-mix(in srgb, var(--accent) 15%, #000);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    /* Dzisiaj + aktywny */
+    .cal-day.today.active {
+      background: color-mix(in srgb, var(--success) 22%, #000);
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--success) 40%, transparent);
+    }
+    /* Seria — kolejne aktywne dni podświetlone intensywniej */
+    .cal-day.streak-run {
+      background: color-mix(in srgb, var(--fire) 20%, #000);
+      border-color: color-mix(in srgb, var(--fire) 50%, transparent);
+      color: var(--fire);
+    }
+    .cal-day.streak-run.today {
+      box-shadow: 0 0 10px color-mix(in srgb, var(--fire) 50%, transparent);
+    }
+
+    /* ===== TOOLTIPS DNI ===== */
+    .demo-note {
+      font-size: clamp(0.7rem, 1.2vmin, 0.82rem);
+      color: #555;
+      text-align: center;
+      padding-top: clamp(4px, 0.6vmin, 8px);
+    }
+
+    /* ===== SEPARATOR ===== */
+    .section-sep {
+      height: 1px;
+      background: #1a1a1a;
+      margin: clamp(4px, 1vmin, 8px) 0;
+    }
+
+    /* ===== STANY DEMO (przełącznik) ===== */
+    .demo-controls {
+      background: #0d0d0d;
+      border: 1px solid #222;
+      border-radius: var(--btn-radius);
+      padding: clamp(12px, 2vmin, 20px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.5vmin, 14px);
+    }
+    .demo-controls-title {
+      font-size: clamp(0.7rem,1.2vmin,0.85rem);
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .demo-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(6px, 1vmin, 10px);
+    }
+    .demo-btn {
+      background: #111;
+      border: 2px solid #222;
+      border-radius: clamp(8px, 1.4vmin, 14px);
+      color: #888;
+      font-size: clamp(0.78rem, 1.4vmin, 0.92rem);
+      font-weight: 600;
+      padding: clamp(6px, 1vmin, 10px) clamp(12px, 1.8vmin, 18px);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .demo-btn:hover { background: #1a1a1a; border-color: #444; color: #f0f0f0; }
+    .demo-btn.active-state { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, #111); }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR (mock) -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="avatar-link">🧑‍🚀</span>
+      <div class="player-info">
+        <div class="player-name">Kuba</div>
+        <div class="xp-bar-wrap">
+          <span class="xp-label">Poz. 3</span>
+          <div class="xp-bar"><div class="xp-fill" style="width:62%"></div></div>
+          <span class="xp-label">620 / 1000 XP</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="seconds-badge">⏳ 1 240</div>
+    </div>
+  </div>
+
+  <!-- TREŚĆ -->
+  <div class="hub-content">
+
+    <!-- ETYKIETA -->
+    <div class="section-label">📅 Twoja passa</div>
+
+    <!-- KARTA STREAKA -->
+    <div class="streak-card" id="streakCard">
+
+      <!-- Górny rząd: ogień + liczby -->
+      <div class="streak-top">
+        <div class="streak-fire-wrap">
+          <div class="streak-fire-bg alive" id="fireBg">🔥</div>
+        </div>
+
+        <div class="streak-numbers">
+          <div class="streak-value" id="streakValue">7</div>
+          <div class="streak-sublabel">dni z rzędu</div>
+        </div>
+
+        <div class="streak-divider"></div>
+
+        <div class="streak-best">
+          <div class="streak-best-value" id="bestValue">🏆 12</div>
+          <div class="streak-sublabel">rekord</div>
+        </div>
+      </div>
+
+      <!-- Separator -->
+      <div class="section-sep"></div>
+
+      <!-- Nagłówek kalendarza -->
+      <div class="cal-header">
+        <div class="cal-title">Ostatnie 28 dni</div>
+        <div class="journey-day" id="journeyDay">Dzień 42. podróży</div>
+      </div>
+
+      <!-- Kalendarz 28 dni -->
+      <div class="cal-grid" id="calGrid"></div>
+
+      <div class="demo-note" id="calNote">Zielone dni = gra ukończona · 🔥 Pomarańcz = aktualna seria</div>
+
+    </div>
+
+    <!-- KONTROLKI DEMO -->
+    <div class="demo-controls">
+      <div class="demo-controls-title">🛠 Stany demo — kliknij żeby podejrzeć</div>
+      <div class="demo-btn-row">
+        <button class="demo-btn active-state" onclick="setDemo('active7')" id="btn-active7">🔥 Seria 7 dni</button>
+        <button class="demo-btn" onclick="setDemo('active30')" id="btn-active30">🔥 Seria 30 dni</button>
+        <button class="demo-btn" onclick="setDemo('newbie')" id="btn-newbie">🌱 Nowy gracz (dzień 1)</button>
+        <button class="demo-btn" onclick="setDemo('zero')" id="btn-zero">💀 Pas zerwany (0)</button>
+        <button class="demo-btn" onclick="setDemo('intermittent')" id="btn-intermittent">📅 Nieregularny</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ===== KONFIGURACJA STANÓW DEMO =====
+    const DEMOS = {
+      'active7': {
+        streak: 7, best: 12, journeyDay: 42,
+        // ostatnie 28 dni: 0=brak, 1=aktywny, 2=seria (bieżąca passa)
+        // indeks 0 = 27 dni temu, indeks 27 = dziś
+        days: [0,1,0,0,1,1,0,0,0,1,0,0,1,1,1,0,0,1,0,0,0,2,2,2,2,2,2,2],
+      },
+      'active30': {
+        streak: 30, best: 30, journeyDay: 84,
+        days: [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+      },
+      'newbie': {
+        streak: 1, best: 1, journeyDay: 1,
+        days: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
+      },
+      'zero': {
+        streak: 0, best: 8, journeyDay: 30,
+        days: [0,1,1,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+      },
+      'intermittent': {
+        streak: 2, best: 5, journeyDay: 55,
+        days: [1,0,1,0,0,1,1,0,1,0,0,0,1,0,1,1,1,1,1,0,0,1,0,1,0,0,2,2],
+      },
+    };
+
+    let currentDemo = 'active7';
+
+    function buildCalendar(days) {
+      const grid = document.getElementById('calGrid');
+      grid.innerHTML = '';
+      const today = Math.max(...days.map((d,i) => d > 0 ? i : -1));
+
+      days.forEach((val, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day';
+        if (idx === today) cell.classList.add('today');
+
+        if (val === 2) {
+          cell.classList.add('active', 'streak-run');
+        } else if (val === 1) {
+          cell.classList.add('active');
+        }
+
+        // Numer dnia (względny: 1 = 27 dni temu)
+        cell.textContent = idx + 1;
+        grid.appendChild(cell);
+      });
+    }
+
+    function setDemo(key) {
+      currentDemo = key;
+      const d = DEMOS[key];
+
+      // Streak licznik
+      const valEl = document.getElementById('streakValue');
+      valEl.textContent = d.streak;
+      valEl.className = 'streak-value' + (d.streak === 0 ? ' zero' : '');
+
+      // Rekord
+      document.getElementById('bestValue').textContent = `🏆 ${d.best}`;
+
+      // Dzień podróży
+      document.getElementById('journeyDay').textContent = `Dzień ${d.journeyDay}. podróży`;
+
+      // Ogień — pulsuje tylko gdy streak > 0
+      const fireBg = document.getElementById('fireBg');
+      fireBg.textContent = d.streak > 0 ? '🔥' : '🕯️';
+      fireBg.className = 'streak-fire-bg' + (d.streak > 0 ? ' alive' : '');
+
+      // Kalendarz
+      buildCalendar(d.days);
+
+      // Podświetl aktywny przycisk
+      document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active-state'));
+      document.getElementById('btn-' + key)?.classList.add('active-state');
+    }
+
+    // ===== INIT =====
+    setDemo('active7');
+  </script>
+  <script src="../transitions.js"></script>
+
+</body>
+</html>

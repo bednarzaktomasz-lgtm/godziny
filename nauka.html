@@ -20,6 +20,54 @@
       align-items: center;
       justify-content: center;
     }
+
+    /* ---- FAB Hint ---- */
+    .fab-hint {
+      position: fixed;
+      bottom: 24px; right: 20px;
+      z-index: 300;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid #333;
+      color: #555;
+      font-size: 1.3rem; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    }
+    .fab-hint:hover  { color: #f0f0f0; border-color: #555; }
+    .fab-hint.active { border-color: var(--accent-color); color: var(--accent-color); transform: rotate(15deg); }
+
+    /* ---- Hint Toast ---- */
+    .hint-toast {
+      position: fixed;
+      bottom: 84px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      z-index: 299;
+      width: min(360px, calc(100vw - 40px));
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex; align-items: flex-start; gap: 12px;
+      overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .hint-toast.visible        { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .hint-toast-icon           { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .hint-toast-body           { flex: 1; }
+    .hint-toast-title          { font-size: 0.72rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .hint-toast-msg            { font-size: 0.88rem; color: #ccc; line-height: 1.5; }
+    .hint-toast-bar            {
+      position: absolute; bottom: 0; left: 0;
+      height: 3px; background: var(--accent-color); border-radius: 0 0 16px 16px;
+      width: 100%; transform-origin: left; transform: scaleX(0);
+    }
+    .hint-toast.auto-close .hint-toast-bar { transform: scaleX(1); transition: transform 5s linear; }
   </style>
 </head>
 <body>
@@ -31,16 +79,26 @@
     </svg>
   </a>
   <div class="topbar-right">
-    <button class="help-btn" id="helpBtn">?</button>
   </div>
 </div>
-
-<div class="feedback-bar" id="hintArea">Przeciągnij wskazówki zegara palcem. Wskazówka minutowa jest dłuższa, godzinowa krótsza.</div>
 
 <div class="clock-wrap" id="clockContainer"></div>
 
 <div class="content-area">
   <p id="timeDisplay">12:00</p>
+</div>
+
+<!-- FAB ? -->
+<button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
+
+<!-- Hint Toast -->
+<div class="hint-toast" id="hintToast">
+  <span class="hint-toast-icon">💡</span>
+  <div class="hint-toast-body">
+    <div class="hint-toast-title">Jak to działa?</div>
+    <div class="hint-toast-msg">Przeciągnij wskazówki zegara palcem. Wskazówka minutowa jest dłuższa, godzinowa krótsza. Kliknij AM/PM, aby zmienić połowę doby.</div>
+  </div>
+  <div class="hint-toast-bar" id="hintBar"></div>
 </div>
 
 <script src="clock-renderer.js"></script>
@@ -103,12 +161,33 @@
     });
   }
 
-  const helpBtn = document.getElementById('helpBtn');
-  const hintArea = document.getElementById('hintArea');
-  helpBtn.addEventListener('click', () => {
-    hintArea.classList.toggle('active');
-    helpBtn.classList.toggle('active');
-  });
+  // ==================== FAB + Toast ====================
+  let _hintOpen = false, _hintTimer = null;
+
+  function toggleHint() { _hintOpen ? closeHint() : openHint(); }
+
+  function openHint() {
+    _hintOpen = true;
+    const fab   = document.getElementById('fabHint');
+    const toast = document.getElementById('hintToast');
+    const bar   = document.getElementById('hintBar');
+    fab.classList.add('active');
+    toast.classList.remove('auto-close');
+    toast.classList.add('visible');
+    bar.style.transition = 'none';
+    bar.style.transform  = 'scaleX(0)';
+    void bar.offsetWidth;
+    toast.classList.add('auto-close');
+    clearTimeout(_hintTimer);
+    _hintTimer = setTimeout(closeHint, 5000);
+  }
+
+  function closeHint() {
+    _hintOpen = false;
+    clearTimeout(_hintTimer);
+    document.getElementById('fabHint').classList.remove('active');
+    document.getElementById('hintToast').classList.remove('visible', 'auto-close');
+  }
 </script>
 
 <script src="transitions.js"></script>

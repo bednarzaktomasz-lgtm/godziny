@@ -316,3 +316,92 @@ function migrateFromLegacy() {
   _writeProfilesRoot(data);
   localStorage.setItem(_saveKey(id), JSON.stringify(state));
 }
+
+// ----- 3.3 / 3.3b: Raportowanie wyników -----
+
+/**
+ * Raportuje wynik jednej odpowiedzi w trybie Wyprawy.
+ * Wyprawa: +10 XP, +5 Sekund za poprawną.
+ * Aktualizuje score węzła, stats, errorLog, activityCalendar.
+ */
+function reportResult(nodeId, starNum, isCorrect) {
+  const state = loadGame();
+  if (!state) return;
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (isCorrect) {
+    if (nodeId) {
+      state.xp += 10;
+      state.seconds += 5;
+      const starKey = 'star' + starNum;
+      if (state.nodes[nodeId] && state.nodes[nodeId][starKey]) {
+        state.nodes[nodeId][starKey].score++;
+      }
+    }
+    state.stats.totalCorrect++;
+    state.level = Math.max(1, Math.floor(state.xp / 500) + 1);
+    if (!state.activityCalendar[today]) state.activityCalendar[today] = 0;
+    state.activityCalendar[today]++;
+  } else {
+    if (nodeId) {
+      state.stats.errorLog[nodeId] = (state.stats.errorLog[nodeId] || 0) + 1;
+    }
+  }
+  state.stats.totalAttempts++;
+  saveGame(state);
+}
+
+/**
+ * Oznacza gwiazdkę jako zdobytą i przyznaje +50 Sekund.
+ * Zapisuje bestStreak sesji w state.nodes[nodeId][starKey].streak.
+ */
+function markStarCompleted(nodeId, starNum, bestStreak) {
+  const state = loadGame();
+  if (!state) return;
+  const starKey = 'star' + starNum;
+  if (!state.nodes[nodeId] || !state.nodes[nodeId][starKey]) return;
+  if (!state.nodes[nodeId][starKey].completed) {
+    state.nodes[nodeId][starKey].completed = true;
+    state.nodes[nodeId][starKey].streak = bestStreak || 0;
+    state.seconds += 50;
+  }
+  saveGame(state);
+}
+
+/**
+ * Raportuje wynik w trybie Szybkiej Gry.
+ * Brak XP; +5 Sekund za poprawną odpowiedź, limit 20 dziennie.
+ */
+function reportQuickGameResult(isCorrect) {
+  const state = loadGame();
+  if (!state) return;
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (state.stats.quickGameLastDate !== today) {
+    state.stats.quickGameTodayCount = 0;
+    state.stats.quickGameLastDate = today;
+  }
+
+  if (isCorrect && state.stats.quickGameTodayCount < 20) {
+    state.seconds += 5;
+    state.stats.quickGameTodayCount++;
+  }
+
+  if (isCorrect) state.stats.totalCorrect++;
+  state.stats.totalAttempts++;
+  if (!state.activityCalendar[today]) state.activityCalendar[today] = 0;
+  if (isCorrect) state.activityCalendar[today]++;
+  saveGame(state);
+}
+
+// ----- XP / Level helper -----
+
+function getXpProgress(state) {
+  const xpPerLevel = 500;
+  const xp         = (state && state.xp) || 0;
+  const level      = Math.max(1, Math.floor(xp / xpPerLevel) + 1);
+  const levelStart = (level - 1) * xpPerLevel;
+  const levelXp    = xp - levelStart;
+  const pct        = Math.min(100, Math.round((levelXp / xpPerLevel) * 100));
+  return { level, levelXp, xpPerLevel, pct };
+}

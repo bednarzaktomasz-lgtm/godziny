@@ -3,65 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zegar</title>
+  <title>Mistrz Czasu</title>
   <link rel="stylesheet" href="layout.css" />
   <style>
-    .nav-btn {
+    /* ===== START HUB — page-specific styles ===== */
+
+    body {
+      gap: 0;
+      padding: 0 0 calc(clamp(40px, 8vmin, 64px) + clamp(20px, 4vmin, 40px) + 16px);
+    }
+
+    /* Topbar — sticky, full-width */
+    .topbar {
+      width: 100%;
+      position: sticky;
+      top: 0;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #222;
+      z-index: 100;
+      padding: clamp(10px, 2vmin, 20px) clamp(14px, 3vw, 32px);
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: clamp(8px, 1.5vmin, 14px);
+    }
+
+    .avatar-link {
+      font-size: clamp(1.3rem, 3vmin, 1.9rem);
+      background: #111;
+      border: 2px solid #222;
+      border-radius: 50%;
+      width: clamp(34px, 5vmin, 48px);
+      height: clamp(34px, 5vmin, 48px);
+      display: flex;
       align-items: center;
       justify-content: center;
-      gap: clamp(10px, 2vmin, 20px);
+      flex-shrink: 0;
       text-decoration: none;
+      transition: border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .avatar-link:hover { border-color: #555; }
+
+    .player-info { display: flex; flex-direction: column; gap: 2px; }
+    .player-name { font-size: clamp(0.82rem, 1.7vmin, 1.05rem); font-weight: 700; }
+
+    .xp-bar-wrap { display: flex; align-items: center; gap: 6px; }
+    .xp-label    { font-size: clamp(0.62rem, 1.1vmin, 0.78rem); color: #888; white-space: nowrap; }
+    .xp-bar      { width: clamp(55px, 11vw, 110px); height: 5px; background: #222; border-radius: 3px; overflow: hidden; }
+    .xp-fill     { height: 100%; background: #bb86fc; border-radius: 3px; transition: width 0.6s ease; }
+
+    .seconds-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 20px;
+      padding: clamp(4px, 0.7vmin, 7px) clamp(8px, 1.3vmin, 14px);
+      font-size: clamp(0.78rem, 1.5vmin, 0.95rem);
+      font-weight: 700;
+      color: #ffd700;
+      white-space: nowrap;
+    }
+
+    /* ===== HUB CONTENT ===== */
+    .hub-content {
+      width: min(560px, 96vw);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2.5vmin, 20px);
+      padding: clamp(20px, 4vmin, 40px) 0;
+    }
+
+    .hub-greeting {
+      font-size: clamp(1.1rem, 2.5vmin, 1.5rem);
+      font-weight: 700;
       color: #f0f0f0;
+      padding-bottom: clamp(4px, 0.8vmin, 8px);
+    }
+
+    /* ===== HUB CARDS ===== */
+    .hub-card {
+      display: flex;
+      align-items: center;
+      gap: clamp(14px, 2.5vmin, 24px);
       background: #111;
       border: 2px solid #222;
       border-radius: var(--btn-radius);
-      font-size: clamp(1rem, 2.2vmin, 1.8rem);
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      transition: background 0.2s, border-color 0.2s;
+      padding: clamp(16px, 3vmin, 28px);
+      text-decoration: none;
+      color: #f0f0f0;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
       -webkit-tap-highlight-color: transparent;
-      aspect-ratio: 1 / 1;
     }
-    .nav-btn:hover,
-    .nav-btn:active {
-      background: #1a1a1a;
-      border-color: var(--accent-color, #d82928);
-    }
-    .nav-btn .icon {
-      font-size: clamp(2rem, 5vmin, 4.5rem);
-    }
-    .nav-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: clamp(12px, 2.5vmin, 32px);
-      width: calc(var(--nav-width) * 0.8);
-    }
-    /* Zmień gracza — lewa strona topbara */
-    .profile-nav-btn {
+    .hub-card:hover { background: #1a1a1a; border-color: #444; transform: translateY(-1px); }
+
+    .hub-card-icon-wrap {
+      width: clamp(52px, 9vmin, 76px);
+      height: clamp(52px, 9vmin, 76px);
+      background: #000;
+      border: 2px solid #222;
+      border-radius: clamp(12px, 2vmin, 20px);
       display: flex;
       align-items: center;
       justify-content: center;
-      width: var(--icon-size);
-      height: var(--icon-size);
-      text-decoration: none;
-      border-radius: 50%;
-      transition: background 0.2s;
-      -webkit-tap-highlight-color: transparent;
+      font-size: clamp(1.8rem, 4.5vmin, 2.8rem);
       flex-shrink: 0;
     }
-    .profile-nav-btn:hover { background: #1a1a1a; }
+
+    .hub-card-body  { flex: 1; min-width: 0; }
+    .hub-card-title { font-size: clamp(1rem, 2.2vmin, 1.4rem); font-weight: 700; margin-bottom: clamp(3px, 0.5vmin, 6px); }
+    .hub-card-desc  { font-size: clamp(0.78rem, 1.4vmin, 0.95rem); color: #888; line-height: 1.4; }
+    .hub-card-arrow { color: #555; font-size: clamp(1rem, 2vmin, 1.4rem); flex-shrink: 0; margin-left: auto; }
+
+    .hub-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: clamp(0.66rem, 1.2vmin, 0.8rem);
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      margin-top: clamp(4px, 0.8vmin, 8px);
+    }
+    .hub-status.progress {
+      background: color-mix(in srgb, #bb86fc 12%, transparent);
+      color: #bb86fc;
+      border: 1px solid color-mix(in srgb, #bb86fc 30%, transparent);
+    }
+    .hub-status.soon {
+      background: transparent;
+      color: #555;
+      border: 1px solid #333;
+    }
+
+    /* ===== BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      gap: clamp(12px, 2.5vmin, 24px);
+      padding: clamp(10px, 1.8vmin, 16px) clamp(16px, 3vw, 32px);
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid #222;
+      z-index: 60;
+    }
+    .bottom-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #111;
+      border: 2px solid #222;
+      border-radius: clamp(10px, 1.8vmin, 16px);
+      color: #555;
+      font-size: clamp(0.82rem, 1.5vmin, 0.95rem);
+      font-weight: 600;
+      padding: clamp(8px, 1.4vmin, 14px) clamp(14px, 2.5vmin, 24px);
+      cursor: not-allowed;
+      opacity: 0.55;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-icon { font-size: clamp(0.9rem, 1.8vmin, 1.1rem); }
   </style>
 </head>
 <body>
 
+  <!-- TOPBAR -->
   <div class="topbar">
-    <a href="profil.html" class="profile-nav-btn" id="profileNavBtn" title="Zmień gracza">
-      <span id="profileAvatar" style="font-size: clamp(1.4rem, 3vmin, 2.4rem); line-height:1;">👤</span>
-    </a>
+    <div class="topbar-left">
+      <a href="profil.html" class="avatar-link" id="playerAvatar" title="Zmień gracza">👤</a>
+      <div class="player-info">
+        <div class="player-name" id="playerName">—</div>
+        <div class="xp-bar-wrap">
+          <span class="xp-label" id="levelLabel">Poz. 1</span>
+          <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+          <span class="xp-label" id="xpLabel">0 XP</span>
+        </div>
+      </div>
+    </div>
     <div class="topbar-right">
-      <button class="help-btn" id="helpBtn">?</button>
+      <div class="seconds-badge" id="secondsBadge">⏳ 0</div>
       <a href="ustawienia.html" class="icon-btn settings-icon" title="Ustawienia">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="100%" height="100%">
           <line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
@@ -72,70 +200,83 @@
     </div>
   </div>
 
-  <div class="feedback-bar" id="hintArea">Wybierz tryb gry</div>
+  <!-- HUB CARDS -->
+  <div class="hub-content">
+    <div class="hub-greeting" id="hubGreeting">Witaj!</div>
 
-  <div class="nav-buttons">
-    <a href="nauka.html" class="nav-btn" data-hint="Swobodnie przestawiaj wskazówki zegara palcem i obserwuj czas na wyświetlaczu cyfrowym.">
-      <span class="icon">🎓</span>
-      Tryb Nauki
+    <a href="mapa.html" class="hub-card">
+      <div class="hub-card-icon-wrap">🗺️</div>
+      <div class="hub-card-body">
+        <div class="hub-card-title">Wyprawa</div>
+        <div class="hub-card-desc">Podażaj ścieżką i zdobywaj gwiazdki na każdej wyspie.</div>
+        <div class="hub-status progress" id="wyprawaStatus">0 / 60 gwiazdek</div>
+      </div>
+      <div class="hub-card-arrow">›</div>
     </a>
 
-    <a href="godziny.html" class="nav-btn" data-hint="Odczytaj godzinę z zegara analogowego i wybierz poprawną odpowiedź spośród trzech podanych.">
-      <span class="icon">⏱️</span>
-      Tryb Quizu
+    <a href="wyzwanie.html" class="hub-card">
+      <div class="hub-card-icon-wrap">⚡</div>
+      <div class="hub-card-body">
+        <div class="hub-card-title">Wyzwanie Dnia</div>
+        <div class="hub-card-desc">Codzienne zadanie z wyjątkowymi nagrodami.</div>
+        <div class="hub-status soon">🔧 Wkrótce</div>
+      </div>
+      <div class="hub-card-arrow">›</div>
     </a>
 
-    <a href="wpisz.html" class="nav-btn" data-hint="Odczytaj godzinę z zegara analogowego i wpisz ją samodzielnie cyframi na klawiaturze.">
-      <span class="icon">⌨️</span>
-      Wpisz Godzinę
-    </a>
-
-    <a href="ustaw.html" class="nav-btn" data-hint="Przestaw wskazówki zegara tak, aby pokazywały podaną godzinę, a następnie zatwierdź odpowiedź.">
-      <span class="icon">🎯</span>
-      Ustaw Godzinę
+    <a href="szybka-gra.html" class="hub-card">
+      <div class="hub-card-icon-wrap">🎮</div>
+      <div class="hub-card-body">
+        <div class="hub-card-title">Szybka Gra</div>
+        ​<div class="hub-card-desc">Wybierz dowolny tryb i ćwicz bez ograniczeń.</div>
+      </div>
+      <div class="hub-card-arrow">›</div>
     </a>
   </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" aria-label="Nawigacja główna">
+    <button class="bottom-nav-btn" title="Wkrótce dostępne">
+      <span class="btn-icon">👗</span> Garderoba
+    </button>
+    <button class="bottom-nav-btn" title="Wkrótce dostępne">
+      <span class="btn-icon">🏆</span> Trofea
+    </button>
+  </nav>
 
   <script src="game-state.js"></script>
   <script>
     // ===== PROFILE CHECK =====
     migrateFromLegacy();
-    const _activeProfile = getActiveProfile();
-    if (!_activeProfile) {
-      location.replace('profil.html');
-    } else {
-      const _av = AVATARS[_activeProfile.avatar] || AVATARS['boy-1'];
-      document.getElementById('profileAvatar').textContent = _av.emoji;
+    const _profile = getActiveProfile();
+    if (!_profile) { location.replace('profil.html'); }
+    const _save = loadGame();
+
+    // Topbar
+    const _av = AVATARS[_profile.avatar] || AVATARS['boy-1'];
+    document.getElementById('playerAvatar').textContent = _av.emoji;
+    document.getElementById('playerName').textContent   = _profile.name;
+
+    const _xp = getXpProgress(_save);
+    document.getElementById('levelLabel').textContent   = `Poz. ${_xp.level}`;
+    document.getElementById('xpFill').style.width       = _xp.pct + '%';
+    document.getElementById('xpLabel').textContent      = `${_save.xp} / ${_xp.xpPerLevel} XP`;
+    document.getElementById('secondsBadge').textContent = `⏳ ${_save.seconds}`;
+
+    // Wyprawa progress
+    let totalStars = 0;
+    for (const n of Object.values(_save.nodes || {})) {
+      if (n.star1 && n.star1.completed) totalStars++;
+      if (n.star2 && n.star2.completed) totalStars++;
+      if (n.star3 && n.star3.completed) totalStars++;
     }
+    document.getElementById('wyprawaStatus').textContent = `${totalStars} / 60 gwiazdek`;
 
-    const handColor = localStorage.getItem('zegar_handColor') || 'white';
-    const colorMap = { white: '#f0f0f0', blue: '#2563eb', red: '#d82928' };
-    document.documentElement.style.setProperty('--accent-color', colorMap[handColor] || '#f0f0f0');
-
-    const helpBtn = document.getElementById('helpBtn');
-    const hintArea = document.getElementById('hintArea');
-    const defaultHint = 'Wybierz tryb gry';
-    let helpActive = false;
-
-    helpBtn.addEventListener('click', () => {
-      helpActive = !helpActive;
-      helpBtn.classList.toggle('active', helpActive);
-      hintArea.textContent = defaultHint;
-      hintArea.classList.toggle('active', helpActive);
-    });
-
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
-        hintArea.textContent = btn.dataset.hint;
-        hintArea.classList.add('active');
-      });
-      btn.addEventListener('mouseleave', () => {
-        hintArea.textContent = defaultHint;
-        hintArea.classList.toggle('active', helpActive);
-      });
-    });
+    // Greeting
+    const _hour = new Date().getHours();
+    const _greet = _hour < 12 ? 'Dzień dobry' : _hour < 18 ? 'Cześć' : 'Dobry wieczór';
+    document.getElementById('hubGreeting').textContent = `${_greet}, ${_profile.name}! 👋`;
   </script>
-
-<script src="transitions.js"></script>
+  <script src="transitions.js"></script>
 </body>
 </html>

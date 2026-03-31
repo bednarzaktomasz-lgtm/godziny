@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Szybka Gra — Mistrz Czasu</title>
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    /* ===== SZYBKA GRA — page-specific styles ===== */
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(8px, 1.5vmin, 14px);
+      text-decoration: none;
+      color: #f0f0f0;
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      font-size: clamp(0.9rem, 1.8vmin, 1.3rem);
+      font-weight: 700;
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      aspect-ratio: 1 / 1;
+      padding: clamp(12px, 2.5vmin, 24px);
+      text-align: center;
+    }
+    .nav-btn:hover { background: #1a1a1a; border-color: #444; }
+    .nav-btn .icon { font-size: clamp(1.8rem, 5vmin, 3.8rem); }
+    .nav-btn .reward-note {
+      font-size: clamp(0.6rem, 1.1vmin, 0.72rem);
+      color: #ffd700;
+      font-weight: 600;
+    }
+    .nav-btn.no-reward .reward-note { color: #555; }
+    .nav-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(12px, 2.5vmin, 28px);
+      width: min(480px, 92vw);
+    }
+    .topbar-spacer { width: var(--icon-size); }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="start.html" title="Wróć do menu">
+      <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </a>
+    <div class="topbar-right">
+      <button class="help-btn" id="helpBtn">?</button>
+    </div>
+  </div>
+
+  <div class="feedback-bar" id="hintArea">Wybierz tryb i ćwicz dowolnie</div>
+
+  <div class="nav-buttons">
+
+    <a href="nauka.html" class="nav-btn no-reward"
+       data-hint="Swobodnie przestawiaj wskazówki zegara i obserwuj czas. Bez scoringu — czysta nauka.">
+      <span class="icon">🕐</span>
+      Wolna Nauka
+      <span class="reward-note">bez nagród</span>
+    </a>
+
+    <a href="godziny.html" class="nav-btn"
+       data-hint="Odczytaj godzinę i wybierz właściwą odpowiedź. Do 20 poprawnych dziennie daje +5 Sekund każda.">
+      <span class="icon">🔵</span>
+      Wybierz Godzinę
+      <span class="reward-note">+5 ⏳ za poprawną</span>
+    </a>
+
+    <a href="wpisz.html" class="nav-btn"
+       data-hint="Odczytaj godzinę i wpisz ją cyframi. Do 20 poprawnych dziennie daje +5 Sekund każda.">
+      <span class="icon">✏️</span>
+      Wpisz Godzinę
+      <span class="reward-note">+5 ⏳ za poprawną</span>
+    </a>
+
+    <a href="ustaw.html" class="nav-btn"
+       data-hint="Ustaw wskazówki tak, aby pokazywały podaną godzinę. Do 20 poprawnych dziennie daje +5 Sekund każda.">
+      <span class="icon">⚙️</span>
+      Ustaw Wskazówki
+      <span class="reward-note">+5 ⏳ za poprawną</span>
+    </a>
+
+  </div>
+
+  <script>
+    const helpBtn     = document.getElementById('helpBtn');
+    const hintArea    = document.getElementById('hintArea');
+    const defaultHint = 'Wybierz tryb i ćwicz dowolnie';
+    let helpActive = false;
+
+    helpBtn.addEventListener('click', () => {
+      helpActive = !helpActive;
+      helpBtn.classList.toggle('active', helpActive);
+      hintArea.textContent = defaultHint;
+      hintArea.classList.toggle('active', helpActive);
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        hintArea.textContent = btn.dataset.hint;
+        hintArea.classList.add('active');
+      });
+      btn.addEventListener('mouseleave', () => {
+        hintArea.textContent = defaultHint;
+        hintArea.classList.toggle('active', helpActive);
+      });
+    });
+  </script>
+  <script src="transitions.js"></script>
+</body>
+</html>

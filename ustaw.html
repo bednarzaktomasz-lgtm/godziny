@@ -1,443 +1,727 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ustaw Godzinę</title>
-    <link rel="stylesheet" href="clock-styles.css" />
-    <link rel="stylesheet" href="layout.css" />
-    <style>
-        .info-panel {
-            display: flex;
-            flex-direction: column;
-            gap: var(--gap);
-            width: 100%;
-        }
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Ustaw Godzinę</title>
+	<link rel="stylesheet" href="clock-styles.css" />
+	<link rel="stylesheet" href="layout.css" />
+	<style>
+		/* ---- Info panel ---- */
+		.info-panel {
+			display: flex;
+			flex-direction: column;
+			gap: var(--gap);
+			width: 100%;
+		}
+		.target-display {
+			background: #111;
+			border: 2px solid #222;
+			border-radius: var(--btn-radius);
+			text-align: center;
+			color: #f0f0f0;
+			min-height: var(--btn-height);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: clamp(4px, 1vmin, 8px);
+			cursor: pointer;
+			transition: background 0.2s, border-color 0.2s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.target-display:hover  { background: #1a1a1a; border-color: #444; }
+		.target-display:active { background: #222; }
+		.target-display.correct { background: #16a34a; border-color: #16a34a; }
+		.target-display.wrong   { background: #dc2626; border-color: #dc2626; }
+		.target-label {
+			font-size: clamp(0.75rem, 1.5vmin, 1.2rem);
+			opacity: 0.9;
+			font-weight: 600;
+		}
+		.target-time {
+			font-size: clamp(1.6rem, 4vmin, 3.2rem);
+			font-weight: 700;
+			letter-spacing: 0.05em;
+		}
+		.user-time-display {
+			text-align: center;
+			min-height: clamp(56px, 8vmin, 100px);
+			background: #111;
+			border: 2px solid #222;
+			border-radius: var(--btn-radius);
+			font-size: clamp(0.9rem, 2vmin, 1.6rem);
+			color: #555;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 12px;
+			transition: opacity 0.3s;
+		}
+		.user-time-display.hidden { opacity: 0; pointer-events: none; }
+		.user-time-display strong { color: #f0f0f0; font-size: clamp(1rem, 2.5vmin, 2rem); }
 
-        .target-display {
-            background: #111;
-            border: 2px solid #222;
-            border-radius: var(--btn-radius);
-            text-align: center;
-            color: #f0f0f0;
-            min-height: var(--btn-height);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: clamp(4px, 1vmin, 8px);
-            cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .target-display:hover  { background: #1a1a1a; border-color: #444; }
-        .target-display:active { background: #222; }
-        .target-display.correct { background: #16a34a; border-color: #16a34a; }
-        .target-display.wrong   { background: #dc2626; border-color: #dc2626; }
+		/* ---- Pasek postępu gwiazdki ---- */
+		.star-progress {
+			display: flex;
+			flex-direction: column;
+			gap: clamp(5px, 1vmin, 8px);
+			width: 100%;
+			padding: clamp(8px, 1.3vmin, 14px) clamp(10px, 1.5vmin, 16px);
+			background: #0d0d0d;
+			border: 1px solid #222;
+			border-radius: var(--btn-radius);
+		}
+		.star-progress.hidden { display: none; }
+		.spi-row {
+			display: flex;
+			align-items: center;
+			gap: clamp(6px, 1vmin, 10px);
+		}
+		.spi-label {
+			font-size: clamp(0.65rem, 1.3vmin, 0.85rem);
+			color: #888;
+			width: clamp(68px, 11vmin, 90px);
+			flex-shrink: 0;
+		}
+		.spi-track {
+			flex: 1;
+			height: clamp(6px, 1vmin, 8px);
+			background: #222;
+			border-radius: 4px;
+			overflow: hidden;
+		}
+		.spi-fill {
+			height: 100%;
+			border-radius: 4px;
+			background: #bb86fc;
+			transition: width 0.3s ease;
+			width: 0%;
+		}
+		.spi-fill.spi-streak { background: #f0c040; }
+		.spi-fill.done       { background: #16a34a !important; transition: none; }
+		.spi-count {
+			font-size: clamp(0.65rem, 1.3vmin, 0.85rem);
+			color: #888;
+			min-width: 2.5em;
+			text-align: right;
+			flex-shrink: 0;
+			font-variant-numeric: tabular-nums;
+		}
 
-        .target-label {
-            font-size: clamp(0.75rem, 1.5vmin, 1.2rem);
-            opacity: 0.9;
-            font-weight: 600;
-        }
-        .target-time {
-            font-size: clamp(1.6rem, 4vmin, 3.2rem);
-            font-weight: 700;
-            letter-spacing: 0.05em;
-        }
+		/* ---- Expedition mode — ukryj ustawienia ---- */
+		.expedition-mode .modal#settingsModal { display: none !important; }
+		.expedition-mode #settingsIcon         { display: none; }
 
-        .user-time-display {
-            text-align: center;
-            min-height: clamp(56px, 8vmin, 100px);
-            background: #111;
-            border: 2px solid #222;
-            border-radius: var(--btn-radius);
-            font-size: clamp(0.9rem, 2vmin, 1.6rem);
-            color: #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            transition: opacity 0.3s;
-        }
-        .user-time-display.hidden { opacity: 0; pointer-events: none; }
-        .user-time-display strong { color: #f0f0f0; font-size: clamp(1rem, 2.5vmin, 2rem); }
-    </style>
+		/* ---- FAB Hint ---- */
+		.fab-hint {
+			position: fixed;
+			bottom: 24px; right: 20px;
+			z-index: 300;
+			width: 48px; height: 48px;
+			border-radius: 50%;
+			background: #111;
+			border: 2px solid #333;
+			color: #555;
+			font-size: 1.3rem; font-weight: 700;
+			cursor: pointer;
+			display: flex; align-items: center; justify-content: center;
+			transition: color 0.2s, border-color 0.2s, transform 0.2s;
+			-webkit-tap-highlight-color: transparent;
+			box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+		}
+		.fab-hint:hover           { color: #f0f0f0; border-color: #555; }
+		.fab-hint.active          { border-color: var(--accent-color); color: var(--accent-color); transform: rotate(15deg); }
+
+		/* ---- Hint Toast ---- */
+		.hint-toast {
+			position: fixed;
+			bottom: 84px; left: 50%;
+			transform: translateX(-50%) translateY(10px);
+			z-index: 299;
+			width: min(360px, calc(100vw - 40px));
+			background: #1a1a1a;
+			border: 1px solid #333;
+			border-radius: 16px;
+			padding: 14px 18px;
+			display: flex; align-items: flex-start; gap: 12px;
+			overflow: hidden;
+			opacity: 0; pointer-events: none;
+			transition: opacity 0.22s ease, transform 0.22s ease;
+		}
+		.hint-toast.visible        { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+		.hint-toast-icon           { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+		.hint-toast-body           { flex: 1; }
+		.hint-toast-title          { font-size: 0.72rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+		.hint-toast-msg            { font-size: 0.88rem; color: #ccc; line-height: 1.5; }
+		.hint-toast-bar            {
+			position: absolute; bottom: 0; left: 0;
+			height: 3px; background: var(--accent-color); border-radius: 0 0 16px 16px;
+			width: 100%; transform-origin: left; transform: scaleX(0);
+		}
+		.hint-toast.auto-close .hint-toast-bar { transform: scaleX(1); transition: transform 5s linear; }
+
+		/* ---- Star Overlay ---- */
+		.star-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,0);
+			z-index: 400;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			visibility: hidden;
+			transition: background 0.3s ease, visibility 0s 0.3s;
+			padding: clamp(16px, 3vmin, 32px);
+		}
+		.star-overlay.active {
+			background: rgba(0,0,0,0.88);
+			visibility: visible;
+			transition: background 0.3s ease, visibility 0s 0s;
+		}
+		.star-overlay-box {
+			background: #111;
+			border: 2px solid #333;
+			border-radius: clamp(20px, 3.5vmin, 32px);
+			padding: clamp(24px, 4vmin, 48px);
+			text-align: center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: clamp(10px, 1.8vmin, 18px);
+			max-width: min(380px, 90vw);
+			width: 100%;
+			opacity: 0;
+			transform: scale(0.9);
+			transition: opacity 0.3s ease, transform 0.3s ease;
+		}
+		.star-overlay.active .star-overlay-box { opacity: 1; transform: scale(1); }
+		.star-overlay-stars    { font-size: clamp(2rem, 5vmin, 3.5rem); }
+		.star-overlay-title    { font-size: clamp(1.1rem, 2.8vmin, 1.7rem); font-weight: 700; color: #f0f0f0; }
+		.star-overlay-subtitle { font-size: clamp(0.8rem, 1.6vmin, 1rem); color: #888; }
+		.star-overlay-next {
+			width: 100%;
+			min-height: var(--btn-height);
+			background: #bb86fc;
+			border: none;
+			border-radius: var(--btn-radius);
+			font-size: var(--btn-font);
+			font-weight: 700;
+			color: #000;
+			cursor: pointer;
+			transition: background 0.2s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.star-overlay-next:hover { background: #d4a6ff; }
+		.star-overlay-map {
+			margin-top: 2px;
+			color: #888;
+			font-size: clamp(0.82rem, 1.5vmin, 0.95rem);
+			text-decoration: none;
+			transition: color 0.2s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.star-overlay-map:hover { color: #f0f0f0; }
+	</style>
 </head>
 <body>
 
-    <div class="topbar">
-        <a href="start.html" title="Wróć do menu">
-            <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-        </a>
-        <div class="topbar-right">
-            <button class="help-btn" id="helpBtn">?</button>
-            <svg class="icon-btn settings-icon" id="settingsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                <line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
-                <line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
-                <line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
-            </svg>
-            </svg>
-        </div>
-    </div>
+	<div class="topbar">
+		<a id="backBtn" href="start.html" title="Wróć do menu">
+			<svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<polyline points="15 18 9 12 15 6"></polyline>
+			</svg>
+		</a>
+		<div class="topbar-right">
+			<svg class="icon-btn settings-icon" id="settingsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+				<line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+				<line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+				<line x1="4" y1="18" x2="20" y2="18"></line><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+			</svg>
+		</div>
+	</div>
 
-    <div class="feedback-bar" id="hintArea">Ustaw wskazówki zegara na podaną godzinę, a następnie kliknij przycisk z godziną, aby sprawdzić.</div>
+	<div class="result-bar">
+		<div class="feedback" id="feedback"></div>
+		<div class="score" id="score">0 / 0</div>
+	</div>
 
-    <div class="result-bar">
-        <div class="feedback" id="feedback"></div>
-        <div class="score" id="score">0 / 0</div>
-    </div>
+	<div class="clock-wrap" id="clockContainer"></div>
 
-    <div class="clock-wrap" id="clockContainer"></div>
+	<div class="content-area">
+		<div class="star-progress hidden" id="starProgress">
+			<div class="spi-row">
+				<span class="spi-label">Poprawne</span>
+				<div class="spi-track"><div class="spi-fill" id="spCorrect"></div></div>
+				<span class="spi-count" id="spCorrectTxt">0/8</span>
+			</div>
+			<div class="spi-row">
+				<span class="spi-label">Seria</span>
+				<div class="spi-track"><div class="spi-fill spi-streak" id="spStreak"></div></div>
+				<span class="spi-count" id="spStreakTxt">0/6</span>
+			</div>
+		</div>
+		<div class="info-panel">
+			<div class="target-display" id="targetDisplay">
+				<div class="target-label">Ustaw wskazówki na:</div>
+				<div class="target-time" id="targetTime">12:00</div>
+			</div>
+			<div class="user-time-display" id="userTimeDisplay">
+				Twoja godzina: <strong id="userTime">12:00</strong>
+			</div>
+		</div>
+	</div>
 
-    <div class="content-area">
-        <div class="info-panel">
-            <div class="target-display" id="targetDisplay">
-                <div class="target-time" id="targetTime">12:00</div>
-            </div>
+	<div class="modal" id="settingsModal">
+		<div class="modal-content">
+			<div class="modal-modes">
+				<button class="mode-toggle active" data-mode="full">Pełne godziny</button>
+				<button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
+				<button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
+				<button class="mode-toggle" data-mode="five">Co 5 minut</button>
+				<button class="mode-toggle" data-mode="any">Każda minuta</button>
+			</div>
+			<div class="sound-toggle" id="soundToggleRow">
+				<span>Dźwięki</span>
+				<div class="toggle-switch active" id="soundToggle"></div>
+			</div>
+			<div class="sound-toggle" id="timeHintToggleRow">
+				<span>Podpowiedź czasu</span>
+				<div class="toggle-switch active" id="timeHintToggle"></div>
+			</div>
+		</div>
+	</div>
 
-            <div class="user-time-display" id="userTimeDisplay">
-                Twoja godzina: <strong id="userTime">12:00</strong>
-            </div>
-        </div>
+	<!-- FAB ? -->
+	<button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
 
-    </div>
+	<!-- Hint Toast -->
+	<div class="hint-toast" id="hintToast">
+		<span class="hint-toast-icon">💡</span>
+		<div class="hint-toast-body">
+			<div class="hint-toast-title">Jak to działa?</div>
+			<div class="hint-toast-msg">Przesuń wskazówki zegara tak, aby pokazywały podaną godzinę, a następnie kliknij tarczę z godziną, aby sprawdzić.</div>
+		</div>
+		<div class="hint-toast-bar" id="hintBar"></div>
+	</div>
 
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-modes">
-                <button class="mode-toggle active" data-mode="full">Pełne godziny</button>
-                <button class="mode-toggle" data-mode="half">Połówki (30 min)</button>
-                <button class="mode-toggle" data-mode="quarter">Kwadranse (15, 45 min)</button>
-                <button class="mode-toggle" data-mode="five">Co 5 minut</button>
-                <button class="mode-toggle" data-mode="any">Każda minuta</button>
-            </div>
-            <div class="sound-toggle" id="soundToggleRow">
-                <span>Dźwięki</span>
-                <div class="toggle-switch active" id="soundToggle"></div>
-            </div>
-            <div class="sound-toggle" id="timeHintToggleRow">
-                <span>Podpowiedź czasu</span>
-                <div class="toggle-switch active" id="timeHintToggle"></div>
-            </div>
-        </div>
-    </div>
+	<!-- Star Overlay -->
+	<div class="star-overlay" id="starOverlay">
+		<div class="star-overlay-box">
+			<div class="star-overlay-stars" id="starOverlayStars">⭐⭐⭐</div>
+			<div class="star-overlay-title" id="starOverlayTitle">Gwiazdka zdobyta!</div>
+			<div class="star-overlay-subtitle" id="starOverlaySubtitle">Doskonała robota!</div>
+			<button class="star-overlay-next" id="starOverlayNext" style="display:none">▶ Zagraj dalej</button>
+			<a class="star-overlay-map" id="starOverlayMap" href="mapa.html">← Wróć do Mapy</a>
+		</div>
+	</div>
 
-    <script src="clock-renderer.js"></script>
-    <script>
-        // ==================== Load Global Settings ====================
-        const STORAGE_KEYS = {
-            activeModes: 'zegar_activeModes',
-            soundEnabled: 'zegar_soundEnabled',
-            showTimeHint: 'zegar_showTimeHint',
-            clockBg: 'zegar_clockBg',
-            handColor: 'zegar_handColor',
-            numberStyle: 'zegar_numberStyle',
-            hourFormat: 'zegar_hourFormat',
-        };
 
-        function loadGlobalSettings() {
-            return {
-                activeModes: JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
-                soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
-                showTimeHint: localStorage.getItem(STORAGE_KEYS.showTimeHint) !== 'false',
-                clockBg: localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
-                handColor: localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
-                numberStyle: localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic',
-                hourFormat: localStorage.getItem(STORAGE_KEYS.hourFormat) || '12',
-            };
-        }
+	<script src="clock-renderer.js"></script>
+	<script src="game-state.js"></script>
+	<script src="question-logic.js"></script>
+	<script>
+		// ==================== URL Params & Expedition Mode ====================
+		const urlParams      = new URLSearchParams(window.location.search);
+		const expeditionNode = urlParams.get('node');
+		const expeditionStar = parseInt(urlParams.get('star') || '0', 10);
+		const isExpedition   = !!expeditionNode && expeditionStar >= 1;
 
-        const globalSettings = loadGlobalSettings();
+		// NODE_CONFIG — definicja węzłów
+		const NODE_CONFIG = {
+			'full-hours':     { minutes: [0],                                              dialType: 'arabic', label: 'Wyspa Pełnych Godzin',      icon: '🏝️' },
+			'quarters':       { minutes: [0,15,30,45],                                     dialType: 'arabic', label: 'Zatoka Kwadransów',          icon: '🌊' },
+			'half-past':      { minutes: [0,30],                                           dialType: 'arabic', label: 'Góry Wpół do',               icon: '🏔️' },
+			'every-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'arabic', label: 'Dolina Co Pięć Minut',        icon: '🌿' },
+			'every-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'arabic', label: 'Morze Każdej Minuty',         icon: '🌊' },
+			'roman-full':     { minutes: [0],                                              dialType: 'roman',  label: 'Wyspa Cyfr Rzymskich',        icon: '🏛️' },
+			'roman-quarters': { minutes: [0,15,30,45],                                     dialType: 'roman',  label: 'Forum Kwadransów',            icon: '🗿' },
+			'roman-half':     { minutes: [0,30],                                           dialType: 'roman',  label: 'Koloseum Wpół do',            icon: '⚔️' },
+			'roman-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'roman',  label: 'Akwedukt Minut',              icon: '🌁' },
+			'roman-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'roman',  label: 'Labirynt Caesara',            icon: '🔱' },
+			'blank-full':     { minutes: [0],                                              dialType: 'blank',  label: 'Wyspa Ciszy',                 icon: '🌑' },
+			'blank-quarters': { minutes: [0,15,30,45],                                     dialType: 'blank',  label: 'Mglisty Przylądek',           icon: '🌫️' },
+			'blank-half':     { minutes: [0,30],                                           dialType: 'blank',  label: 'Dolina Cienia',               icon: '🌒' },
+			'blank-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'blank',  label: 'Pustynia Bez Znaków',         icon: '🏜️' },
+			'blank-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'blank',  label: 'Mroczne Bezdroża',            icon: '🌑' },
+			'24h-full':       { minutes: [0],                                              hourFormat: '24',   label: 'Brama Południa',              icon: '🌃' },
+			'24h-quarters':   { minutes: [0,15,30,45],                                     hourFormat: '24',   label: 'Wieża Zegarowa',              icon: '🗼' },
+			'24h-half':       { minutes: [0,30],                                           hourFormat: '24',   label: 'Kanał Wpół do',               icon: '🌉' },
+			'24h-five':       { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              hourFormat: '24',   label: 'Metro Nocne',                 icon: '🚇' },
+			'24h-minute':     { minutes: Array.from({length:60},(_,i)=>i),                 hourFormat: '24',   label: 'Labirynt 24h',                icon: '🌐' },
+		};
 
-        // ==================== Initialize Clock ====================
-        const clockContainer = document.getElementById("clockContainer");
-        let hasMovedHand = false;
-        let isChecked = false;
+		const nodeConf          = isExpedition ? (NODE_CONFIG[expeditionNode] || null) : null;
+		const expeditionMinutes = nodeConf ? nodeConf.minutes : null;
 
-        const clock = new ClockRenderer(clockContainer, {
-            size: 'normal',
-            interactive: true,
-            showBrand: true,
-            showDigital: true,
-            showDate: true,
-            showSecondHand: false,
-            showBgControls: false,
-            handColor: globalSettings.handColor,
-            onTimeChange: (h, m) => {
-                if (!hasMovedHand) {
-                    hasMovedHand = true;
-                }
-                updateUserTimeDisplay();
-            }
-        });
+		if (isExpedition) {
+			document.body.classList.add('expedition-mode');
+			document.getElementById('backBtn').href = 'mapa.html';
+			document.getElementById('starProgress').classList.remove('hidden');
+		}
 
-        // Apply saved background
-        clock.setBackground(globalSettings.clockBg);
-        clock.setNumberStyle(globalSettings.numberStyle);
-        let targetTime = { h: 12, m: 0 };
-        let correctAnswers = 0;
-        let totalAnswers = 0;
-        let attempts = 0;
-        let soundEnabled = globalSettings.soundEnabled;
-        let showTimeHint = globalSettings.showTimeHint;
-        let activeModes = new Set(globalSettings.activeModes);
-        let hourFormat = globalSettings.hourFormat;
-        let audioContext = null;
+		// ==================== Load Global Settings ====================
+		const STORAGE_KEYS = {
+			activeModes:   'zegar_activeModes',
+			soundEnabled:  'zegar_soundEnabled',
+			showTimeHint:  'zegar_showTimeHint',
+			clockBg:       'zegar_clockBg',
+			handColor:     'zegar_handColor',
+			numberStyle:   'zegar_numberStyle',
+			hourFormat:    'zegar_hourFormat',
+		};
 
-        // ==================== Mode Configuration ====================
-        const MODE_MINUTES = {
-            full: [0],
-            half: [30],
-            quarter: [15, 45],
-            five: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
-            any: Array.from({ length: 60 }, (_, i) => i),
-        };
+		function loadGlobalSettings() {
+			let ns = localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic';
+			let hf = localStorage.getItem(STORAGE_KEYS.hourFormat) || '12';
+			if (nodeConf) {
+				if (nodeConf.dialType) ns = nodeConf.dialType === 'blank' ? 'none' : nodeConf.dialType;
+				if (nodeConf.hourFormat) hf = nodeConf.hourFormat;
+			}
+			return {
+				activeModes:  JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
+				soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
+				showTimeHint: localStorage.getItem(STORAGE_KEYS.showTimeHint) !== 'false',
+				clockBg:      localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
+				handColor:    localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
+				numberStyle:  ns,
+				hourFormat:   hf,
+			};
+		}
 
-        const TOLERANCE_MAP = {
-            full: 5,
-            half: 4,
-            quarter: 3,
-            five: 2,
-            any: 2,
-        };
+		const globalSettings = loadGlobalSettings();
 
-        // ==================== DOM Elements ====================
-        const targetTimeEl = document.getElementById("targetTime");
-        const targetDisplay = document.getElementById("targetDisplay");
-        const userTimeEl = document.getElementById("userTime");
-        const feedbackEl = document.getElementById("feedback");
-        const scoreEl = document.getElementById("score");
-        const settingsIcon = document.getElementById("settingsIcon");
-        const settingsModal = document.getElementById("settingsModal");
-        const soundToggle = document.getElementById("soundToggle");
-        const timeHintToggle = document.getElementById("timeHintToggle");
-        const userTimeDisplay = document.getElementById("userTimeDisplay");
+		// ==================== Initialize Clock ====================
+		const clockContainer = document.getElementById('clockContainer');
+		let hasMovedHand = false;
+		let isChecked    = false;
 
-        // ==================== Sync UI to Global Settings ====================
-        document.querySelectorAll('.mode-toggle').forEach(btn => {
-            btn.classList.toggle('active', activeModes.has(btn.dataset.mode));
-        });
-        soundToggle.classList.toggle('active', soundEnabled);
-        timeHintToggle.classList.toggle('active', showTimeHint);
-        userTimeDisplay.classList.toggle('hidden', !showTimeHint);
+		const clock = new ClockRenderer(clockContainer, {
+			size: 'normal',
+			interactive: true,
+			showBrand: true,
+			showDigital: true,
+			showDate: true,
+			showSecondHand: false,
+			showBgControls: false,
+			handColor: globalSettings.handColor,
+			onTimeChange: () => {
+				if (!hasMovedHand) hasMovedHand = true;
+				updateUserTimeDisplay();
+			}
+		});
+		clock.setBackground(globalSettings.clockBg);
+		clock.setNumberStyle(globalSettings.numberStyle);
 
-        // ==================== Audio Setup ====================
-        function initAudioContext() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-        }
+		// ==================== DOM & Game Variables ====================
+		const targetTimeEl    = document.getElementById('targetTime');
+		const targetDisplay   = document.getElementById('targetDisplay');
+		const userTimeEl      = document.getElementById('userTime');
+		const feedbackEl      = document.getElementById('feedback');
+		const scoreEl         = document.getElementById('score');
+		const userTimeDisplay = document.getElementById('userTimeDisplay');
 
-        function playBeep(frequency, duration) {
-            if (!soundEnabled) return;
-            
-            initAudioContext();
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration / 1000);
-        }
+		let targetTime     = { h: 12, m: 0 };
+		let correctAnswers = 0;
+		let totalAnswers   = 0;
+		let attempts       = 0;
+		let soundEnabled   = globalSettings.soundEnabled;
+		let showTimeHint   = globalSettings.showTimeHint;
+		let activeModes    = new Set(globalSettings.activeModes);
+		let hourFormat     = globalSettings.hourFormat;
+		let audioContext   = null;
+		let attemptHistory = [];
 
-        function playSuccess() { playBeep(880, 150); }
-        function playError() { playBeep(220, 300); }
+		// ==================== Session State (star condition: 8+6) ====================
+		let session          = { total: 0, streak: 0, bestStreak: 0 };
+		let starAlreadyEarned = false;
 
-        // ==================== Time Functions ====================
-        function formatTime(hour, minute) {
-            const h = String(hour).padStart(2, "0");
-            const m = String(minute).padStart(2, "0");
-            return `${h}:${m}`;
-        }
+		// ==================== Sync UI to Global Settings ====================
+		document.querySelectorAll('.mode-toggle').forEach(btn => {
+			btn.classList.toggle('active', activeModes.has(btn.dataset.mode));
+		});
+		document.getElementById('soundToggle').classList.toggle('active', soundEnabled);
+		document.getElementById('timeHintToggle').classList.toggle('active', showTimeHint);
+		userTimeDisplay.classList.toggle('hidden', !showTimeHint);
 
-        function randomMinute() {
-            const allMinutes = new Set();
-            activeModes.forEach((mode) => {
-                MODE_MINUTES[mode].forEach((m) => allMinutes.add(m));
-            });
-            const minutesArray = Array.from(allMinutes);
-            return minutesArray[Math.floor(Math.random() * minutesArray.length)];
-        }
+		// ==================== Mode Configuration ====================
+		const MODE_MINUTES = {
+			full:    [0],
+			half:    [30],
+			quarter: [15, 45],
+			five:    [0,5,10,15,20,25,30,35,40,45,50,55],
+			any:     Array.from({length:60}, (_,i) => i),
+		};
 
-        function randomHour() {
-            return hourFormat === '24' ? Math.floor(Math.random() * 23) + 1 : Math.floor(Math.random() * 12) + 1;
-        }
+		const TOLERANCE_MAP = {
+			full:    5,
+			half:    4,
+			quarter: 3,
+			five:    2,
+			any:     2,
+		};
 
-        function getCurrentTolerance() {
-            let minTolerance = 10;
-            activeModes.forEach((mode) => {
-                if (TOLERANCE_MAP[mode] < minTolerance) {
-                    minTolerance = TOLERANCE_MAP[mode];
-                }
-            });
-            return minTolerance;
-        }
+		// ==================== Audio ====================
+		function initAudioContext() {
+			if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+			if (audioContext.state === 'suspended') audioContext.resume();
+		}
+		function playBeep(frequency, duration) {
+			if (!soundEnabled) return;
+			initAudioContext();
+			const osc  = audioContext.createOscillator();
+			const gain = audioContext.createGain();
+			osc.connect(gain);
+			gain.connect(audioContext.destination);
+			osc.frequency.value = frequency;
+			osc.type = 'sine';
+			gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+			gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+			osc.start(audioContext.currentTime);
+			osc.stop(audioContext.currentTime + duration / 1000);
+		}
+		function playSuccess() { playBeep(880, 150); }
+		function playError()   { playBeep(220, 300); }
 
-        function checkAnswerWithTolerance(userH, userM, correctH, correctM, toleranceMinutes) {
-            const userTotal = ((userH - 1) % 12 + 1) === 12 ? (userM === 0 ? 0 : 12 * 60 + userM) : ((userH - 1) % 12) * 60 + userM;
-            const correctTotal = ((correctH - 1) % 12 + 1) === 12 ? (correctM === 0 ? 0 : 12 * 60 + correctM) : ((correctH - 1) % 12) * 60 + correctM;
-            
-            let diff = Math.abs(userTotal - correctTotal);
-            if (diff > 360) diff = 720 - diff;
-            
-            return diff <= toleranceMinutes;
-        }
+		// ==================== Time Helpers ====================
+		function formatTime(hour, minute) {
+			return String(hour).padStart(2,'0') + ':' + String(minute).padStart(2,'0');
+		}
 
-        function updateUserTimeDisplay() {
-            const time = clock.getTime();
-            userTimeEl.textContent = formatTime(time.h, time.m);
-        }
+		function getCurrentTolerance() {
+			let minTol = 10;
+			activeModes.forEach(m => { if (TOLERANCE_MAP[m] < minTol) minTol = TOLERANCE_MAP[m]; });
+			return minTol;
+		}
 
-        // ==================== Game Logic ====================
-        function startNewQuestion() {
-            const hour = randomHour();
-            const minute = randomMinute();
-            targetTime = { h: hour, m: minute };
-            
-            // Reset clock to 12:00
-            clock.setTime(12, 0);
-            clock.hideGhostHands();
-            
-            // Update displays
-            targetTimeEl.textContent = formatTime(targetTime.h, targetTime.m);
-            updateUserTimeDisplay();
-            
-            // Reset UI
-            isChecked = false;
-            hasMovedHand = false;
-            attempts = 0;
-            feedbackEl.textContent = '';
-            feedbackEl.className = 'feedback';
-            targetDisplay.classList.remove('correct', 'wrong');
-        }
+		function checkAnswerWithTolerance(userH, userM, correctH, correctM, tol) {
+			const toMin = (h, m) => {
+				const h12 = ((h - 1) % 12 + 12) % 12;
+				return h12 * 60 + m;
+			};
+			let diff = Math.abs(toMin(userH, userM) - toMin(correctH, correctM));
+			if (diff > 360) diff = 720 - diff;
+			return diff <= tol;
+		}
 
-        function handleCheck() {
-            if (isChecked || !hasMovedHand) return;
+		function updateUserTimeDisplay() {
+			const t = clock.getTime();
+			userTimeEl.textContent = formatTime(t.h, t.m);
+		}
 
-            initAudioContext();
+		// ==================== Progress Bar ====================
+		function updateProgressBar() {
+			const correctPct = Math.min(100, Math.round((session.total / 8) * 100));
+			const streakPct  = Math.min(100, Math.round((session.bestStreak / 6) * 100));
+			document.getElementById('spCorrect').style.width = correctPct + '%';
+			document.getElementById('spStreak').style.width  = streakPct  + '%';
+			document.getElementById('spCorrectTxt').textContent = session.total + '/8';
+			document.getElementById('spStreakTxt').textContent  = session.bestStreak + '/6';
+			if (session.total >= 8)      document.getElementById('spCorrect').classList.add('done');
+			if (session.bestStreak >= 6) document.getElementById('spStreak').classList.add('done');
+		}
 
-            const userTime = clock.getTime();
-            const tolerance = getCurrentTolerance();
-            const isCorrect = checkAnswerWithTolerance(
-                userTime.h, userTime.m,
-                targetTime.h, targetTime.m,
-                tolerance
-            );
-            const correctTimeText = formatTime(targetTime.h, targetTime.m);
+		// ==================== Game Logic ====================
+		function startNewQuestion() {
+			const q = generateQuestion(
+				nodeConf || { minutes: (() => {
+					const s = new Set();
+					activeModes.forEach(m => MODE_MINUTES[m].forEach(v => s.add(v)));
+					return Array.from(s);
+				})(), hourFormat },
+				attemptHistory
+			);
+			targetTime = { h: q.hour, m: q.minute };
+			attemptHistory.push({ hour: q.hour, minute: q.minute });
+			if (attemptHistory.length > 10) attemptHistory.shift();
 
-            if (isCorrect) {
-                isChecked = true;
-                if (attempts === 0) {
-                    totalAnswers++;
-                    correctAnswers++;
-                    scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
-                }
-                feedbackEl.textContent = `🎉 Świetnie!`;
-                feedbackEl.className = 'feedback success';
-                targetDisplay.classList.add('correct');
-                playSuccess();
-                setTimeout(startNewQuestion, 2000);
-            } else {
-                playError();
-                if (attempts === 0) {
-                    totalAnswers++;
-                    scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
-                    attempts = 1;
-                    feedbackEl.textContent = `Spróbuj jeszcze raz!`;
-                    feedbackEl.className = 'feedback bad';
-                    targetDisplay.classList.add('wrong');
-                    setTimeout(() => {
-                        targetDisplay.classList.remove('wrong');
-                        hasMovedHand = false;
-                        feedbackEl.textContent = '';
-                        feedbackEl.className = 'feedback';
-                    }, 800);
-                } else {
-                    isChecked = true;
-                    feedbackEl.textContent = `Prawidłowa: ${correctTimeText}.`;
-                    feedbackEl.className = 'feedback error';
-                    targetDisplay.classList.add('wrong');
-                    clock.showGhostHands(targetTime.h, targetTime.m);
-                    setTimeout(startNewQuestion, 2500);
-                }
-            }
-        }
+			// Reset clock to 12:00
+			clock.setTime(12, 0);
+			clock.hideGhostHands();
 
-        // ==================== Click target to check ====================
-        targetDisplay.addEventListener("click", handleCheck);
+			// Update displays
+			targetTimeEl.textContent = formatTime(targetTime.h, targetTime.m);
+			updateUserTimeDisplay();
 
-        // ==================== Modal & Settings ====================
-        settingsIcon.addEventListener("click", () => {
-            settingsModal.classList.add("active");
-        });
+			// Reset UI
+			isChecked   = false;
+			hasMovedHand = false;
+			attempts    = 0;
+			feedbackEl.textContent = '';
+			feedbackEl.className   = 'feedback';
+			targetDisplay.classList.remove('correct', 'wrong');
+		}
 
-        settingsModal.addEventListener("click", (e) => {
-            if (e.target === settingsModal) {
-                settingsModal.classList.remove("active");
-            }
-        });
+		function handleCheck() {
+			if (isChecked || !hasMovedHand) return;
+			initAudioContext();
 
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-                settingsModal.classList.remove("active");
-            }
-        });
+			const userTime    = clock.getTime();
+			const tolerance   = getCurrentTolerance();
+			const isCorrect   = checkAnswerWithTolerance(
+				userTime.h, userTime.m, targetTime.h, targetTime.m, tolerance
+			);
+			const correctText = formatTime(targetTime.h, targetTime.m);
 
-        document.querySelectorAll(".mode-toggle").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                const mode = btn.dataset.mode;
-                if (activeModes.has(mode)) {
-                    if (activeModes.size > 1) {
-                        activeModes.delete(mode);
-                        btn.classList.remove("active");
-                    }
-                } else {
-                    activeModes.add(mode);
-                    btn.classList.add("active");
-                }
-            });
-        });
+			if (isCorrect) {
+				isChecked = true;
+				if (attempts === 0) {
+					totalAnswers++;
+					correctAnswers++;
+					scoreEl.textContent = correctAnswers + ' / ' + totalAnswers;
 
-        soundToggle.addEventListener("click", () => {
-            soundEnabled = !soundEnabled;
-            soundToggle.classList.toggle("active");
-            if (soundEnabled) {
-                initAudioContext();
-                playBeep(660, 100);
-            }
-        });
+					// Session tracking
+					session.streak++;
+					session.total++;
+					session.bestStreak = Math.max(session.bestStreak, session.streak);
+					if (isExpedition) updateProgressBar();
 
-        timeHintToggle.addEventListener("click", () => {
-            showTimeHint = !showTimeHint;
-            timeHintToggle.classList.toggle("active");
-            userTimeDisplay.classList.toggle("hidden", !showTimeHint);
-        });
+					// Report to game state
+					if (isExpedition && expeditionNode) {
+						reportResult(expeditionNode, expeditionStar, true);
+					} else {
+						reportQuickGameResult(true);
+					}
 
-        const helpBtn = document.getElementById('helpBtn');
-        const hintArea = document.getElementById('hintArea');
-        helpBtn.addEventListener('click', () => {
-            hintArea.classList.toggle('active');
-            helpBtn.classList.toggle('active');
-        });
+					// Check star condition
+					if (isExpedition && !starAlreadyEarned && session.total >= 8 && session.bestStreak >= 6) {
+						starAlreadyEarned = true;
+						markStarCompleted(expeditionNode, expeditionStar, session.bestStreak);
+						setTimeout(showStarOverlay, 2000);
+						feedbackEl.textContent = '🎉 Świetnie!';
+						feedbackEl.className   = 'feedback ok';
+						targetDisplay.classList.add('correct');
+						playSuccess();
+						return;
+					}
+				}
+				feedbackEl.textContent = '🎉 Świetnie!';
+				feedbackEl.className   = 'feedback ok';
+				targetDisplay.classList.add('correct');
+				playSuccess();
+				setTimeout(startNewQuestion, 2000);
+			} else {
+				playError();
+				if (attempts === 0) {
+					totalAnswers++;
+					scoreEl.textContent = correctAnswers + ' / ' + totalAnswers;
+					attempts = 1;
 
-        // ==================== Initialize ====================
-        startNewQuestion();
-    </script>
-<script src="transitions.js"></script>
+					// Session: streak reset on first wrong attempt
+					session.streak = 0;
+					if (isExpedition) updateProgressBar();
+
+					// Report wrong
+					if (isExpedition && expeditionNode) {
+						reportResult(expeditionNode, expeditionStar, false);
+					} else {
+						reportQuickGameResult(false);
+					}
+
+					feedbackEl.textContent = 'Spróbuj jeszcze raz!';
+					feedbackEl.className   = 'feedback bad';
+					targetDisplay.classList.add('wrong');
+					setTimeout(() => {
+						targetDisplay.classList.remove('wrong');
+						hasMovedHand = false;
+						feedbackEl.textContent = '';
+						feedbackEl.className   = 'feedback';
+					}, 800);
+				} else {
+					isChecked = true;
+					feedbackEl.textContent = 'Prawidłowa: ' + correctText + '.';
+					feedbackEl.className   = 'feedback error';
+					targetDisplay.classList.add('wrong');
+					clock.showGhostHands(targetTime.h, targetTime.m);
+					setTimeout(startNewQuestion, 2500);
+				}
+			}
+		}
+
+		targetDisplay.addEventListener('click', handleCheck);
+
+		// ==================== Star Overlay ====================
+		function showStarOverlay() {
+			const starLabels = ['⭐', '⭐⭐', '⭐⭐⭐'];
+			document.getElementById('starOverlayStars').textContent = starLabels[expeditionStar - 1] || '⭐⭐⭐';
+			document.getElementById('starOverlayTitle').textContent = 'Gwiazdka zdobyta!';
+			document.getElementById('starOverlaySubtitle').textContent =
+				'Poprawnych: ' + session.total + '  •  Najlepsza seria: ' + session.bestStreak;
+
+			// ustaw.html is always star 3 — no "Zagraj dalej"
+			document.getElementById('starOverlayNext').style.display = 'none';
+			document.getElementById('starOverlayMap').textContent    = '← Wróć do Mapy';
+			document.getElementById('starOverlay').classList.add('active');
+		}
+
+		// ==================== FAB + Toast ====================
+		let _hintOpen = false, _hintTimer = null;
+
+		function toggleHint() { _hintOpen ? closeHint() : openHint(); }
+
+		function openHint() {
+			_hintOpen = true;
+			const fab   = document.getElementById('fabHint');
+			const toast = document.getElementById('hintToast');
+			const bar   = document.getElementById('hintBar');
+			fab.classList.add('active');
+			toast.classList.remove('auto-close');
+			toast.classList.add('visible');
+			bar.style.transition = 'none';
+			bar.style.transform  = 'scaleX(0)';
+			void bar.offsetWidth;
+			toast.classList.add('auto-close');
+			clearTimeout(_hintTimer);
+			_hintTimer = setTimeout(closeHint, 5000);
+		}
+
+		function closeHint() {
+			_hintOpen = false;
+			clearTimeout(_hintTimer);
+			document.getElementById('fabHint').classList.remove('active');
+			document.getElementById('hintToast').classList.remove('visible', 'auto-close');
+		}
+
+		// ==================== Settings Modal ====================
+		const settingsIcon  = document.getElementById('settingsIcon');
+		const settingsModal = document.getElementById('settingsModal');
+
+		if (settingsIcon) {
+			settingsIcon.addEventListener('click', () => settingsModal.classList.add('active'));
+		}
+		settingsModal.addEventListener('click', e => {
+			if (e.target === settingsModal) settingsModal.classList.remove('active');
+		});
+		document.addEventListener('keydown', e => {
+			if (e.key === 'Escape') settingsModal.classList.remove('active');
+		});
+
+		document.querySelectorAll('.mode-toggle').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const mode = btn.dataset.mode;
+				if (activeModes.has(mode)) {
+					if (activeModes.size > 1) { activeModes.delete(mode); btn.classList.remove('active'); }
+				} else {
+					activeModes.add(mode); btn.classList.add('active');
+				}
+			});
+		});
+
+		document.getElementById('soundToggle').addEventListener('click', () => {
+			soundEnabled = !soundEnabled;
+			document.getElementById('soundToggle').classList.toggle('active');
+			if (soundEnabled) { initAudioContext(); playBeep(660, 100); }
+		});
+
+		document.getElementById('timeHintToggle').addEventListener('click', () => {
+			showTimeHint = !showTimeHint;
+			document.getElementById('timeHintToggle').classList.toggle('active');
+			userTimeDisplay.classList.toggle('hidden', !showTimeHint);
+		});
+
+		// ==================== Start ====================
+		startNewQuestion();
+	</script>
+	<script src="transitions.js"></script>
 </body>
 </html>

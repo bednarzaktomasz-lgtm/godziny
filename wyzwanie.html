@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wyzwanie Dnia — Mistrz Czasu</title>
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    /* ===== WYZWANIE — placeholder styles ===== */
+    .coming-soon-card {
+      width: var(--content-width);
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      padding: clamp(40px, 8vmin, 72px) clamp(24px, 4vmin, 48px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(14px, 2.5vmin, 24px);
+      text-align: center;
+    }
+    .coming-soon-icon  { font-size: clamp(3rem, 8vmin, 5rem); }
+    .coming-soon-title { font-size: clamp(1.3rem, 3vmin, 2rem); font-weight: 700; }
+    .coming-soon-desc  { font-size: clamp(0.85rem, 1.6vmin, 1.05rem); color: #888; line-height: 1.6; max-width: 320px; }
+    .coming-soon-tag {
+      font-size: clamp(0.72rem, 1.3vmin, 0.85rem);
+      font-weight: 700;
+      color: #555;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+    .topbar-spacer { width: var(--icon-size); }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="start.html" title="Wróć do menu">
+      <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </a>
+    <div class="topbar-right">
+      <div class="topbar-spacer"></div>
+    </div>
+  </div>
+
+  <div class="coming-soon-card">
+    <div class="coming-soon-icon">⚡</div>
+    <div class="coming-soon-title">Wyzwanie Dnia</div>
+    <div class="coming-soon-desc">
+      Ta funkcja jest w trakcie budowy.<br>
+      Wróć wkrótce po specjalne codzienne zadania z wyjątkowymi nagrodami!
+    </div>
+    <div class="coming-soon-tag">🔧 Faza 7</div>
+  </div>
+
+  <script src="transitions.js"></script>
+</body>
+</html>

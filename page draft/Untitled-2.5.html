@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mistrz Czasu — Prototyp Mapy #3 (Ścieżka)</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #000;
+      --card:      #111;
+      --card-hover:#1a1a1a;
+      --border:    #222;
+      --border-hi: #444;
+      --text:      #f0f0f0;
+      --muted:     #888;
+      --very-muted:#555;
+      --accent:    #bb86fc;   /* fioletowy — nowy UI */
+      --gold:      #ffd700;
+      --success:   #16a34a;
+      --blue:      #2563eb;
+      --locked-bg: #0d0d0d;
+
+      --tile-w:    min(280px, 80vw);
+      --line-w:    2px;
+      --dot-size:  12px;
+      --gap:       clamp(80px, 18vmin, 160px);  /* długie odcinki linii = scrollowanie */
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ===== TOPBAR (wzorzec z layout.css) ===== */
+    .topbar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(10px, 2vmin, 20px) clamp(14px, 3vw, 32px);
+      position: sticky;
+      top: 0;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      font-size: clamp(1.4rem, 3.5vmin, 2rem);
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      width: clamp(36px, 5vmin, 52px);
+      height: clamp(36px, 5vmin, 52px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .player-info { display: flex; flex-direction: column; gap: 2px; }
+    .player-name { font-size: clamp(0.85rem, 1.8vmin, 1.1rem); font-weight: 700; }
+
+    .xp-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .xp-label {
+      font-size: clamp(0.65rem, 1.2vmin, 0.8rem);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .xp-bar {
+      width: clamp(60px, 12vw, 120px);
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      width: 35%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1.5vmin, 16px);
+    }
+
+    .seconds-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(4px, 0.8vmin, 8px) clamp(10px, 1.5vmin, 16px);
+      font-size: clamp(0.8rem, 1.6vmin, 1rem);
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* ===== NAGŁÓWEK MAPY ===== */
+    .map-header {
+      text-align: center;
+      padding: clamp(24px, 5vmin, 48px) 20px clamp(16px, 3vmin, 32px);
+    }
+    .map-title {
+      font-size: clamp(1.4rem, 4vmin, 2.4rem);
+      font-weight: 700;
+      color: var(--accent);
+    }
+    /* .map-subtitle usunięty — podpowiedź przeniesiona do FAB+Toast */
+
+    /* ===== ŚCIEŻKA — główny kontener ===== */
+    .path-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding: 0 20px;
+    }
+
+    /* Segmenty linii między kafelkami — każdy węzeł rysuje linię w dół przez ::after */
+    .path-node::after {
+      content: '';
+      position: absolute;
+      bottom: calc(-1 * var(--gap));
+      left: calc(50% - var(--line-w) / 2);
+      width: var(--line-w);
+      height: var(--gap);
+      background: var(--border);  /* domyślnie: szara linia (zablokowane) */
+      z-index: 0;
+    }
+
+    /* done → current: zieleń → fiolet */
+    .path-node.done:has(+ .path-node.current)::after {
+      background: linear-gradient(to bottom,
+        color-mix(in srgb, var(--success) 70%, transparent),
+        color-mix(in srgb, var(--accent)  70%, transparent)
+      );
+    }
+
+    /* done → done: jednolita zieloń */
+    .path-node.done:has(+ .path-node.done)::after {
+      background: color-mix(in srgb, var(--success) 60%, transparent);
+    }
+
+    /* current → locked: fiolet → szarość */
+    .path-node.current::after {
+      background: linear-gradient(to bottom,
+        color-mix(in srgb, var(--accent) 70%, transparent),
+        var(--border)
+      );
+    }
+
+    /* ===== WĘZEŁ ŚCIEŻKI ===== */
+    .path-node {
+      position: relative;
+      z-index: 1;
+      width: var(--tile-w);
+      margin-bottom: var(--gap);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Kafelek — kwadratowy, układ pionowy (jak grid-item z Untitled-1) */
+    .node-tile {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: clamp(16px, 3vmin, 26px);
+      aspect-ratio: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(10px, 2vmin, 18px);
+      padding: clamp(16px, 3vmin, 28px);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .node-tile:hover {
+      background: var(--card-hover);
+      border-color: var(--border-hi);
+      transform: translateY(-2px);
+    }
+
+    /* Stan: aktualny (w toku) */
+    .path-node.current .node-tile {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 24px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+    .path-node.current .node-tile:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Stan: ukończony */
+    .path-node.done .node-tile {
+      border-color: color-mix(in srgb, var(--success) 60%, var(--border));
+    }
+
+    /* Stan: zablokowany */
+    .path-node.locked .node-tile {
+      background: var(--locked-bg);
+      border-color: var(--border);
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+    .path-node.locked .node-tile:hover {
+      background: var(--locked-bg);
+      border-color: var(--border);
+      transform: none;
+    }
+
+    /* Ikona węzła — duża, wycentrowana */
+    .node-icon {
+      font-size: clamp(2.8rem, 8vmin, 5rem);
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Treść kafelka — wycentrowana */
+    .node-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(6px, 1.2vmin, 10px);
+      width: 100%;
+    }
+
+    .node-name {
+      font-size: clamp(0.85rem, 1.8vmin, 1.1rem);
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.3;
+      margin-bottom: 0;
+    }
+    .path-node.locked .node-name { color: var(--muted); }
+
+    /* Gwiazdki */
+    .node-stars {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-bottom: 0;
+    }
+    .star {
+      font-size: clamp(0.9rem, 1.8vmin, 1.2rem);
+      opacity: 0.25;
+      transition: opacity 0.2s;
+    }
+    .star.earned { opacity: 1; }
+
+    /* Pasek postępu wewnątrz kafelka */
+    .node-progress-bar {
+      height: 4px;
+      width: 70%;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .node-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .path-node.done .node-progress-fill { background: var(--success); }
+
+    /* Status badge w prawym górnym rogu */
+    .node-badge {
+      position: absolute;
+      top: clamp(8px, 1.5vmin, 14px);
+      right: clamp(10px, 2vmin, 18px);
+      font-size: clamp(0.65rem, 1.2vmin, 0.8rem);
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .badge-done    { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); }
+    .badge-current { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+    .badge-locked  { background: transparent; color: var(--very-muted); }
+
+    /* Kropka na linii (łącząca kafelek z linią) */
+    .node-dot {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--dot-size);
+      height: var(--dot-size);
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      z-index: 2;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    /* Górna kropka (wejście linii w kafelek) */
+    .node-dot.top {
+      top: calc(-1 * var(--dot-size) / 2);
+    }
+    /* Dolna kropka (wyjście linii z kafelka) */
+    .node-dot.bottom {
+      bottom: calc(-1 * var(--dot-size) / 2);
+    }
+
+    .path-node.done .node-dot {
+      border-color: var(--success);
+      background: var(--success);
+    }
+    .path-node.current .node-dot {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+    }
+    .path-node.current .node-dot.bottom {
+      /* dolna kropka aktualnego węzła — poza postępem */
+      background: var(--bg);
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    /* ===== POPUP WYBORU GWIAZDKI ===== */
+    .star-popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      transition: background 0.22s ease, visibility 0s 0.22s;
+      padding: clamp(16px, 3vmin, 32px) 20px;
+    }
+    .star-popup-overlay.active {
+      background: rgba(0,0,0,0.7);
+      visibility: visible;
+      transition: background 0.22s ease, visibility 0s 0s;
+    }
+
+    .star-popup {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: clamp(16px, 3vmin, 28px);
+      padding: clamp(20px, 3.5vmin, 36px);
+      width: min(440px, 92vw);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2vmin, 20px);
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .star-popup-overlay.active .star-popup {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .popup-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+    .popup-icon { font-size: clamp(2rem, 5vmin, 3rem); }
+    .popup-title {
+      font-size: clamp(1rem, 2.2vmin, 1.4rem);
+      font-weight: 700;
+    }
+
+    .popup-divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    .popup-label {
+      font-size: clamp(0.7rem, 1.3vmin, 0.85rem);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .star-options { display: flex; flex-direction: column; gap: clamp(8px, 1.5vmin, 14px); }
+
+    .star-opt-btn {
+      display: flex;
+      align-items: center;
+      gap: clamp(10px, 1.8vmin, 16px);
+      background: #000;
+      border: 2px solid var(--border);
+      border-radius: clamp(10px, 1.8vmin, 16px);
+      padding: clamp(10px, 1.8vmin, 18px) clamp(14px, 2vmin, 20px);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      text-align: left;
+      width: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .star-opt-btn:hover { background: var(--card-hover); border-color: var(--border-hi); }
+    .star-opt-btn.earned:hover { border-color: var(--accent); }
+
+    .star-opt-game-icon { font-size: clamp(1.2rem, 2.5vmin, 1.6rem); flex-shrink: 0; }
+
+    .star-opt-body { flex: 1; min-width: 0; }
+    .star-opt-name {
+      font-size: clamp(0.9rem, 1.8vmin, 1.1rem);
+      font-weight: 600;
+    }
+
+    .star-opt-stars {
+      font-size: clamp(0.85rem, 1.6vmin, 1.05rem);
+      flex-shrink: 0;
+      white-space: nowrap;
+      letter-spacing: 2px;
+    }
+
+    .star-opt-status {
+      font-size: clamp(0.75rem, 1.4vmin, 0.9rem);
+      flex-shrink: 0;
+    }
+    .status-done    { color: var(--success); font-weight: 700; }
+    .status-play    { color: var(--accent);  font-weight: 700; }
+    .status-locked  { color: var(--very-muted); }
+
+    /* ===== FAB ? + TOAST ===== */
+    .fab-hint {
+      position: fixed;
+      bottom: 24px;
+      right: 20px;
+      z-index: 300;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid #333;
+      color: var(--very-muted);
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    }
+    .fab-hint:hover { color: var(--text); border-color: #555; }
+    .fab-hint.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: rotate(15deg);
+    }
+
+    .hint-toast {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      z-index: 299;
+      width: min(360px, calc(100vw - 40px));
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .hint-toast.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .hint-toast-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .hint-toast-body { flex: 1; }
+    .hint-toast-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .hint-toast-msg {
+      font-size: 0.88rem;
+      color: #ccc;
+      line-height: 1.5;
+    }
+    .hint-toast-bar {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 0 0 16px 16px;
+      width: 100%;
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+    .hint-toast.auto-close .hint-toast-bar {
+      transform: scaleX(1);
+      transition: transform 5s linear;
+    }
+
+
+
+    /* ===== KONIEC ŚCIEŻKI ===== */
+    .path-end {
+      position: relative;
+      z-index: 1;
+      margin-top: calc(var(--gap) / 2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .path-end-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--locked-bg);
+      border: 3px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: var(--very-muted);
+    }
+    .path-end-label {
+      font-size: clamp(0.75rem, 1.4vmin, 0.9rem);
+      color: var(--very-muted);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="avatar">🧑‍🚀</div>
+      <div class="player-info">
+        <div class="player-name">Kuba</div>
+        <div class="xp-bar-wrap">
+          <span class="xp-label">Poz. 2</span>
+          <div class="xp-bar"><div class="xp-fill"></div></div>
+          <span class="xp-label">350 / 1000 XP</span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="seconds-badge">⏳ 240</div>
+    </div>
+  </div>
+
+  <!-- NAGŁÓWEK -->
+  <div class="map-header">
+    <div class="map-title">🗺️ Wyprawa</div>
+  </div>
+
+  <!-- ŚCIEŻKA -->
+  <div class="path-container" id="pathContainer">
+
+
+    <!-- WĘZEŁ 1 — UKOŃCZONY -->
+    <div class="path-node done" data-node="full-hours">
+      <div class="node-tile" onclick="openPopup('full-hours')">
+        <span class="node-badge badge-done">✓ Ukończone</span>
+        <div class="node-icon">🏝️</div>
+        <div class="node-body">
+          <div class="node-name">Wyspa Pełnych Godzin</div>
+          <div class="node-stars">
+            <span class="star earned">⭐</span>
+            <span class="star earned">⭐</span>
+            <span class="star earned">⭐</span>
+          </div>
+          <div class="node-progress-bar">
+            <div class="node-progress-fill" style="width: 100%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="node-dot bottom"></div>
+    </div>
+
+    <!-- WĘZEŁ 2 — AKTUALNY -->
+    <div class="path-node current" data-node="quarters">
+      <div class="node-dot top"></div>
+      <div class="node-tile" onclick="openPopup('quarters')">
+        <span class="node-badge badge-current">▶ W toku</span>
+        <div class="node-icon">🌊</div>
+        <div class="node-body">
+          <div class="node-name">Zatoka Kwadransów</div>
+          <div class="node-stars">
+            <span class="star earned">⭐</span>
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+          </div>
+          <div class="node-progress-bar">
+            <div class="node-progress-fill" style="width: 40%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="node-dot bottom"></div>
+    </div>
+
+    <!-- WĘZEŁ 3 — ZABLOKOWANY -->
+    <div class="path-node locked" data-node="half-past">
+      <div class="node-dot top"></div>
+      <div class="node-tile">
+        <span class="node-badge badge-locked">🔒</span>
+        <div class="node-icon">🏔️</div>
+        <div class="node-body">
+          <div class="node-name">Góry "Wpół do"</div>
+          <div class="node-stars">
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+          </div>
+          <div class="node-progress-bar">
+            <div class="node-progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="node-dot bottom"></div>
+    </div>
+
+    <!-- WĘZEŁ 4 — ZABLOKOWANY -->
+    <div class="path-node locked" data-node="roman">
+      <div class="node-dot top"></div>
+      <div class="node-tile">
+        <span class="node-badge badge-locked">🔒</span>
+        <div class="node-icon">🏛️</div>
+        <div class="node-body">
+          <div class="node-name">Pustynia Cyfr Rzymskich</div>
+          <div class="node-stars">
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+          </div>
+          <div class="node-progress-bar">
+            <div class="node-progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="node-dot bottom"></div>
+    </div>
+
+    <!-- WĘZEŁ 5 — ZABLOKOWANY -->
+    <div class="path-node locked" data-node="twenty-four-h">
+      <div class="node-dot top"></div>
+      <div class="node-tile">
+        <span class="node-badge badge-locked">🔒</span>
+        <div class="node-icon">🌃</div>
+        <div class="node-body">
+          <div class="node-name">Labirynt 24h</div>
+          <div class="node-stars">
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+          </div>
+          <div class="node-progress-bar">
+            <div class="node-progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="node-dot bottom"></div>
+    </div>
+
+    <!-- Koniec ścieżki -->
+    <div class="path-end">
+      <div class="path-end-dot">🏆</div>
+      <div class="path-end-label">Mistrz Czasu</div>
+    </div>
+
+  </div>
+
+  <!-- FAB ? -->
+  <button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
+
+  <!-- HINT TOAST -->
+  <div class="hint-toast" id="hintToast">
+    <span class="hint-toast-icon">💡</span>
+    <div class="hint-toast-body">
+      <div class="hint-toast-title">Jak to działa?</div>
+      <div class="hint-toast-msg">Podążaj ścieżką i zdobywaj gwiazdki na każdej wyspie. Zdobądź ⭐ żeby odblokować kolejną wyspę. Każda wyspa ma 3 ćwiczenia — od łatwego do trudnego.</div>
+    </div>
+    <div class="hint-toast-bar" id="hintBar"></div>
+  </div>
+
+  <!-- POPUP WYBORU GWIAZDKI -->
+  <div class="star-popup-overlay" id="starPopup" onclick="closePopupOnBackdrop(event)">
+    <div class="star-popup">
+      <div class="popup-header">
+        <div class="popup-icon" id="popupIcon">🌊</div>
+        <div class="popup-title" id="popupTitle">Zatoka Kwadransów</div>
+      </div>
+      <div class="popup-divider"></div>
+      <div class="star-options" id="starOptions">
+          <!-- generowane przez JS -->
+        </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ===== DATA =====
+    const NODES = {
+      'full-hours': {
+        icon: '🏝️', name: 'Wyspa Pełnych Godzin',
+        stars: [
+          { label: '⭐ Wybierz Godzinę', desc: 'Kliknij właściwą odpowiedź', done: true,  url: 'godziny.html?node=full-hours&star=1' },
+          { label: '⭐⭐ Wpisz Godzinę',  desc: 'Wpisz co widzisz na zegarze',  done: true,  url: 'wpisz.html?node=full-hours&star=2' },
+          { label: '⭐⭐⭐ Ustaw Wskazówki', desc: 'Ustaw dokładny czas',        done: true,  url: 'ustaw.html?node=full-hours&star=3' },
+        ]
+      },
+      'quarters': {
+        icon: '🌊', name: 'Zatoka Kwadransów',
+        stars: [
+          { label: '⭐ Wybierz Godzinę', desc: 'Kliknij właściwą odpowiedź', done: true,  url: 'godziny.html?node=quarters&star=1' },
+          { label: '⭐⭐ Wpisz Godzinę',  desc: 'Wpisz co widzisz na zegarze',  done: false, url: 'wpisz.html?node=quarters&star=2' },
+          { label: '⭐⭐⭐ Ustaw Wskazówki', desc: 'Ustaw dokładny czas',        done: false, url: 'ustaw.html?node=quarters&star=3' },
+        ]
+      },
+    };
+
+    let currentNode = null;
+
+    function openPopup(nodeId) {
+      const node = NODES[nodeId];
+      if (!node) return;
+      currentNode = nodeId;
+
+      document.getElementById('popupIcon').textContent  = node.icon;
+      document.getElementById('popupTitle').textContent = node.name;
+
+      const container = document.getElementById('starOptions');
+      container.innerHTML = '';
+
+      // Znajdź indeks pierwszej niezdobytej gwiazdki
+      const nextStarIdx = node.stars.findIndex(s => !s.done);
+      const GAME_ICONS  = ['🔵', '✏️', '⚙️'];
+      const STAR_LABELS = ['⭐', '⭐⭐', '⭐⭐⭐'];
+
+      node.stars.forEach((star, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'star-opt-btn' + (star.done ? ' earned' : '');
+
+        const isNext   = idx === nextStarIdx;
+        const isLocked = !star.done && !isNext;
+
+        let statusHtml;
+        if (star.done)        statusHtml = `<span class="star-opt-status status-done">✓</span>`;
+        else if (isNext)      statusHtml = `<span class="star-opt-status status-play">▶</span>`;
+        else                  statusHtml = `<span class="star-opt-status status-locked">🔒</span>`;
+
+        const gameIcon = GAME_ICONS[idx]  ?? '🎮';
+        const starLabel = STAR_LABELS[idx] ?? '⭐';
+        const gameName  = star.label.replace(/^[\u2B50\uFE0F\u2605 ]+/, '').trim();
+
+        btn.innerHTML = `
+          <span class="star-opt-game-icon">${gameIcon}</span>
+          <div class="star-opt-body">
+            <div class="star-opt-name">${gameName}</div>
+          </div>
+          <span class="star-opt-stars">${starLabel}</span>
+          ${statusHtml}
+        `;
+
+        if (!isLocked) {
+          btn.addEventListener('click', () => {
+            closePopup();
+            // W realnej implementacji: location.href = star.url;
+            alert(`Nawigacja do: ${star.url}`);
+          });
+        } else {
+          btn.style.opacity = '0.45';
+          btn.style.cursor  = 'default';
+        }
+
+        container.appendChild(btn);
+      });
+
+      document.getElementById('starPopup').classList.add('active');
+    }
+
+    function closePopup() {
+      document.getElementById('starPopup').classList.remove('active');
+    }
+
+    function closePopupOnBackdrop(e) {
+      if (e.target === document.getElementById('starPopup')) closePopup();
+    }
+
+    // ===== FAB HINT =====
+    let _hintOpen = false;
+    let _hintTimer = null;
+
+    function toggleHint() {
+      _hintOpen ? closeHint() : openHint();
+    }
+
+    function openHint() {
+      _hintOpen = true;
+      const fab  = document.getElementById('fabHint');
+      const toast = document.getElementById('hintToast');
+      const bar   = document.getElementById('hintBar');
+      fab.classList.add('active');
+      toast.classList.remove('auto-close');
+      toast.classList.add('visible');
+      bar.style.transition = 'none';
+      bar.style.transform  = 'scaleX(0)';
+      void bar.offsetWidth;  // reflow
+      toast.classList.add('auto-close');
+      clearTimeout(_hintTimer);
+      _hintTimer = setTimeout(closeHint, 5000);
+    }
+
+    function closeHint() {
+      _hintOpen = false;
+      clearTimeout(_hintTimer);
+      document.getElementById('fabHint').classList.remove('active');
+      const toast = document.getElementById('hintToast');
+      toast.classList.remove('visible', 'auto-close');
+    }
+  </script>
+
+</body>
+</html>

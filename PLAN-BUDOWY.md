@@ -190,14 +190,14 @@ AVATARS = {
 
 ### Kroki:
 
-- [ ] **2.1** Przebudowa `start.html` — Hub z trzema kartami wyboru:
+- [x] **2.1** Przebudowa `start.html` — Hub z trzema kartami wyboru:
   - **Top Bar**: Avatar profilu (emoji) + imię, pasek XP, licznik Sekund, przycisk "Zmień gracza" → profil.html
   - **Centrum strony**: Trzy duże karty nawigacyjne w pionie:
     - 🗺️ **Wyprawa** — opis: "Podążaj ścieżką i zdobywaj gwiazdki" → `mapa.html`
     - ⚡ **Wyzwanie Dnia** — opis: "Codzienne zadanie, wyjątkowe nagrody" → `wyzwanie.html` (z oznaczeniem ✓ jeśli dziś ukończone)
     - 🎮 **Szybka Gra** — opis: "Wybierz dowolny tryb i ćwicz" → `szybka-gra.html`
   - **Dolny pasek**: Przyciski Garderoba + Trofea (placeholder)
-- [ ] **2.2** Nowa strona `szybka-gra.html` — wybór trybu gry (4 opcje, od najswobodniejszej):
+- [x] **2.2** Nowa strona `szybka-gra.html` — wybór trybu gry (4 opcje, od najswobodniejszej):
   - 🕐 **Wolna Nauka** (`nauka.html`) — ruszaj wskazówkami, patrz co się dzieje — bez nagród, czysta zabawa
   - 🔵 **Wybierz Godzinę** (`godziny.html`) — kliknij właściwą odpowiedź
   - ✏️ **Wpisz Godzinę** (`wpisz.html`) — wpisz co widzisz
@@ -206,8 +206,8 @@ AVATARS = {
   - Nagroda za Wybierz/Wpisz/Ustaw: +5 Sekund za poprawną, **limit 20 poprawnych dziennie** (`stats.quickGameTodayCount` + `stats.quickGameLastDate`); po limicie gra działa bez nagród
   - Wolna Nauka: brak nagród w ogóle (brak scoringu w `nauka.html`)
   - Brak XP we wszystkich czterech opcjach
-- [ ] **2.2b** Placeholder `wyzwanie.html` — karta z komunikatem "Wkrótce... 🔧" i przyciskiem powrotu → start.html; bez logiki, bez game-state; zastąpiona pełną wersją w **Fazie 7**
-- [ ] **2.3** Nowa strona `mapa.html` — Mapa Przygód:
+- [x] **2.2b** Placeholder `wyzwanie.html` — karta z komunikatem "Wkrótce... 🔧" i przyciskiem powrotu → start.html; bez logiki, bez game-state; zastąpiona pełną wersją w **Fazie 7**
+- [x] **2.3** Nowa strona `mapa.html` — Mapa Przygód:
   - **Podstawa:** `page draft/Untitled-3.html` — skopiować CSS i strukturę HTML, zastąpić hardkodowane dane dynamicznym generowaniem z `NODE_CONFIG` + `game-state.js`
   - Topbar: strzałka wstecz → start.html, avatar + imię + XP bar + Sekundy badge (jak w prototypie)
   - Węzły dynamicznie z `NODE_CONFIG` (kolejność tablicy = kolejność na ścieżce)
@@ -217,16 +217,7 @@ AVATARS = {
   - FAB+Toast z kontekstową podpowiedzią (sekcja 14 page-standards)
 
   #### NODE_CONFIG — definicja węzłów (wkleić do `mapa.html`):
-  ```javascript
-  const NODE_CONFIG = [
-    { id: 'full-hours',    icon: '🏝️', name: 'Wyspa Pełnych Godzin',       minutes: [0]           },
-    { id: 'quarters',      icon: '🌊', name: 'Zatoka Kwadransów',           minutes: [0,15,30,45]  },
-    { id: 'half-past',     icon: '🏔️', name: 'Góry "Wpół do"',             minutes: [0,30]        },
-    { id: 'roman',         icon: '🏛️', name: 'Pustynia Cyfr Rzymskich',     minutes: [0]           },
-    { id: 'twenty-four-h', icon: '🌃', name: 'Labirynt 24h',                minutes: null          },
-  ];
-  // gwiazdki per węzeł: 1→godziny.html, 2→wpisz.html, 3→ustaw.html (stałe)
-  ```
+  > ⚠️ Poniższy config to wersja z czasu projektowania Fazy 2 (5 węzłów). **Pełna wersja (20 węzłów, 4 pętle) zdefiniowana jest w Fazie 3 step 3.8** i wdrożona w `mapa.html`.
 
   #### Logika stanów węzłów:
   ```javascript
@@ -242,7 +233,7 @@ AVATARS = {
     return 'locked';
   }
   ```
-- [ ] **2.4** Pasek statusu (XP + Sekundy) na `start.html` z `userProgress`
+- [x] **2.4** Pasek statusu (XP + Sekundy) na `start.html` z `userProgress`
 
 ### Wzorce do reużycia:
 - CSS z `Untitled-1.html`: `.adventure-card`, `.adventure-list`, `.adventure-progress`
@@ -261,16 +252,16 @@ AVATARS = {
 > 📌 **Podpowiedzi (FAB + Toast):** `mapa.html` i `szybka-gra.html` korzystają z nowego wzorca FAB+Toast (sekcja 14 w page-standards). Istniejące strony gier (`godziny.html`, `wpisz.html`, `ustaw.html`, `nauka.html`) na razie pozostają ze starym wzorcem `.help-btn` + `.feedback-bar`; migracja następuje przy ich przebudowie w **Fazie 3**.
 
 ### Weryfikacja Fazy 2:
-- [ ] Avatar + imię w topbar na start.html
-- [ ] 3 karty (Wyprawa, Wyzwanie Dnia, Szybka Gra) prowadzą do właściwych stron
-- [ ] Szybka Gra → 4 przyciski trybów działają
-- [ ] Wyzwanie Dnia → placeholder z komunikatem
-- [ ] Mapa → 5 pierwszych kąrt węzłów z poprawnymi stanami (1 odblokowana przy nowym profilu)
-- [ ] Karta węzła → popup gwiazdek (⭐ Wybierz / ⭐⭐ Wpisz / ⭐⭐⭐ Ustaw) → nawigacja URL
-- [ ] XP i Sekundy odczytane z userProgress
-- [ ] "Zmień gracza" → profil.html
-- [ ] Responsywność 360px–1200px
-- [ ] Fade transitions
+- [x] Avatar + imię w topbar na start.html
+- [x] 3 karty (Wyprawa, Wyzwanie Dnia, Szybka Gra) prowadzą do właściwych stron
+- [x] Szybka Gra → 4 przyciski trybów działają
+- [x] Wyzwanie Dnia → placeholder z komunikatem
+- [x] Mapa → 20 węzłów (4 pętle × 5) dynamicznie z NODE_CONFIG + game-state.js
+- [x] Karta węzła → popup gwiazdek (⭐ Wybierz / ⭐⭐ Wpisz / ⭐⭐⭐ Ustaw) → nawigacja URL
+- [x] XP i Sekundy odczytane z userProgress
+- [x] „Zmień gracza” → profil.html
+- [x] Responsywność 360px–1200px
+- [x] Fade transitions
 
 ---
 
@@ -279,20 +270,22 @@ AVATARS = {
 
 ### Warunek zdobycia gwiazdki
 
-**8 poprawnych odpowiedzi ORAZ co najmniej 6 poprawnych pod rząd.** Sesja gry trwa aż waru-
-nki zostaną spełnione równocześnie — pytania generują się dalej jeśli seria urywa się.
+**Tryb Wyprawa** (`?node=X&star=Y`): **8 poprawnych ORAZ 6 pod rząd.**
+
+**Tryb Sandbox** (brak URL params): **12 poprawnych ORAZ 6 pod rząd** (trudniejszy próg, bo brak nagrody gwiazdką).
 
 ```
 stan sesji: { total: 0, streak: 0, bestStreak: 0 }
 po poprawnej: total++, streak++, bestStreak = max(bestStreak, streak)
-po błędnej: streak = 0  // total nie jest resetowany
-gwiazdka: total >= 8 && bestStreak >= 6
+po błędnej:   streak = 0  // total nie jest resetowany
+gwiazdka (Wyprawa): total >= 8  && bestStreak >= 6
+koniec (Sandbox):   total >= 12 && bestStreak >= 6
 ```
 
-**Pasek postępu w grze** (nowy element UI w każdym trybie):
-- Dwa wskaźniki: `X/8 poprawnych` + `seria: Y/6`
+**Pasek postępu w grze** — zastępuje stary licznik `X / Y` (usunąć `#score` div z HTML wszystkich trybów):
+- Dwa wskaźniki: `X/8 poprawnych` + `seria: Y/6` (Wyprawa) lub `X/12` (Sandbox)
 - Seria resetuje się wizualnie przy błędzie
-- Gdy oba warunki spełnione → animacja zdobycia gwiazdki
+- Gdy oba warunki spełnione → animacja zakończenia sesji
 
 ### question-logic.js — osobny plik logiki pytań
 
@@ -343,25 +336,25 @@ Implementacja: na starcie gry `?node` odczytany z URL → `activeModes` ustawion
 
 ### Kroki:
 
-- [ ] **3.0** Migracja podpowiedzi w `godziny.html`, `wpisz.html`, `ustaw.html`, `nauka.html`: usunąć `.help-btn` z topbaru, `.feedback-bar` z HTML; dodać FAB+Toast ze page-standards sekcja 14
-- [ ] **3.1** Odczyt URL params w godziny/ustaw/wpisz.html: `?node=X&star=Y`. Brak → sandbox (modal ⚙️ widoczny, ← do start.html)
-- [ ] **3.2** Import `game-state.js` we wszystkich trybach
-- [ ] **3.3** `reportResult(node, star, isCorrect, timeSpent)`:
+- [x] **3.0** Migracja podpowiedzi w `godziny.html`, `wpisz.html`, `ustaw.html`, `nauka.html`: usunąć `.help-btn` z topbaru, `.feedback-bar` z HTML; dodać FAB+Toast ze page-standards sekcja 14
+- [x] **3.1** Odczyt URL params w godziny/ustaw/wpisz.html: `?node=X&star=Y`. Brak → sandbox (modal ⚙️ widoczny, ← do start.html)
+- [x] **3.2** Import `game-state.js` we wszystkich trybach
+- [x] **3.3** `reportResult(node, star, isCorrect, timeSpent)`:
   - Wyprawa: +10 XP, +5 Sekund za poprawną odpowiedź
   - Aktualizuje score węzła, stats, errorLog, activityCalendar
   - Wywołuje saveGame
-- [ ] **3.3b** `reportQuickGameResult(isCorrect)` — osobna funkcja dla Szybkiej Gry:
+- [x] **3.3b** `reportQuickGameResult(isCorrect)` — osobna funkcja dla Szybkiej Gry:
   - Sprawdza `stats.quickGameLastDate` — jeśli inny dzień niż dziś, resetuje `stats.quickGameTodayCount = 0`
   - Jeśli `quickGameTodayCount < 20` i `isCorrect`: +5 Sekund, `quickGameTodayCount++`
   - Brak XP, nie dotyka węzłów ani gwiazdek
-- [ ] **3.4** Warunek gwiazdki: **8 poprawnych + 6 pod rząd** (patrz definicja powyżej). Stan sesji `{ total, streak, bestStreak }` trzymany w pamięci (nie w localStorage) przez czas trwania sesji gry
-- [ ] **3.5** Pasek postępu w grze: dwa wskaźniki `X/8` i `seria Y/6` (CSS + HTML w każdym trybie)
-- [ ] **3.6** Hook w istniejących `checkAnswer()` / `handleCheck()`
-- [ ] **3.7** Overlay po gwiazdce (patrz protokół nawigacyjny):
+- [x] **3.4** Warunek gwiazdki: **8 poprawnych + 6 pod rząd** (patrz definicja powyżej). Stan sesji `{ total, streak, bestStreak }` trzymany w pamięci (nie w localStorage) przez czas trwania sesji gry
+- [x] **3.5** Pasek postępu w grze: dwa wskaźniki `X/8` i `seria Y/6` (CSS + HTML w każdym trybie)
+- [x] **3.6** Hook w istniejących `checkAnswer()` / `handleCheck()`
+- [x] **3.7** Overlay po gwiazdce (patrz protokół nawigacyjny):
   - ⭐ / ⭐⭐: komunikat + przycisk ▶ "Zagraj dalej" (`?node=X&star=N+1`) + link "← Mapa"
   - ⭐⭐⭐: komunikat + przycisk "← Wróć do Mapy" (tylko ten jeden)
   - `reportResult()` wywoływany przed pokazaniem overlaya
-- [ ] **3.8** NODE_CONFIG (kolejność trudności w każdym węźle: ⭐ Wybierz → ⭐⭐ Wpisz → ⭐⭐⭐ Ustaw):
+- [x] **3.8** NODE_CONFIG (kolejność trudności w każdym węźle: ⭐ Wybierz → ⭐⭐ Wpisz → ⭐⭐⭐ Ustaw):
   ```javascript
   const NODE_CONFIG = {
     // Pętla 1 — arabskie
@@ -399,36 +392,45 @@ Implementacja: na starcie gry `?node` odczytany z URL → `activeModes` ustawion
 - `question-logic.js` — logika generowania pytań (interfejs do wymiany w Fazie 7)
 
 ### Weryfikacja Fazy 3:
-- [ ] Dashboard → karta → gwiazdka ⭐ → gra → 8+6 → overlay z ▶ i ← Mapa
-- [ ] Kliknięcie ▶ otwiera tę samą wyspę z star=2
-- [ ] Po gwiazdce ⭐⭐⭐ overlay ma tylko "← Wróć do Mapy" (brak ▶)
-- [ ] Modal ⚙️ ukryty w trybie Wyprawa (klasa `.expedition-mode`)
-- [ ] Modal ⚙️ widoczny w trybie sandbox (brak URL params)
-- [ ] Seria resetuje się przy błędzie (total nie)
-- [ ] Pasek postępu odzwierciedla oba wskaźniki w czasie rzeczywistym
-- [ ] localStorage odzwierciedla progres
-- [ ] Dashboard aktualizuje gwiazdki po powrocie
-- [ ] Następna karta odblokowana przy ≥1 gwiazdce
-- [ ] Sandbox bez params działa jak dotąd
-- [ ] Progres per profil
+- [x] Dashboard → karta → gwiazdka ⭐ → gra → 8+6 → overlay z ▶ i ← Mapa
+- [x] Kliknięcie ▶ otwiera tę samą wyspę z star=2
+- [x] Po gwiazdce ⭐⭐⭐ overlay ma tylko "← Wróć do Mapy" (brak ▶)
+- [x] Modal ⚙️ ukryty w trybie Wyprawa (klasa `.expedition-mode`)
+- [x] Modal ⚙️ widoczny w trybie sandbox (brak URL params)
+- [x] Seria resetuje się przy błędzie (total nie)
+- [x] Pasek postępu odzwierciedla oba wskaźniki w czasie rzeczywistym
+- [x] localStorage odzwierciedla progres
+- [x] Dashboard aktualizuje gwiazdki po powrocie
+- [x] Następna karta odblokowana przy ≥1 gwiazdce
+- [x] Sandbox bez params działa jak dotąd
+- [x] Progres per profil
 
 ---
 
 ## FAZA 4: System Nagród — Garderoba
 > *Równolegle z Fazą 5*
 
+### Decyzje UX:
+- **Kupowanie i zakładanie to osobne akcje** — można mieć wiele kupionych, jeden aktywny
+- **Podgląd zegara** w garderobie: animowany `ClockRenderer` z aktualnym czasem
+- **`numberStyle` (arabski/rzymski/brak cyfr) pozostaje w `ustawienia.html`** — to narzędzie pedagogiczne, nie kosmetyka. Gracz może ćwiczyć każdy styl tarcz w Szybkiej Grze od początku, niezależnie od postępu w Wyprawie. Garderoba = czysta kosmetyka (tła + kolory wskazówek, bez wpływu na naukę).
+- Po zakupie przedmiot pojawia się jako odblokowany, ale aktywny zostaje poprzedni do momentu ręcznego założenia
+
 ### Kroki:
-- [ ] **4.1** `garderoba.html`: siatka stylów (4 tła + 3 kolory), locked/unlocked, podgląd ClockRenderer
-- [ ] **4.2** SHOP_ITEMS: solid=0, spiral=500, grid=1000, tech=2000; white=0, blue=300, red=800
-- [ ] **4.3** `purchaseItem(category, itemId)` — sprawdza Sekundy, odblokuje, odejmuje
-- [ ] **4.4** `equipItem(category, itemId)` — zmienia aktywny styl
-- [ ] **4.5** Tryby czytają z wardrobe zamiast `zegar_*`
-- [ ] **4.6** `ustawienia.html` — usunąć tła/kolory (przeniesione)
+- [ ] **4.1** `garderoba.html`: dwie sekcje — Tła (4 karty) + Kolory Wskazówek (3 karty); każda karta: podgląd, nazwa, cena/"Załóż"/"Aktywne", stan locked/unlocked/active
+- [ ] **4.2** SHOP_ITEMS: solid=0 (darmowe), spiral=500, grid=1000, tech=2000; white=0, blue=300, red=800
+- [ ] **4.3** `purchaseItem(category, itemId)` — sprawdza Sekundy, odblokuje, odejmuje, zapisuje
+- [ ] **4.4** `equipItem(category, itemId)` — zmienia aktywny styl (tylko wśród odblokowanych)
+- [ ] **4.5** Animowany podgląd `ClockRenderer` na żywo w garderobie (aktualizuje się przy zmianie aktywnego stylu)
+- [ ] **4.6** Tryby gry czytają z `wardrobe` zamiast `zegar_*` localStorage
+- [ ] **4.7** `ustawienia.html` — usunąć sekcje Tła i Kolory Wskazówek (przeniesione), zostaje: style cyfr, format 12/24h, dźwięk, podpowiedź
 
 ### Pliki: nowy `garderoba.html`; modyfikacja `game-state.js`, `ustawienia.html`, `start.html`, tryby gry
 
 ### Weryfikacja:
-- [ ] Poprawne stany locked/unlocked
+- [ ] Zakup odblokuje przedmiot, nie zakłada automatycznie
+- [ ] "Załóż" zmienia aktywny styl (tylko odblokowany)
+- [ ] Podgląd zegara aktualizuje się na żywo przy założeniu
 - [ ] Zakup zmniejsza Sekundy
 - [ ] Brak zakupu bez funduszy
 - [ ] Styl widoczny we wszystkich trybach
@@ -439,18 +441,40 @@ Implementacja: na starcie gry `?node` odczytany z URL → `activeModes` ustawion
 ## FAZA 5: Streak, Kalendarz, Anty-rdza
 > *Równolegle z Fazą 4*
 
-### Kroki:
-- [ ] **5.1** Streak: wczoraj → streak++, dziś → nic, starsza → reset do 1
-- [ ] **5.2** Kalendarz 28 dni na dashboardzie, zielone aktywne dni, "Dzień X podróży"
-- [ ] **5.3** Anty-rdza: >48h → `filter: sepia(0.5) saturate(0.5)`, komunikat, 1 poprawna → zdejmij
-- [ ] **5.4** Streak counter na dashboardzie
+### Definicja sesji i streaka
 
-### Pliki: modyfikacja `game-state.js`, `start.html`
+**Sesja ukończona** = osiągnięcie warunku końca gry (8+6 w Wyprawie, 12+6 w Sandboxie). `nauka.html` (Wolna Nauka) **nie liczy się** do streaka — brak warunku końca.
+
+**Streak dzienny:** pierwsza ukończona sesja danego dnia zalicza dzień; kolejne sesje tego samego dnia nie zmieniają streaka. Logika:
+```
+po ukończeniu sesji:
+  jeśli lastDate === wczoraj → streak.current++, streak.best = max(best, current)
+  jeśli lastDate === dziś    → nic (dzień już zaliczony)
+  jeśli lastDate < wczoraj   → streak.current = 1  // reset
+  lastDate = dziś
+```
+
+**Anty-rdza** — efekt wizualny gdy gracz nie grał od >48h:
+- Każda tarcza zegara w aplikacji dostaje `filter: sepia(0.5) saturate(0.5)`
+- Komunikat na dashboardzie: "Twój zegar rdzewieje! Zagraj żeby go oczyścić"
+- Znika po ukończeniu pierwszej sesji (tej która równocześnie rozpoczyna nowy streak)
+
+### Kroki:
+- [ ] **5.1** `updateStreak(state)` — wywoływana po ukończeniu sesji; logika jak wyżej
+- [ ] **5.2** Kalendarz 28 dni na dashboardzie, zielone aktywne dni (z `activityCalendar`), napis "Dzień X podróży"
+- [ ] **5.3** Anty-rdza: sprawdzenie `lastDate` przy ładowaniu każdej strony; jeśli >48h — klasa `.rusty` na `<body>` → CSS `filter` na `ClockRenderer`; znika po `updateStreak()` w tej samej sesji
+- [ ] **5.4** Streak counter (liczba + ikona ognia 🔥) na dashboardzie (`start.html`)
+
+### Pliki: modyfikacja `game-state.js`, `start.html`, `clock-styles.css` (klasa `.rusty` dla tarcz)
 
 ### Weryfikacja:
-- [ ] Streak rośnie/resetuje poprawnie
+- [ ] Streak rośnie tylko przy pierwszej sesji danego dnia
+- [ ] Kolejne sesje tego samego dnia nie zmieniają streaka
+- [ ] Przerwa >1 dzień → reset do 1 (nie do 0 — dzień w którym grasz = 1)
 - [ ] Kalendarz podświetla aktywne dni
-- [ ] Sepia po 48h, znika po zadaniu
+- [ ] Sepia po 48h na wszystkich tarczach
+- [ ] Sepia znika po ukończeniu pierwszej sesji
+- [ ] `nauka.html` nie wpływa na streak
 - [ ] Per profil
 
 ---
@@ -533,8 +557,8 @@ FAZA 1 (profile + dane) ──► FAZA 2 (dashboard) ──► FAZA 3 (integracj
 | Faza | Status | Data ukończenia | Uwagi |
 |------|--------|-----------------|-------|
 | 1. Profile + Dane | ✅ Ukończona | 29.03.2026 | — |
-| 2. Dashboard UI | ⬜ Nie rozpoczęta | — | Hub 3 kart + mapa.html + szybka-gra.html; prototyp CSS w Untitled-1.html |
-| 3. Integracja Trybów | ⬜ Nie rozpoczęta | — | — |
+| 2. Dashboard UI | ✅ Ukończona | 30.03.2026 | Mapa 4×5 z Untitled-3.html; hub + szybka-gra + wyzwanie |
+| 3. Integracja Trybów | ✅ Ukończona | 31.03.2026 | Protokół nawigacyjny ▶/← Mapa; sandbox 12+6; pasek postępu zastępuje #score |
 | 4. Garderoba | ⬜ Nie rozpoczęta | — | — |
 | 5. Streak/Kalendarz | ⬜ Nie rozpoczęta | — | — |
 | 6. Odznaki | ⬜ Nie rozpoczęta | — | — |

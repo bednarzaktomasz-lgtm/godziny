@@ -7,6 +7,75 @@
 		<link rel="stylesheet" href="clock-styles.css" />
 		<link rel="stylesheet" href="layout.css" />
 		<style>
+			/* ---- Pasek postępu gwiazdki ---- */
+			.star-progress {
+				display: flex;
+				flex-direction: column;
+				gap: clamp(5px, 1vmin, 8px);
+				width: 100%;
+				padding: clamp(8px, 1.3vmin, 14px) clamp(10px, 1.5vmin, 16px);
+				background: #0d0d0d;
+				border: 1px solid #222;
+				border-radius: var(--btn-radius);
+			}
+			.star-progress.hidden { display: none; }
+			.spi-row  { display: flex; align-items: center; gap: clamp(6px, 1vmin, 10px); }
+			.spi-label { font-size: clamp(0.65rem, 1.3vmin, 0.85rem); color: #888; width: clamp(68px, 11vmin, 90px); flex-shrink: 0; }
+			.spi-track { flex: 1; height: clamp(6px, 1vmin, 8px); background: #222; border-radius: 4px; overflow: hidden; }
+			.spi-fill  { height: 100%; border-radius: 4px; background: #bb86fc; transition: width 0.3s ease; width: 0%; }
+			.spi-fill.spi-streak { background: #f0c040; }
+			.spi-fill.done       { background: #16a34a !important; transition: none; }
+			.spi-count { font-size: clamp(0.65rem, 1.3vmin, 0.85rem); color: #888; min-width: 2.5em; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+			/* ---- Expedition mode ---- */
+			.expedition-mode .modal#settingsModal { display: none !important; }
+			.expedition-mode #settingsIcon         { display: none; }
+
+			/* ---- FAB Hint ---- */
+			.fab-hint {
+				position: fixed; bottom: 24px; right: 20px; z-index: 300;
+				width: 48px; height: 48px; border-radius: 50%;
+				background: #111; border: 2px solid #333; color: #555;
+				font-size: 1.3rem; font-weight: 700; cursor: pointer;
+				display: flex; align-items: center; justify-content: center;
+				transition: color 0.2s, border-color 0.2s, transform 0.2s;
+				-webkit-tap-highlight-color: transparent;
+				box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+			}
+			.fab-hint:hover  { color: #f0f0f0; border-color: #555; }
+			.fab-hint.active { border-color: var(--accent-color); color: var(--accent-color); transform: rotate(15deg); }
+
+			/* ---- Hint Toast ---- */
+			.hint-toast {
+				position: fixed; bottom: 84px; left: 50%;
+				transform: translateX(-50%) translateY(10px);
+				z-index: 299; width: min(360px, calc(100vw - 40px));
+				background: #1a1a1a; border: 1px solid #333; border-radius: 16px;
+				padding: 14px 18px; display: flex; align-items: flex-start; gap: 12px;
+				overflow: hidden; opacity: 0; pointer-events: none;
+				transition: opacity 0.22s ease, transform 0.22s ease;
+			}
+			.hint-toast.visible { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+			.hint-toast-icon  { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+			.hint-toast-body  { flex: 1; }
+			.hint-toast-title { font-size: 0.72rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+			.hint-toast-msg   { font-size: 0.88rem; color: #ccc; line-height: 1.5; }
+			.hint-toast-bar   { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent-color); border-radius: 0 0 16px 16px; width: 100%; transform-origin: left; transform: scaleX(0); }
+			.hint-toast.auto-close .hint-toast-bar { transform: scaleX(1); transition: transform 5s linear; }
+
+			/* ---- Star Overlay ---- */
+			.star-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0); z-index: 400; display: flex; align-items: center; justify-content: center; visibility: hidden; transition: background 0.3s ease, visibility 0s 0.3s; padding: clamp(16px, 3vmin, 32px); }
+			.star-overlay.active { background: rgba(0,0,0,0.88); visibility: visible; transition: background 0.3s ease, visibility 0s 0s; }
+			.star-overlay-box { background: #111; border: 2px solid #333; border-radius: clamp(20px, 3.5vmin, 32px); padding: clamp(24px, 4vmin, 48px); text-align: center; display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 1.8vmin, 18px); max-width: min(380px, 90vw); width: 100%; opacity: 0; transform: scale(0.9); transition: opacity 0.3s ease, transform 0.3s ease; }
+			.star-overlay.active .star-overlay-box { opacity: 1; transform: scale(1); }
+			.star-overlay-stars    { font-size: clamp(2rem, 5vmin, 3.5rem); }
+			.star-overlay-title    { font-size: clamp(1.1rem, 2.8vmin, 1.7rem); font-weight: 700; color: #f0f0f0; }
+			.star-overlay-subtitle { font-size: clamp(0.8rem, 1.6vmin, 1rem); color: #888; }
+			.star-overlay-next { width: 100%; min-height: var(--btn-height); background: #bb86fc; border: none; border-radius: var(--btn-radius); font-size: var(--btn-font); font-weight: 700; color: #000; cursor: pointer; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+			.star-overlay-next:hover { background: #d4a6ff; }
+			.star-overlay-map { margin-top: 2px; color: #888; font-size: clamp(0.82rem, 1.5vmin, 0.95rem); text-decoration: none; transition: color 0.2s; -webkit-tap-highlight-color: transparent; }
+			.star-overlay-map:hover { color: #f0f0f0; }
+
 			/* Digital display */
 			.digital-input-display {
 				width: 100%;
@@ -74,15 +143,12 @@
 	<body>
 
 		<div class="topbar">
-			<a href="start.html" title="Wróć do menu">
+			<a id="backBtn" href="start.html" title="Wróć do menu">
 				<svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 					<polyline points="15 18 9 12 15 6"></polyline>
 				</svg>
 			</a>
-				</svg>
-			</a>
 			<div class="topbar-right">
-				<button class="help-btn" id="helpBtn">?</button>
 				<svg class="icon-btn settings-icon" id="settingsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
 					<line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"></circle>
 					<line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"></circle>
@@ -90,8 +156,6 @@
 				</svg>
 			</div>
 		</div>
-
-		<div class="feedback-bar" id="hintArea">Odczytaj godzinę z zegara i wpisz ją na klawiaturze cyfrowej. Zatwierdź przyciskiem OK.</div>
 
 		<div class="result-bar">
 			<div class="feedback" id="feedback"></div>
@@ -101,6 +165,18 @@
 		<div class="clock-wrap" id="clockContainer"></div>
 
 		<div class="content-area">
+			<div class="star-progress hidden" id="starProgress">
+				<div class="spi-row">
+					<span class="spi-label">Poprawne</span>
+					<div class="spi-track"><div class="spi-fill" id="spCorrect"></div></div>
+					<span class="spi-count" id="spCorrectTxt">0/8</span>
+				</div>
+				<div class="spi-row">
+					<span class="spi-label">Seria</span>
+					<div class="spi-track"><div class="spi-fill spi-streak" id="spStreak"></div></div>
+					<span class="spi-count" id="spStreakTxt">0/6</span>
+				</div>
+			</div>
 			<div class="digital-input-display" id="digitalDisplay">--:--</div>
 
 			<div class="keyboard">
@@ -144,8 +220,72 @@
 			</div>
 		</div>
 
+		<!-- FAB ? -->
+		<button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
+
+		<!-- Hint Toast -->
+		<div class="hint-toast" id="hintToast">
+			<span class="hint-toast-icon">💡</span>
+			<div class="hint-toast-body">
+				<div class="hint-toast-title">Jak to działa?</div>
+				<div class="hint-toast-msg">Odczytaj godzinę z zegara i wpisz ją na klawiaturze cyfrowej. Zatwierdź przyciskiem OK.</div>
+			</div>
+			<div class="hint-toast-bar" id="hintBar"></div>
+		</div>
+
+		<!-- Star Overlay -->
+		<div class="star-overlay" id="starOverlay">
+			<div class="star-overlay-box">
+				<div class="star-overlay-stars" id="starOverlayStars">⭐⭐</div>
+				<div class="star-overlay-title" id="starOverlayTitle">Gwiazdka zdobyta!</div>
+				<div class="star-overlay-subtitle" id="starOverlaySubtitle">Doskonała robota!</div>
+				<button class="star-overlay-next" id="starOverlayNext" style="display:none">▶ Zagraj dalej</button>
+				<a class="star-overlay-map" id="starOverlayMap" href="mapa.html">← Wróć do Mapy</a>
+			</div>
+		</div>
+
 		<script src="clock-renderer.js"></script>
+		<script src="game-state.js"></script>
+		<script src="question-logic.js"></script>
 		<script>
+			// ==================== URL Params & Expedition Mode ====================
+			const urlParams      = new URLSearchParams(window.location.search);
+			const expeditionNode = urlParams.get('node');
+			const expeditionStar = parseInt(urlParams.get('star') || '0', 10);
+			const isExpedition   = !!expeditionNode && expeditionStar >= 1;
+
+			const NODE_CONFIG = {
+				'full-hours':     { minutes: [0],                                              dialType: 'arabic', label: 'Wyspa Pełnych Godzin',      icon: '🏝️' },
+				'quarters':       { minutes: [0,15,30,45],                                     dialType: 'arabic', label: 'Zatoka Kwadransów',          icon: '🌊' },
+				'half-past':      { minutes: [0,30],                                           dialType: 'arabic', label: 'Góry Wpół do',               icon: '🏔️' },
+				'every-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'arabic', label: 'Dolina Co Pięć Minut',        icon: '🌿' },
+				'every-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'arabic', label: 'Morze Każdej Minuty',         icon: '🌊' },
+				'roman-full':     { minutes: [0],                                              dialType: 'roman',  label: 'Wyspa Cyfr Rzymskich',        icon: '🏛️' },
+				'roman-quarters': { minutes: [0,15,30,45],                                     dialType: 'roman',  label: 'Forum Kwadransów',            icon: '🗿' },
+				'roman-half':     { minutes: [0,30],                                           dialType: 'roman',  label: 'Koloseum Wpół do',            icon: '⚔️' },
+				'roman-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'roman',  label: 'Akwedukt Minut',              icon: '🌁' },
+				'roman-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'roman',  label: 'Labirynt Caesara',            icon: '🔱' },
+				'blank-full':     { minutes: [0],                                              dialType: 'blank',  label: 'Wyspa Ciszy',                 icon: '🌑' },
+				'blank-quarters': { minutes: [0,15,30,45],                                     dialType: 'blank',  label: 'Mglisty Przylądek',           icon: '🌫️' },
+				'blank-half':     { minutes: [0,30],                                           dialType: 'blank',  label: 'Dolina Cienia',               icon: '🌒' },
+				'blank-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'blank',  label: 'Pustynia Bez Znaków',         icon: '🏜️' },
+				'blank-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'blank',  label: 'Mroczne Bezdroża',            icon: '🌑' },
+				'24h-full':       { minutes: [0],                                              hourFormat: '24',   label: 'Brama Południa',              icon: '🌃' },
+				'24h-quarters':   { minutes: [0,15,30,45],                                     hourFormat: '24',   label: 'Wieża Zegarowa',              icon: '🗼' },
+				'24h-half':       { minutes: [0,30],                                           hourFormat: '24',   label: 'Kanał Wpół do',               icon: '🌉' },
+				'24h-five':       { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              hourFormat: '24',   label: 'Metro Nocne',                 icon: '🚇' },
+				'24h-minute':     { minutes: Array.from({length:60},(_,i)=>i),                 hourFormat: '24',   label: 'Labirynt 24h',                icon: '🌐' },
+			};
+
+			const nodeConf          = isExpedition ? (NODE_CONFIG[expeditionNode] || null) : null;
+			const expeditionMinutes = nodeConf ? nodeConf.minutes : null;
+
+			if (isExpedition) {
+				document.body.classList.add('expedition-mode');
+				document.getElementById('backBtn').href = 'mapa.html';
+				document.getElementById('starProgress').classList.remove('hidden');
+			}
+
 			// ==================== Load Global Settings ====================
 			const STORAGE_KEYS = {
 				activeModes: 'zegar_activeModes',
@@ -157,20 +297,26 @@
 			};
 
 			function loadGlobalSettings() {
+				let ns = localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic';
+				let hf = localStorage.getItem(STORAGE_KEYS.hourFormat) || '12';
+				if (nodeConf) {
+					if (nodeConf.dialType) ns = nodeConf.dialType === 'blank' ? 'none' : nodeConf.dialType;
+					if (nodeConf.hourFormat) hf = nodeConf.hourFormat;
+				}
 				return {
-					activeModes: JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
+					activeModes:  JSON.parse(localStorage.getItem(STORAGE_KEYS.activeModes)) || ['full'],
 					soundEnabled: localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false',
-					clockBg: localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
-					handColor: localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
-					numberStyle: localStorage.getItem(STORAGE_KEYS.numberStyle) || 'arabic',
-					hourFormat: localStorage.getItem(STORAGE_KEYS.hourFormat) || '12',
+					clockBg:      localStorage.getItem(STORAGE_KEYS.clockBg) || 'solid',
+					handColor:    localStorage.getItem(STORAGE_KEYS.handColor) || 'white',
+					numberStyle:  ns,
+					hourFormat:   hf,
 				};
 			}
 
 			const globalSettings = loadGlobalSettings();
 
-			// Initialize clock using the module
-			const clockContainer = document.getElementById("clockContainer");
+			// ==================== Initialize Clock ====================
+			const clockContainer = document.getElementById('clockContainer');
 			const clock = new ClockRenderer(clockContainer, {
 				size: 'sm',
 				interactive: false,
@@ -182,254 +328,285 @@
 				showBgControls: false,
 				handColor: globalSettings.handColor,
 			});
-
-			// Apply saved background
 			clock.setBackground(globalSettings.clockBg);
 			clock.setNumberStyle(globalSettings.numberStyle);
 
-			const feedbackEl = document.getElementById("feedback");
-			const scoreEl = document.getElementById("score");
-			const digitalDisplay = document.getElementById("digitalDisplay");
+			// ==================== DOM & Game Variables ====================
+			const feedbackEl    = document.getElementById('feedback');
+			const scoreEl       = document.getElementById('score');
+			const digitalDisplay = document.getElementById('digitalDisplay');
 
-			let currentTime = { hour: 12, minute: 0 };
-			let inputValue = "";
-			let totalAnswers = 0;
+			let currentTime   = { hour: 12, minute: 0 };
+			let inputValue    = '';
+			let totalAnswers  = 0;
 			let correctAnswers = 0;
-			let activeModes = new Set(globalSettings.activeModes);
-			let soundEnabled = globalSettings.soundEnabled;
-			let hourFormat = globalSettings.hourFormat;
-			let audioContext = null;
-			let isChecking = false;
-			let attempts = 0;
+			let activeModes   = new Set(globalSettings.activeModes);
+			let soundEnabled  = globalSettings.soundEnabled;
+			let hourFormat    = globalSettings.hourFormat;
+			let audioContext  = null;
+			let isChecking    = false;
+			let attempts      = 0;
+			let attemptHistory = [];
 
-			// Sync mode toggles UI to match loaded settings
+			// ==================== Session State (star condition: 8+6) ====================
+			let session           = { total: 0, streak: 0, bestStreak: 0 };
+			let starAlreadyEarned = false;
+
+			// ==================== Sync UI ====================
 			document.querySelectorAll('.mode-toggle').forEach(btn => {
 				btn.classList.toggle('active', activeModes.has(btn.dataset.mode));
 			});
+			document.getElementById('soundToggle').classList.toggle('active', soundEnabled);
 
-			// Sync sound toggle UI
-			const soundToggleInit = document.getElementById('soundToggle');
-			soundToggleInit.classList.toggle('active', soundEnabled);
-
+			// ==================== Audio ====================
 			function initAudioContext() {
-				if (!audioContext) {
-					audioContext = new (window.AudioContext || window.webkitAudioContext)();
-				}
-				if (audioContext.state === 'suspended') {
-					audioContext.resume();
-				}
+				if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+				if (audioContext.state === 'suspended') audioContext.resume();
 			}
-
 			function playBeep(frequency, duration) {
 				if (!soundEnabled) return;
 				initAudioContext();
-				const oscillator = audioContext.createOscillator();
-				const gainNode = audioContext.createGain();
-				oscillator.connect(gainNode);
-				gainNode.connect(audioContext.destination);
-				oscillator.frequency.value = frequency;
-				oscillator.type = 'sine';
-				gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-				gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-				oscillator.start(audioContext.currentTime);
-				oscillator.stop(audioContext.currentTime + duration / 1000);
+				const osc  = audioContext.createOscillator();
+				const gain = audioContext.createGain();
+				osc.connect(gain); gain.connect(audioContext.destination);
+				osc.frequency.value = frequency; osc.type = 'sine';
+				gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+				gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+				osc.start(audioContext.currentTime);
+				osc.stop(audioContext.currentTime + duration / 1000);
 			}
-
 			function playSuccess() { playBeep(880, 150); }
 			function playError()   { playBeep(220, 300); }
 			function playClick()   { playBeep(440, 50); }
 
+			// ==================== Question Pool ====================
 			const MODE_MINUTES = {
-				full: [0],
-				half: [30],
-				quarter: [15, 45],
-				five: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
-				any: Array.from({ length: 60 }, (_, i) => i),
+				full:    [0], half: [30], quarter: [15, 45],
+				five:    [0,5,10,15,20,25,30,35,40,45,50,55],
+				any:     Array.from({length:60}, (_,i) => i),
 			};
 
 			function formatTime(hour, minute) {
-				const h = String(hour).padStart(2, "0");
-				const m = String(minute).padStart(2, "0");
-				return `${h}:${m}`;
+				return String(hour).padStart(2,'0') + ':' + String(minute).padStart(2,'0');
 			}
 
 			function randomMinute() {
-				const allMinutes = new Set();
-				activeModes.forEach((mode) => {
-					MODE_MINUTES[mode].forEach((m) => allMinutes.add(m));
-				});
-				const minutesArray = Array.from(allMinutes);
-				return minutesArray[Math.floor(Math.random() * minutesArray.length)];
+				if (expeditionMinutes) return expeditionMinutes[Math.floor(Math.random() * expeditionMinutes.length)];
+				const s = new Set();
+				activeModes.forEach(m => MODE_MINUTES[m].forEach(v => s.add(v)));
+				const arr = Array.from(s);
+				return arr[Math.floor(Math.random() * arr.length)];
 			}
 
 			function randomHour() {
 				return hourFormat === '24' ? Math.floor(Math.random() * 23) + 1 : Math.floor(Math.random() * 12) + 1;
 			}
 
+			// ==================== Display ====================
 			function updateDisplay() {
-				// Format input as HH:MM
-				let display = "";
-				const digits = inputValue.padEnd(4, "-");
-				display = digits.slice(0, 2) + ":" + digits.slice(2, 4);
-				digitalDisplay.textContent = display;
+				const digits = inputValue.padEnd(4, '-');
+				digitalDisplay.textContent = digits.slice(0,2) + ':' + digits.slice(2,4);
 			}
 
+			// ==================== Progress Bar ====================
+			function updateProgressBar() {
+				const cpct = Math.min(100, Math.round((session.total / 8) * 100));
+				const spct = Math.min(100, Math.round((session.bestStreak / 6) * 100));
+				document.getElementById('spCorrect').style.width = cpct + '%';
+				document.getElementById('spStreak').style.width  = spct + '%';
+				document.getElementById('spCorrectTxt').textContent = session.total + '/8';
+				document.getElementById('spStreakTxt').textContent  = session.bestStreak + '/6';
+				if (session.total >= 8)       document.getElementById('spCorrect').classList.add('done');
+				if (session.bestStreak >= 6)  document.getElementById('spStreak').classList.add('done');
+			}
+
+			// ==================== Game Logic ====================
 			function setNewQuestion() {
-				const hour = randomHour();
-				const minute = randomMinute();
-				currentTime = { hour, minute };
+				const q = generateQuestion(
+					nodeConf || { minutes: (() => { const s2 = new Set(); activeModes.forEach(m => MODE_MINUTES[m].forEach(v => s2.add(v))); return Array.from(s2); })(), hourFormat },
+					attemptHistory
+				);
+				currentTime = { hour: q.hour, minute: q.minute };
+				attemptHistory.push({ hour: q.hour, minute: q.minute });
+				if (attemptHistory.length > 10) attemptHistory.shift();
 
-				// Use clock renderer to display time
-				clock.setTime(hour, minute);
-				if (hourFormat === '24') clock.setAmPm(hour >= 13);
-				inputValue = "";
+				clock.setTime(q.hour, q.minute);
+				if (hourFormat === '24') clock.setAmPm(q.hour >= 13);
+
+				inputValue = '';
 				isChecking = false;
+				attempts   = 0;
 				updateDisplay();
-
-				digitalDisplay.classList.remove("correct", "wrong");
-				feedbackEl.textContent = "";
-				feedbackEl.className = "feedback";
+				digitalDisplay.classList.remove('correct', 'wrong');
+				feedbackEl.textContent = '';
+				feedbackEl.className   = 'feedback';
 			}
 
 			function handleKeyPress(key) {
 				if (isChecking) return;
-
-				if (key === "delete") {
-					if (inputValue.length > 0) {
-						inputValue = inputValue.slice(0, -1);
-						playClick();
-					}
-				} else if (key === "ok") {
+				if (key === 'delete') {
+					if (inputValue.length > 0) { inputValue = inputValue.slice(0,-1); playClick(); }
+				} else if (key === 'ok') {
 					checkAnswer();
 				} else if (inputValue.length < 4) {
-					inputValue += key;
-					playClick();
+					inputValue += key; playClick();
 				}
-
 				updateDisplay();
 			}
 
 			function checkAnswer() {
 				if (inputValue.length !== 4 || isChecking) return;
 
-				const inputHour = parseInt(inputValue.slice(0, 2), 10);
-				const inputMinute = parseInt(inputValue.slice(2, 4), 10);
+				const inputHour   = parseInt(inputValue.slice(0,2), 10);
+				const inputMinute = parseInt(inputValue.slice(2,4), 10);
 				const correctTimeText = formatTime(currentTime.hour, currentTime.minute);
-
-				const isCorrect = (inputHour === currentTime.hour || (hourFormat === '12' && inputHour === 0 && currentTime.hour === 12))
+				const isCorrect =
+					(inputHour === currentTime.hour ||
+					 (hourFormat === '12' && inputHour === 0 && currentTime.hour === 12))
 					&& inputMinute === currentTime.minute;
 
 				if (isCorrect) {
 					isChecking = true;
 					if (attempts === 0) {
-						totalAnswers += 1;
-						correctAnswers += 1;
-						scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+						totalAnswers++;
+						correctAnswers++;
+						scoreEl.textContent = correctAnswers + ' / ' + totalAnswers;
+
+						session.streak++;
+						session.total++;
+						session.bestStreak = Math.max(session.bestStreak, session.streak);
+						if (isExpedition) updateProgressBar();
+
+						if (isExpedition && expeditionNode) {
+							reportResult(expeditionNode, expeditionStar, true);
+						} else {
+							reportQuickGameResult(true);
+						}
+
+						if (isExpedition && !starAlreadyEarned && session.total >= 8 && session.bestStreak >= 6) {
+							starAlreadyEarned = true;
+							markStarCompleted(expeditionNode, expeditionStar, session.bestStreak);
+							feedbackEl.textContent = 'Dobrze! ' + correctTimeText + '.';
+							feedbackEl.className   = 'feedback ok';
+							digitalDisplay.classList.add('correct');
+							playSuccess();
+							setTimeout(showStarOverlay, 2000);
+							return;
+						}
 					}
-					feedbackEl.textContent = `Dobrze! ${correctTimeText}.`;
-					feedbackEl.className = "feedback ok";
-					digitalDisplay.classList.add("correct");
+					feedbackEl.textContent = 'Dobrze! ' + correctTimeText + '.';
+					feedbackEl.className   = 'feedback ok';
+					digitalDisplay.classList.add('correct');
 					playSuccess();
 					setTimeout(setNewQuestion, 2000);
 				} else {
 					playError();
 					if (attempts === 0) {
-						totalAnswers += 1;
-						scoreEl.textContent = `${correctAnswers} / ${totalAnswers}`;
+						totalAnswers++;
+						scoreEl.textContent = correctAnswers + ' / ' + totalAnswers;
 						attempts = 1;
-						digitalDisplay.classList.add("wrong");
-						feedbackEl.textContent = `Spróbuj jeszcze raz!`;
-						feedbackEl.className = "feedback bad";
+
+						session.streak = 0;
+						if (isExpedition) updateProgressBar();
+
+						if (isExpedition && expeditionNode) {
+							reportResult(expeditionNode, expeditionStar, false);
+						} else {
+							reportQuickGameResult(false);
+						}
+
+						digitalDisplay.classList.add('wrong');
+						feedbackEl.textContent = 'Spróbuj jeszcze raz!';
+						feedbackEl.className   = 'feedback bad';
 						setTimeout(() => {
-							digitalDisplay.classList.remove("wrong");
-							inputValue = "";
+							digitalDisplay.classList.remove('wrong');
+							inputValue = '';
 							updateDisplay();
 						}, 600);
 					} else {
 						isChecking = true;
-						digitalDisplay.classList.add("wrong");
-						feedbackEl.textContent = `Prawidłowa: ${correctTimeText}.`;
-						feedbackEl.className = "feedback bad";
+						digitalDisplay.classList.add('wrong');
+						feedbackEl.textContent = 'Prawidłowa: ' + correctTimeText + '.';
+						feedbackEl.className   = 'feedback bad';
 						setTimeout(setNewQuestion, 2500);
 					}
 				}
 			}
 
-			// Keyboard event listeners
+			// ==================== Star Overlay ====================
+			function showStarOverlay() {
+				const starLabels = ['⭐', '⭐⭐', '⭐⭐⭐'];
+				document.getElementById('starOverlayStars').textContent = starLabels[expeditionStar - 1] || '⭐⭐';
+				document.getElementById('starOverlaySubtitle').textContent =
+					'Poprawnych: ' + session.total + '  •  Najlepsza seria: ' + session.bestStreak;
+				const nextBtn = document.getElementById('starOverlayNext');
+				const mapLink = document.getElementById('starOverlayMap');
+				if (expeditionStar < 3) {
+					nextBtn.style.display = '';
+					nextBtn.onclick = () => {
+						window.location.href = 'ustaw.html?node=' + expeditionNode + '&star=3';
+					};
+					mapLink.textContent = '← Mapa';
+				} else {
+					nextBtn.style.display = 'none';
+					mapLink.textContent = '← Wróć do Mapy';
+				}
+				document.getElementById('starOverlay').classList.add('active');
+			}
+
+			// ==================== FAB + Toast ====================
+			let _hintOpen = false, _hintTimer = null;
+			function toggleHint() { _hintOpen ? closeHint() : openHint(); }
+			function openHint() {
+				_hintOpen = true;
+				const fab = document.getElementById('fabHint'), toast = document.getElementById('hintToast'), bar = document.getElementById('hintBar');
+				fab.classList.add('active');
+				toast.classList.remove('auto-close'); toast.classList.add('visible');
+				bar.style.transition = 'none'; bar.style.transform = 'scaleX(0)'; void bar.offsetWidth;
+				toast.classList.add('auto-close');
+				clearTimeout(_hintTimer); _hintTimer = setTimeout(closeHint, 5000);
+			}
+			function closeHint() {
+				_hintOpen = false; clearTimeout(_hintTimer);
+				document.getElementById('fabHint').classList.remove('active');
+				document.getElementById('hintToast').classList.remove('visible', 'auto-close');
+			}
+
+			// ==================== Keyboard ====================
 			document.querySelectorAll('.key').forEach(key => {
-				key.addEventListener('click', () => {
-					handleKeyPress(key.dataset.key);
-				});
+				key.addEventListener('click', () => handleKeyPress(key.dataset.key));
+			});
+			digitalDisplay.addEventListener('click', () => handleKeyPress('ok'));
+			document.addEventListener('keydown', e => {
+				if (e.key >= '0' && e.key <= '9') handleKeyPress(e.key);
+				else if (e.key === 'Backspace') handleKeyPress('delete');
+				else if (e.key === 'Enter') handleKeyPress('ok');
 			});
 
-			// Click on digital display to confirm
-			digitalDisplay.addEventListener('click', () => {
-				handleKeyPress('ok');
-			});
+			// ==================== Settings Modal ====================
+			const settingsIcon  = document.getElementById('settingsIcon');
+			const settingsModal = document.getElementById('settingsModal');
+			if (settingsIcon) settingsIcon.addEventListener('click', () => settingsModal.classList.add('active'));
+			settingsModal.addEventListener('click', e => { if (e.target === settingsModal) settingsModal.classList.remove('active'); });
+			document.addEventListener('keydown', e => { if (e.key === 'Escape') settingsModal.classList.remove('active'); });
 
-			// Physical keyboard support
-			document.addEventListener('keydown', (e) => {
-				if (e.key >= '0' && e.key <= '9') {
-					handleKeyPress(e.key);
-				} else if (e.key === 'Backspace') {
-					handleKeyPress('delete');
-				} else if (e.key === 'Enter') {
-					handleKeyPress('ok');
-				}
-			});
-
-			const settingsIcon = document.getElementById("settingsIcon");
-			const settingsModal = document.getElementById("settingsModal");
-
-			settingsIcon.addEventListener("click", () => {
-				settingsModal.classList.add("active");
-			});
-
-			settingsModal.addEventListener("click", (e) => {
-				if (e.target === settingsModal) {
-					settingsModal.classList.remove("active");
-				}
-			});
-
-			document.addEventListener("keydown", (e) => {
-				if (e.key === "Escape") {
-					settingsModal.classList.remove("active");
-				}
-			});
-
-			document.querySelectorAll(".mode-toggle").forEach((btn) => {
-				btn.addEventListener("click", () => {
+			document.querySelectorAll('.mode-toggle').forEach(btn => {
+				btn.addEventListener('click', () => {
 					const mode = btn.dataset.mode;
-					if (activeModes.has(mode)) {
-						if (activeModes.size > 1) {
-							activeModes.delete(mode);
-							btn.classList.remove("active");
-						}
-					} else {
-						activeModes.add(mode);
-						btn.classList.add("active");
-					}
+					if (activeModes.has(mode)) { if (activeModes.size > 1) { activeModes.delete(mode); btn.classList.remove('active'); } }
+					else { activeModes.add(mode); btn.classList.add('active'); }
 					setNewQuestion();
 				});
 			});
 
-			const soundToggle = document.getElementById("soundToggle");
-			soundToggle.addEventListener("click", () => {
+			const soundToggle = document.getElementById('soundToggle');
+			soundToggle.addEventListener('click', () => {
 				soundEnabled = !soundEnabled;
-				soundToggle.classList.toggle("active");
-				if (soundEnabled) {
-					initAudioContext();
-					playBeep(660, 100);
-				}
+				soundToggle.classList.toggle('active');
+				if (soundEnabled) { initAudioContext(); playBeep(660, 100); }
 			});
 
-			const helpBtn = document.getElementById('helpBtn');
-			const hintArea = document.getElementById('hintArea');
-			helpBtn.addEventListener('click', () => {
-				hintArea.classList.toggle('active');
-				helpBtn.classList.toggle('active');
-			});
-
+			// ==================== Start ====================
 			setNewQuestion();
 		</script>
 	<script src="transitions.js"></script>
