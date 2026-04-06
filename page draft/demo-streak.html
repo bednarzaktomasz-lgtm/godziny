@@ -13,6 +13,7 @@
       --success:  #16a34a;
       --fire:     #f97316;   /* pomarańcz — ogień streaka */
       --fire-dim: #7c3319;   /* przygaszone tło badge streaka */
+      --cal-gap:  clamp(4px, 0.8vmin, 7px);
     }
 
     body {
@@ -170,7 +171,8 @@
     .cal-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: clamp(4px, 0.8vmin, 7px);
+      gap: var(--cal-gap);
+      overflow: visible;
     }
 
     .cal-day {
@@ -179,41 +181,41 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(0.58rem, 1.1vmin, 0.75rem);
+      font-size: clamp(1.16rem, 2.2vmin, 1.5rem);
       font-weight: 700;
       color: #555;
       background: #0d0d0d;
       border: 1px solid #1a1a1a;
-      transition: background 0.2s;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
       position: relative;
     }
-    /* Aktywny (grał tego dnia) */
+    /* Dawne aktywne dni — tylko obwód, bez wypełnienia */
     .cal-day.active {
-      background: color-mix(in srgb, var(--success) 22%, #000);
+      background: transparent;
       border-color: color-mix(in srgb, var(--success) 45%, transparent);
-      color: var(--success);
+      color: color-mix(in srgb, var(--success) 55%, #555);
     }
-    /* Dzisiaj — specjalne obramowanie */
-    .cal-day.today {
-      background: color-mix(in srgb, var(--accent) 15%, #000);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    /* Dzisiaj + aktywny */
-    .cal-day.today.active {
-      background: color-mix(in srgb, var(--success) 22%, #000);
-      border-color: var(--success);
+    /* Bieżąca seria — jasny zielony obwód (jak "dziś" ale zielony) */
+    .cal-day.streak-run {
+      background: color-mix(in srgb, var(--success) 15%, #000);
+      border: 2px solid var(--success);
       color: var(--success);
       box-shadow: 0 0 8px color-mix(in srgb, var(--success) 40%, transparent);
+      z-index: 1;
     }
-    /* Seria — kolejne aktywne dni podświetlone intensywniej */
-    .cal-day.streak-run {
-      background: color-mix(in srgb, var(--fire) 20%, #000);
-      border-color: color-mix(in srgb, var(--fire) 50%, transparent);
-      color: var(--fire);
+    /* Dziś BEZ serii — fioletowy ring */
+    .cal-day.today {
+      background: color-mix(in srgb, var(--accent) 15%, #000);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
     }
-    .cal-day.streak-run.today {
-      box-shadow: 0 0 10px color-mix(in srgb, var(--fire) 50%, transparent);
+    /* Dziś W serii — zielony (seria dominuje) */
+    .cal-day.today.streak-run {
+      background: color-mix(in srgb, var(--success) 15%, #000);
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--success) 50%, transparent);
     }
 
     /* ===== TOOLTIPS DNI ===== */
@@ -329,7 +331,7 @@
       <!-- Kalendarz 28 dni -->
       <div class="cal-grid" id="calGrid"></div>
 
-      <div class="demo-note" id="calNote">Zielone dni = gra ukończona · 🔥 Pomarańcz = aktualna seria</div>
+      <div class="demo-note" id="calNote">Jasna zieleń = bieżąca seria &nbsp;·&nbsp; Zwykła zieleń = dawny aktywny dzień &nbsp;·&nbsp; Fioletowy ring = dziś bez serii</div>
 
     </div>
 
@@ -380,6 +382,7 @@
       const grid = document.getElementById('calGrid');
       grid.innerHTML = '';
       const today = Math.max(...days.map((d,i) => d > 0 ? i : -1));
+      const cells = [];
 
       days.forEach((val, idx) => {
         const cell = document.createElement('div');
@@ -395,6 +398,7 @@
         // Numer dnia (względny: 1 = 27 dni temu)
         cell.textContent = idx + 1;
         grid.appendChild(cell);
+        cells.push(cell);
       });
     }
 

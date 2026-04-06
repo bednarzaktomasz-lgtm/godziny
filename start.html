@@ -8,6 +8,12 @@
   <style>
     /* ===== START HUB — page-specific styles ===== */
 
+    :root {
+      --fire:     #f97316;
+      --fire-dim: #7c3319;
+      --cal-gap:  clamp(4px, 0.8vmin, 7px);
+    }
+
     body {
       gap: 0;
       padding: 0 0 calc(clamp(40px, 8vmin, 64px) + clamp(20px, 4vmin, 40px) + 16px);
@@ -170,7 +176,186 @@
       opacity: 0.55;
       -webkit-tap-highlight-color: transparent;
     }
+    .bottom-nav-btn.enabled {
+      color: #f0f0f0;
+      cursor: pointer;
+      opacity: 1;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .bottom-nav-btn.enabled:hover { background: #1a1a1a; border-color: #444; }
     .btn-icon { font-size: clamp(0.9rem, 1.8vmin, 1.1rem); }
+
+    /* ===== RUSTY BANNER ===== */
+    .rusty-banner {
+      background: color-mix(in srgb, var(--fire) 12%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--fire) 35%, transparent);
+      border-radius: var(--btn-radius);
+      color: var(--fire);
+      font-size: clamp(0.82rem, 1.5vmin, 0.95rem);
+      font-weight: 600;
+      padding: clamp(10px, 2vmin, 16px) clamp(14px, 2.5vmin, 22px);
+      text-align: center;
+    }
+
+    /* ===== PASSA — streak & calendar ===== */
+    .section-label {
+      font-size: clamp(0.72rem, 1.3vmin, 0.88rem);
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 0 clamp(4px, 1vmin, 8px);
+    }
+
+    .streak-card {
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      padding: clamp(16px, 3vmin, 28px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 2.5vmin, 22px);
+    }
+
+    .streak-top {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 2.5vmin, 20px);
+    }
+
+    .streak-fire-wrap {
+      position: relative;
+      width: clamp(52px, 9vmin, 72px);
+      height: clamp(52px, 9vmin, 72px);
+      flex-shrink: 0;
+    }
+    .streak-fire-bg {
+      width: 100%; height: 100%;
+      background: color-mix(in srgb, var(--fire) 12%, transparent);
+      border: 2px solid color-mix(in srgb, var(--fire) 30%, transparent);
+      border-radius: clamp(12px, 2vmin, 20px);
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(1.8rem, 4.5vmin, 2.6rem);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .streak-fire-bg.alive {
+      background: color-mix(in srgb, var(--fire) 18%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--fire) 30%, transparent);
+    }
+
+    .streak-numbers { display: flex; flex-direction: column; gap: 2px; }
+    .streak-value {
+      font-size: clamp(1.6rem, 4vmin, 2.4rem);
+      font-weight: 700;
+      color: var(--fire);
+      line-height: 1;
+    }
+    .streak-value.zero { color: #555; }
+    .streak-sublabel  { font-size: clamp(0.72rem, 1.3vmin, 0.88rem); color: #888; }
+
+    .streak-divider {
+      width: 1px;
+      height: clamp(32px, 5vmin, 48px);
+      background: #222;
+      flex-shrink: 0;
+    }
+
+    .streak-best { display: flex; flex-direction: column; gap: 2px; }
+    .streak-best-value {
+      font-size: clamp(1rem, 2.2vmin, 1.4rem);
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    .journey-day {
+      font-size: clamp(0.78rem, 1.4vmin, 0.95rem);
+      color: color-mix(in srgb, #bb86fc 80%, #fff);
+      font-weight: 600;
+      text-align: center;
+      padding: clamp(6px, 1vmin, 10px) 0 0;
+    }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cal-title {
+      font-size: clamp(0.82rem, 1.5vmin, 0.98rem);
+      font-weight: 700;
+      color: #888;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: var(--cal-gap);
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.66rem, 1.25vmin, 0.85rem);
+      font-weight: 700;
+      color: #555;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .cal-day.active {
+      background: transparent;
+      border-color: color-mix(in srgb, #16a34a 45%, transparent);
+      color: color-mix(in srgb, #16a34a 55%, #555);
+    }
+    .cal-day.streak-run {
+      background: color-mix(in srgb, #16a34a 15%, #000);
+      border: 2px solid #16a34a;
+      color: #16a34a;
+      box-shadow: 0 0 8px color-mix(in srgb, #16a34a 40%, transparent);
+      z-index: 1;
+    }
+    .cal-day.today {
+      background: color-mix(in srgb, #bb86fc 15%, #000);
+      border: 2px solid #bb86fc;
+      color: #bb86fc;
+      box-shadow: 0 0 12px color-mix(in srgb, #bb86fc 55%, transparent);
+    }
+    .cal-day.today.streak-run {
+      background: color-mix(in srgb, #16a34a 15%, #000);
+      border-color: #16a34a;
+      color: #16a34a;
+      box-shadow: 0 0 10px color-mix(in srgb, #16a34a 50%, transparent);
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: var(--cal-gap);
+    }
+    .cal-weekday {
+      text-align: center;
+      font-size: clamp(0.58rem, 1.05vmin, 0.72rem);
+      font-weight: 700;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 2px;
+    }
+    .cal-day.empty {
+      background: transparent;
+      border-color: transparent;
+      pointer-events: none;
+    }
+
+    .section-sep {
+      height: 1px;
+      background: #1a1a1a;
+      margin: clamp(4px, 1vmin, 8px) 0;
+    }
   </style>
 </head>
 <body>
@@ -204,6 +389,11 @@
   <div class="hub-content">
     <div class="hub-greeting" id="hubGreeting">Witaj!</div>
 
+    <!-- Rusty banner — widoczny gdy body.rusty -->
+    <div class="rusty-banner" id="rustyBanner" style="display:none" role="alert">
+      ⚙️ Twój zegar rdzewieje! Zagraj żeby go oczyścić.
+    </div>
+
     <a href="mapa.html" class="hub-card">
       <div class="hub-card-icon-wrap">🗺️</div>
       <div class="hub-card-body">
@@ -232,16 +422,55 @@
       </div>
       <div class="hub-card-arrow">›</div>
     </a>
+
+    <!-- PASSA -->
+    <div class="section-label">📅 Twoja passa</div>
+
+    <div class="streak-card">
+      <div class="streak-top">
+        <div class="streak-fire-wrap">
+          <div class="streak-fire-bg" id="fireBg">🕯️</div>
+        </div>
+        <div class="streak-numbers">
+          <div class="streak-value zero" id="streakValue">0</div>
+          <div class="streak-sublabel">dni z rzędu</div>
+        </div>
+        <div class="streak-divider"></div>
+        <div class="streak-best">
+          <div class="streak-best-value" id="bestValue">🏆 0</div>
+          <div class="streak-sublabel">rekord</div>
+        </div>
+      </div>
+
+      <div class="section-sep"></div>
+
+      <div class="cal-header">
+        <div class="cal-title" id="calTitle">Ładowanie…</div>
+        <div class="journey-day" id="journeyDay">Dzień 1. podróży</div>
+      </div>
+
+      <div class="cal-weekdays">
+        <div class="cal-weekday">Pn</div>
+        <div class="cal-weekday">Wt</div>
+        <div class="cal-weekday">Śr</div>
+        <div class="cal-weekday">Cz</div>
+        <div class="cal-weekday">Pt</div>
+        <div class="cal-weekday">Sb</div>
+        <div class="cal-weekday">Nd</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
   </div>
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav" aria-label="Nawigacja główna">
-    <button class="bottom-nav-btn" title="Wkrótce dostępne">
+    <a href="garderoba.html" class="bottom-nav-btn enabled">
       <span class="btn-icon">👗</span> Garderoba
-    </button>
-    <button class="bottom-nav-btn" title="Wkrótce dostępne">
+    </a>
+    <a href="trofea.html" class="bottom-nav-btn enabled">
       <span class="btn-icon">🏆</span> Trofea
-    </button>
+    </a>
   </nav>
 
   <script src="game-state.js"></script>
@@ -276,6 +505,79 @@
     const _hour = new Date().getHours();
     const _greet = _hour < 12 ? 'Dzień dobry' : _hour < 18 ? 'Cześć' : 'Dobry wieczór';
     document.getElementById('hubGreeting').textContent = `${_greet}, ${_profile.name}! 👋`;
+
+    // ===== PASSA =====
+    const _streak = _save.streak || { current: 0, best: 0, lastDate: null };
+
+    // Rusty check
+    if (isRusty()) {
+      document.body.classList.add('rusty');
+      document.getElementById('rustyBanner').style.display = '';
+    }
+
+    // Streak counter
+    const _streakVal = document.getElementById('streakValue');
+    _streakVal.textContent = _streak.current;
+    _streakVal.className = 'streak-value' + (_streak.current === 0 ? ' zero' : '');
+
+    document.getElementById('bestValue').textContent = `🏆 ${_streak.best}`;
+
+    const _fireBg = document.getElementById('fireBg');
+    _fireBg.textContent  = _streak.current > 0 ? '🔥' : '🕯️';
+    _fireBg.className    = 'streak-fire-bg' + (_streak.current > 0 ? ' alive' : '');
+
+    // Journey day
+    const _createdAt  = (_profile && _profile.createdAt) || (_save && _save.createdAt) || Date.now();
+    const _journeyDay = Math.max(1, Math.floor((Date.now() - _createdAt) / 86400000) + 1);
+    document.getElementById('journeyDay').textContent = `Dzień ${_journeyDay}. podróży`;
+
+    // Calendar — current month, 6 rows × 7 cols
+    (function buildCalendar() {
+      const MONTHS_PL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec',
+                         'Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+
+      const grid  = document.getElementById('calGrid');
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const year  = today.getFullYear();
+      const month = today.getMonth();
+
+      document.getElementById('calTitle').textContent = MONTHS_PL[month] + ' ' + year;
+
+      // Monday-first: Mon=0 … Sun=6
+      const firstDow    = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const lastDate  = _streak.lastDate;
+      const streakCnt = _streak.current;
+      let streakStartTs = null;
+      if (lastDate && streakCnt > 0) {
+        const lastTs = new Date(lastDate); lastTs.setHours(0, 0, 0, 0);
+        streakStartTs = new Date(lastTs.getTime() - (streakCnt - 1) * 86400000);
+      }
+
+      for (let i = 0; i < 42; i++) {
+        const dayNum = i - firstDow + 1;
+        const cell   = document.createElement('div');
+
+        if (dayNum < 1 || dayNum > daysInMonth) {
+          cell.className   = 'cal-day empty';
+          cell.textContent = '';
+        } else {
+          const date    = new Date(year, month, dayNum);
+          const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dayNum).padStart(2, '0');
+          const hasAct  = !!(_save.activityCalendar && _save.activityCalendar[dateStr]);
+          const isToday = date.getTime() === today.getTime();
+          const inStreak = streakStartTs && date >= streakStartTs && date <= today;
+
+          cell.className = 'cal-day';
+          if (isToday)            cell.classList.add('today');
+          if (inStreak && hasAct) cell.classList.add('active', 'streak-run');
+          else if (hasAct)        cell.classList.add('active');
+          cell.textContent = dayNum;
+        }
+        grid.appendChild(cell);
+      }
+    })();
   </script>
   <script src="transitions.js"></script>
 </body>

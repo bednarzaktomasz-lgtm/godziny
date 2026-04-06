@@ -323,10 +323,11 @@ function migrateFromLegacy() {
  * Raportuje wynik jednej odpowiedzi w trybie Wyprawy.
  * Wyprawa: +10 XP, +5 Sekund za poprawną.
  * Aktualizuje score węzła, stats, errorLog, activityCalendar.
+ * @returns {{ newAchievements: Achievement[] }}
  */
 function reportResult(nodeId, starNum, isCorrect) {
   const state = loadGame();
-  if (!state) return;
+  if (!state) return { newAchievements: [] };
   const today = new Date().toISOString().slice(0, 10);
 
   if (isCorrect) {
@@ -348,33 +349,43 @@ function reportResult(nodeId, starNum, isCorrect) {
     }
   }
   state.stats.totalAttempts++;
+  const newAchievements = _checkAchievementsInPlace(state);
   saveGame(state);
+  return { newAchievements };
 }
 
 /**
  * Oznacza gwiazdkę jako zdobytą i przyznaje +50 Sekund.
  * Zapisuje bestStreak sesji w state.nodes[nodeId][starKey].streak.
+ * @returns {{ newAchievements: Achievement[] }}
  */
 function markStarCompleted(nodeId, starNum, bestStreak) {
   const state = loadGame();
-  if (!state) return;
+  if (!state) return { newAchievements: [] };
   const starKey = 'star' + starNum;
-  if (!state.nodes[nodeId] || !state.nodes[nodeId][starKey]) return;
+  if (!state.nodes[nodeId] || !state.nodes[nodeId][starKey]) return { newAchievements: [] };
   if (!state.nodes[nodeId][starKey].completed) {
     state.nodes[nodeId][starKey].completed = true;
     state.nodes[nodeId][starKey].streak = bestStreak || 0;
     state.seconds += 50;
   }
   saveGame(state);
+  updateStreak();
+  // Load fresh state (streaka już zaktualizowana) i sprawdź odznaki
+  const updated = loadGame() || state;
+  const newAchievements = _checkAchievementsInPlace(updated);
+  if (newAchievements.length > 0) saveGame(updated);
+  return { newAchievements };
 }
 
 /**
  * Raportuje wynik w trybie Szybkiej Gry.
  * Brak XP; +5 Sekund za poprawną odpowiedź, limit 20 dziennie.
+ * @returns {{ newAchievements: Achievement[] }}
  */
 function reportQuickGameResult(isCorrect) {
   const state = loadGame();
-  if (!state) return;
+  if (!state) return { newAchievements: [] };
   const today = new Date().toISOString().slice(0, 10);
 
   if (state.stats.quickGameLastDate !== today) {
@@ -391,7 +402,9 @@ function reportQuickGameResult(isCorrect) {
   state.stats.totalAttempts++;
   if (!state.activityCalendar[today]) state.activityCalendar[today] = 0;
   if (isCorrect) state.activityCalendar[today]++;
+  const newAchievements = _checkAchievementsInPlace(state);
   saveGame(state);
+  return { newAchievements };
 }
 
 // ----- XP / Level helper -----
@@ -405,3 +418,221 @@ function getXpProgress(state) {
   const pct        = Math.min(100, Math.round((levelXp / xpPerLevel) * 100));
   return { level, levelXp, xpPerLevel, pct };
 }
+
+// ─── Passa / Anty-rdza ───────────────────────────────────────────────────
+
+/**
+ * Aktualizuje passę gracza po ukończeniu sesji.
+ * Wołana automatycznie przez markStarCompleted().
+ */
+function updateStreak() {
+  const state = loadGame();
+  if (!state) return;
+  const today     = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const last      = state.streak.lastDate;
+
+  if (last === today) {
+    // Już aktualizowane dzisiaj — nic nie rób
+  } else if (last === yesterday) {
+    // Kontynuacja passy
+    state.streak.current++;
+    state.streak.best = Math.max(state.streak.best, state.streak.current);
+    state.streak.lastDate = today;
+  } else {
+    // Reset lub pierwsza sesja
+    state.streak.current  = 1;
+    state.streak.best     = Math.max(state.streak.best, 1);
+    state.streak.lastDate = today;
+  }
+  saveGame(state);
+}
+
+/**
+ * Sprawdza czy zegar "rdzewieje" — brak ukończonej sesji od ponad doby.
+ * Używana przy ładowaniu każdej strony z ClockRenderer.
+ */
+function isRusty() {
+  const state = loadGame();
+  if (!state) return false;
+  const last = state.streak.lastDate;
+  if (!last) return false;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  return last < yesterday;
+}
+
+// ─── Garderoba — sklep z kosmetykami ─────────────────────────────────────────
+
+const SHOP_ITEMS = {
+  bgs:    { solid: 0,   spiral: 500, grid: 1000, tech: 2000 },
+  colors: { white: 0,   blue: 300,   red: 800 },
+};
+
+/**
+ * Kupuje przedmiot z garderoby za Sekundy.
+ * @param {'bgs'|'colors'} category
+ * @param {string} itemId
+ * @returns {{ ok: boolean, reason?: string, newAchievements?: Achievement[] }}
+ */
+function purchaseItem(category, itemId) {
+  const state = loadGame();
+  if (!state) return { ok: false, reason: 'no-save' };
+
+  const prices = SHOP_ITEMS[category];
+  if (!prices || !(itemId in prices)) return { ok: false, reason: 'invalid-item' };
+
+  const price      = prices[itemId];
+  const unlockedKey = category === 'bgs' ? 'unlockedBgs' : 'unlockedHandColors';
+
+  if (state.wardrobe[unlockedKey].includes(itemId)) return { ok: false, reason: 'already-owned' };
+  if (state.seconds < price) return { ok: false, reason: 'not-enough-seconds' };
+
+  state.seconds -= price;
+  state.wardrobe[unlockedKey].push(itemId);
+  const newAchievements = _checkAchievementsInPlace(state);
+  saveGame(state);
+  return { ok: true, newAchievements };
+}
+
+/**
+ * Zakłada (aktywuje) przedmiot z garderoby — musi być wcześniej odblokowany.
+ * @param {'bgs'|'colors'} category
+ * @param {string} itemId
+ * @returns {{ ok: boolean, reason?: string }}
+ */
+function equipItem(category, itemId) {
+  const state = loadGame();
+  if (!state) return { ok: false, reason: 'no-save' };
+
+  const unlockedKey = category === 'bgs' ? 'unlockedBgs' : 'unlockedHandColors';
+  const activeKey   = category === 'bgs' ? 'activeBg'    : 'activeHandColor';
+
+  if (!state.wardrobe[unlockedKey].includes(itemId)) return { ok: false, reason: 'not-owned' };
+
+  state.wardrobe[activeKey] = itemId;
+  saveGame(state);
+  return { ok: true };
+}
+
+// ─── Faza 6: Odznaki i Trofea ─────────────────────────────────────────────────
+
+/**
+ * Definicja 9 odznak aplikacji.
+ * check(state) — czysta funkcja, zwraca true gdy warunek spełniony.
+ */
+const ACHIEVEMENTS = [
+  {
+    id:   'first-star',
+    icon: '🥇',
+    name: 'Pierwsze Kroki',
+    desc: 'Zdobądź pierwszą gwiazdkę',
+    check: s => Object.values(s.nodes).some(n =>
+      n.star1.completed || n.star2.completed || n.star3.completed),
+  },
+  {
+    id:   'first-island',
+    icon: '🏝️',
+    name: 'Wyspiarz',
+    desc: 'Ukończ dowolną wyspę (3 gwiazdki na jednym węźle)',
+    check: s => Object.values(s.nodes).some(n =>
+      n.star1.completed && n.star2.completed && n.star3.completed),
+  },
+  {
+    id:   'quarters-king',
+    icon: '⏱️',
+    name: 'Kwadransowy Król',
+    desc: 'Wszystkie 3 gwiazdki na Zatoce Kwadransów',
+    check: s => {
+      const n = s.nodes['quarters'];
+      return n && n.star1.completed && n.star2.completed && n.star3.completed;
+    },
+  },
+  {
+    id:   'roman-expert',
+    icon: '🏛️',
+    name: 'Rzymski Ekspert',
+    desc: 'Ukończ całą pętlę cyfr rzymskich (5 wysp)',
+    check: s => ['roman-full','roman-quarters','roman-half','roman-five','roman-minute']
+      .every(id => {
+        const n = s.nodes[id];
+        return n && n.star1.completed && n.star2.completed && n.star3.completed;
+      }),
+  },
+  {
+    id:   'master',
+    icon: '👑',
+    name: 'Mistrz Czasu',
+    desc: 'Wszystkie 20 wysp × 3 gwiazdki',
+    check: s => Object.values(s.nodes).every(n =>
+      n.star1.completed && n.star2.completed && n.star3.completed),
+  },
+  {
+    id:   'streak-7',
+    icon: '🔥',
+    name: 'Seria 7',
+    desc: 'Zagraj 7 dni z rzędu',
+    check: s => (s.streak.current >= 7 || s.streak.best >= 7),
+  },
+  {
+    id:   'streak-30',
+    icon: '🌟',
+    name: 'Seria 30',
+    desc: 'Zagraj 30 dni z rzędu',
+    check: s => (s.streak.current >= 30 || s.streak.best >= 30),
+  },
+  {
+    id:   'connoisseur',
+    icon: '🎨',
+    name: 'Koneser',
+    desc: 'Odblokuj wszystkie style tarcz i kolory wskazówek',
+    check: s => ['spiral','grid','tech'].every(b => s.wardrobe.unlockedBgs.includes(b))
+              && ['blue','red'].every(c => s.wardrobe.unlockedHandColors.includes(c)),
+  },
+  {
+    id:   'century',
+    icon: '💯',
+    name: 'Setka',
+    desc: '100 poprawnych odpowiedzi łącznie',
+    check: s => s.stats.totalCorrect >= 100,
+  },
+];
+
+/**
+ * Sprawdza niezdobyte jeszcze odznaki dla podanego stanu gry.
+ * Mutuje state.achievements — dodaje nowo zdobyte.
+ * NIE wywołuje saveGame — wywołujący jest za to odpowiedzialny.
+ * @param {object} state
+ * @returns {Array} nowo zdobyte odznaki (obiekty z ACHIEVEMENTS)
+ */
+function _checkAchievementsInPlace(state) {
+  if (!state) return [];
+  if (!Array.isArray(state.achievements)) state.achievements = [];
+  const now         = new Date().toISOString().slice(0, 10);
+  const alreadyEarned = new Set(state.achievements.map(a => a.id));
+  const newlyEarned   = [];
+  for (const ach of ACHIEVEMENTS) {
+    if (!alreadyEarned.has(ach.id) && ach.check(state)) {
+      state.achievements.push({ id: ach.id, earnedAt: now });
+      newlyEarned.push(ach);
+    }
+  }
+  return newlyEarned;
+}
+
+/**
+ * Publiczna wersja checkAchievements — ładuje stan i sprawdza odznaki.
+ * Używana przez trofea.html i inne strony, które nie mają dostępu do stanu.
+ * @returns {{ earned: string[], details: object[] }}  — id + data zdobycia
+ */
+function getAchievements() {
+  const state = loadGame();
+  if (!state) return { earned: [], details: [] };
+  if (!Array.isArray(state.achievements)) return { earned: [], details: [] };
+  const earned = state.achievements.map(a => a.id);
+  const details = ACHIEVEMENTS.map(ach => {
+    const record = state.achievements.find(a => a.id === ach.id);
+    return { ...ach, earnedAt: record ? record.earnedAt : null };
+  });
+  return { earned, details };
+}
+

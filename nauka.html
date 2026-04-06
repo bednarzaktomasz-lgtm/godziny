@@ -102,7 +102,11 @@
 </div>
 
 <script src="clock-renderer.js"></script>
+<script src="game-state.js"></script>
 <script>
+  // Anti-rust check
+  if (typeof isRusty === 'function' && isRusty()) document.body.classList.add('rusty');
+
   // ==================== Load Global Settings ====================
   const STORAGE_KEYS = {
     clockBg: 'zegar_clockBg',

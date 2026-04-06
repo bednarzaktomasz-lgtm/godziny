@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garderoba — Mistrz Czasu</title>
+  <link rel="stylesheet" href="clock-styles.css" />
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    /* ===== GARDEROBA — page-specific styles ===== */
+
+    body {
+      padding-bottom: clamp(40px, 8vmin, 64px);
+    }
+
+    /* ===== SEKCJE ===== */
+    .section-heading {
+      font-size: clamp(0.72rem, 1.3vmin, 0.88rem);
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 0 clamp(4px, 1vmin, 8px);
+    }
+
+    .content-area {
+      gap: clamp(12px, 2.5vmin, 20px);
+    }
+
+    /* ===== SHOP GRID ===== */
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(10px, 2vmin, 18px);
+    }
+
+    /* ===== SHOP CARD ===== */
+    .shop-card {
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      padding: clamp(14px, 2.5vmin, 22px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1.8vmin, 16px);
+      transition: border-color 0.2s;
+    }
+    .shop-card.shop-active {
+      border-color: #16a34a;
+    }
+
+    /* Background thumbnail */
+    .shop-thumb {
+      width: 100%;
+      aspect-ratio: 1.6;
+      border-radius: clamp(8px, 1.4vmin, 14px);
+      border: 1px solid #333;
+    }
+    .thumb-solid  { background: radial-gradient(circle at 40% 40%, #2a2a2a, #000); }
+    .thumb-spiral { background: conic-gradient(from 0deg, #000, #444, #111, #444, #000); }
+    .thumb-grid   {
+      background-color: #000;
+      background-image: radial-gradient(#333 1px, transparent 0);
+      background-size: 8px 8px;
+    }
+    .thumb-tech   {
+      background-image: linear-gradient(#1a1a1a 1px, transparent 0),
+                        linear-gradient(90deg, #1a1a1a 1px, transparent 0);
+      background-size: 16px 16px;
+      background-color: #000;
+    }
+
+    /* Color dot for hand colors */
+    .shop-card-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 2vmin, 18px);
+    }
+    .color-dot {
+      width: clamp(40px, 7vmin, 56px);
+      height: clamp(40px, 7vmin, 56px);
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid #333;
+    }
+    .dot-white { background: #e8e8e8; }
+    .dot-blue  { background: #2563eb; }
+    .dot-red   { background: #ef4444; }
+
+    /* Item text */
+    .shop-name {
+      font-size: clamp(0.88rem, 1.7vmin, 1.05rem);
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+    .shop-desc {
+      font-size: clamp(0.7rem, 1.2vmin, 0.84rem);
+      color: #888;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* Action button */
+    .shop-btn {
+      width: 100%;
+      background: #111;
+      border: 2px solid #333;
+      border-radius: clamp(8px, 1.4vmin, 14px);
+      color: #555;
+      font-size: clamp(0.78rem, 1.45vmin, 0.92rem);
+      font-weight: 600;
+      padding: clamp(8px, 1.4vmin, 14px);
+      text-align: center;
+      cursor: default;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .shop-btn.btn-buy {
+      border-color: #ffd700;
+      color: #ffd700;
+      cursor: pointer;
+    }
+    .shop-btn.btn-buy:hover {
+      background: color-mix(in srgb, #ffd700 10%, #111);
+    }
+    .shop-btn.btn-equip {
+      border-color: #bb86fc;
+      color: #bb86fc;
+      cursor: pointer;
+    }
+    .shop-btn.btn-equip:hover {
+      background: color-mix(in srgb, #bb86fc 10%, #111);
+    }
+    .shop-btn.btn-active {
+      border-color: #16a34a;
+      color: #16a34a;
+    }
+
+    /* ===== FAB + HINT TOAST (section 14) ===== */
+    .fab-hint {
+      position: fixed;
+      bottom: 24px; right: 20px;
+      z-index: 300;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid #333;
+      color: #555;
+      font-size: 1.3rem; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    }
+    .fab-hint:hover { color: #f0f0f0; border-color: #555; }
+    .fab-hint.active { border-color: var(--accent); color: var(--accent); transform: rotate(15deg); }
+
+    .hint-toast {
+      position: fixed;
+      bottom: 84px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      z-index: 299;
+      width: min(360px, calc(100vw - 40px));
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex; align-items: flex-start; gap: 12px;
+      overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .hint-toast.visible { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .hint-toast-icon  { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .hint-toast-body  { flex: 1; }
+    .hint-toast-title { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .hint-toast-msg   { font-size: 0.88rem; color: #ccc; line-height: 1.5; }
+    .hint-toast-bar   {
+      position: absolute; bottom: 0; left: 0;
+      height: 3px; background: var(--accent); border-radius: 0 0 16px 16px;
+      width: 100%; transform-origin: left; transform: scaleX(0);
+    }
+    .hint-toast.auto-close .hint-toast-bar { transform: scaleX(1); transition: transform 5s linear; }
+
+    /* ---- Achievement Overlay ---- */
+    .achievement-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0); z-index: 500; display: flex; align-items: center; justify-content: center; visibility: hidden; transition: background 0.3s ease, visibility 0s 0.3s; padding: clamp(16px, 3vmin, 32px); }
+    .achievement-overlay.active { background: rgba(0,0,0,0.92); visibility: visible; transition: background 0.3s ease, visibility 0s 0s; }
+    .achievement-card { background: #111; border: 2px solid #ffd700; border-radius: clamp(20px, 3.5vmin, 32px); padding: clamp(24px, 4vmin, 48px); text-align: center; display: flex; flex-direction: column; align-items: center; gap: clamp(8px, 1.5vmin, 14px); max-width: min(360px, 90vw); width: 100%; opacity: 0; transform: scale(0.9); transition: opacity 0.3s ease, transform 0.3s ease; position: relative; }
+    .achievement-overlay.active .achievement-card { opacity: 1; transform: scale(1); }
+    @keyframes achGlow { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.08); } }
+    .achievement-glow { position: absolute; inset: -5px; border-radius: inherit; border: 2px solid #ffd700; animation: achGlow 1.8s ease-in-out infinite; pointer-events: none; }
+    .achievement-label    { font-size: clamp(0.65rem, 1.3vmin, 0.8rem); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #ffd700; }
+    .achievement-icon-big { font-size: clamp(3rem, 7vmin, 5rem); line-height: 1; }
+    .achievement-name     { font-size: clamp(1.2rem, 2.8vmin, 1.8rem); font-weight: 700; color: #f0f0f0; }
+    .achievement-desc     { font-size: clamp(0.8rem, 1.5vmin, 1rem); color: #888; }
+    .achievement-counter  { font-size: clamp(0.7rem, 1.2vmin, 0.85rem); color: #555; min-height: 1.1em; }
+    .achievement-btn { margin-top: clamp(4px, 1vmin, 8px); width: 100%; min-height: var(--btn-height); background: #ffd700; border: none; border-radius: var(--btn-radius); font-size: var(--btn-font); font-weight: 700; color: #000; cursor: pointer; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+    .achievement-btn:hover { background: #ffe44d; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a href="start.html" title="Wróć do menu">
+      <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </a>
+    <div class="topbar-right"></div>
+  </div>
+
+  <!-- CLOCK PREVIEW -->
+  <div class="clock-wrap" id="clockContainer"></div>
+
+  <!-- SHOP SECTIONS -->
+  <div class="content-area">
+
+    <div class="section-heading">🎨 Tła zegara</div>
+    <div class="shop-grid" id="bgGrid"></div>
+
+    <div class="section-heading" style="margin-top: clamp(8px, 2vmin, 16px);">🎯 Kolor wskazówek</div>
+    <div class="shop-grid" id="colorGrid"></div>
+
+  </div>
+
+  <!-- FAB + Hint Toast -->
+  <button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
+
+  <div class="hint-toast" id="hintToast">
+    <span class="hint-toast-icon">💡</span>
+    <div class="hint-toast-body">
+      <div class="hint-toast-title">Jak to działa?</div>
+      <div class="hint-toast-msg" id="hintMsg">Kupuj nowe tła i kolory za Sekundy ⏳ zdobyte podczas nauki. Aktywne elementy są oznaczone zielono.</div>
+    </div>
+    <div class="hint-toast-bar" id="hintBar"></div>
+  </div>
+
+  <!-- Achievement Overlay (Phase 6) -->
+  <div class="achievement-overlay" id="achievementOverlay">
+    <div class="achievement-card">
+      <div class="achievement-glow"></div>
+      <div class="achievement-label">Nowa odznaka!</div>
+      <div class="achievement-icon-big" id="achievementIcon">🥇</div>
+      <div class="achievement-name" id="achievementName">Pierwsze Kroki</div>
+      <div class="achievement-desc" id="achievementDesc">—</div>
+      <div class="achievement-counter" id="achievementCounter"></div>
+      <button class="achievement-btn" id="achievementBtn">Super! 🎉</button>
+    </div>
+  </div>
+
+  <script src="clock-renderer.js"></script>
+  <script src="game-state.js"></script>
+  <script>
+    // ===== INIT =====
+    const _save = loadGame();
+    if (!_save) { location.replace('start.html'); }
+
+    const _wardrobe  = _save.wardrobe;
+    let _activeBg    = _wardrobe.activeBg;
+    let _activeColor = _wardrobe.activeHandColor;
+
+    // Clock preview
+    const clock = new ClockRenderer(document.getElementById('clockContainer'), {
+      size: 'normal',
+      interactive: false,
+      showBrand: true,
+      showDigital: true,
+      showDate: false,
+      showSecondHand: false,
+      showBgControls: false,
+      handColor: _activeColor,
+    });
+    clock.setBackground(_activeBg);
+    clock.setTime(10, 10);
+
+    // ===== SHOP DATA =====
+    const BG_INFO = {
+      solid:  { label: 'Solidne',  desc: 'Klasyczne czarne tło',     price: 0,    thumb: 'solid'  },
+      spiral: { label: 'Spirala',  desc: 'Subtelny efekt stożkowy',  price: 500,  thumb: 'spiral' },
+      grid:   { label: 'Siatka',   desc: 'Retro kropkowana siatka',  price: 1000, thumb: 'grid'   },
+      tech:   { label: 'Tech',     desc: 'Elektroniczna kratownica', price: 2000, thumb: 'tech'   },
+    };
+    const COLOR_INFO = {
+      white: { label: 'Białe',      desc: 'Klasyczna biel',    price: 0,   dot: 'dot-white' },
+      blue:  { label: 'Niebieskie', desc: 'Głęboki niebieski', price: 300, dot: 'dot-blue'  },
+      red:   { label: 'Czerwone',   desc: 'Nasycona czerwień', price: 800, dot: 'dot-red'   },
+    };
+
+    // ===== RENDER =====
+    function fmtPrice(p) { return p === 0 ? 'Darmowe' : '⏳\u00a0' + p.toLocaleString('pl'); }
+
+    function renderBgGrid() {
+      const grid  = document.getElementById('bgGrid');
+      const owned = _save.wardrobe.unlockedBgs;
+      grid.innerHTML = '';
+      for (const [id, info] of Object.entries(BG_INFO)) {
+        const isActive = id === _activeBg;
+        const isOwned  = isActive || owned.includes(id);
+        const card = document.createElement('div');
+        card.className = 'shop-card' + (isActive ? ' shop-active' : '');
+        card.innerHTML =
+          `<div class="shop-thumb thumb-${info.thumb}"></div>` +
+          `<div><div class="shop-name">${info.label}</div><div class="shop-desc">${info.desc}</div></div>` +
+          (isActive
+            ? `<button class="shop-btn btn-active">✓ Aktywne</button>`
+            : isOwned
+              ? `<button class="shop-btn btn-equip" onclick="equip('bgs','${id}')">Załóż</button>`
+              : `<button class="shop-btn btn-buy" onclick="buy('bgs','${id}',${info.price})">${fmtPrice(info.price)}</button>`);
+        grid.appendChild(card);
+      }
+    }
+
+    function renderColorGrid() {
+      const grid  = document.getElementById('colorGrid');
+      const owned = _save.wardrobe.unlockedHandColors;
+      grid.innerHTML = '';
+      for (const [id, info] of Object.entries(COLOR_INFO)) {
+        const isActive = id === _activeColor;
+        const isOwned  = isActive || owned.includes(id);
+        const card = document.createElement('div');
+        card.className = 'shop-card' + (isActive ? ' shop-active' : '');
+        card.innerHTML =
+          `<div class="shop-card-row">` +
+            `<div class="color-dot ${info.dot}"></div>` +
+            `<div><div class="shop-name">${info.label}</div><div class="shop-desc">${info.desc}</div></div>` +
+          `</div>` +
+          (isActive
+            ? `<button class="shop-btn btn-active">✓ Aktywne</button>`
+            : isOwned
+              ? `<button class="shop-btn btn-equip" onclick="equip('colors','${id}')">Załóż</button>`
+              : `<button class="shop-btn btn-buy" onclick="buy('colors','${id}',${info.price})">${fmtPrice(info.price)}</button>`);
+        grid.appendChild(card);
+      }
+    }
+
+    function renderAll() {
+      renderBgGrid();
+      renderColorGrid();
+    }
+
+    // ===== ACTIONS =====
+    function buy(category, itemId, price) {
+      const result = purchaseItem(category, itemId);
+      if (result.ok) {
+        const fresh = loadGame();
+        _save.wardrobe        = fresh.wardrobe;
+        _save.seconds         = fresh.seconds;
+        renderAll();
+        if (result.newAchievements && result.newAchievements.length > 0) {
+          showAchievementQueue(result.newAchievements, null);
+        }
+      } else if (result.reason === 'not-enough-seconds') {
+        showFeedbackToast('Za mało Sekund ⏳ — zagraj więcej żeby zdobyć!');
+      }
+    }
+
+    function equip(category, itemId) {
+      equipItem(category, itemId);
+      if (category === 'bgs') {
+        _activeBg = itemId;
+        clock.setBackground(itemId);
+      } else {
+        _activeColor = itemId;
+        clock.setHandColor(itemId);
+      }
+      const fresh = loadGame();
+      _save.wardrobe = fresh.wardrobe;
+      renderAll();
+    }
+
+    // ===== FAB HINT (section 14) =====
+    const HINT_MSG = 'Kupuj nowe tła i kolory za Sekundy ⏳ zdobyte podczas nauki. Aktywne elementy są oznaczone zielono.';
+
+    // ===== ACHIEVEMENT OVERLAY =====
+    let _achQueue = [], _achCallback = null;
+
+    function showAchievementQueue(badges, callback) {
+      _achQueue    = badges.slice();
+      _achCallback = callback || null;
+      _showNextAchievement();
+    }
+
+    function _showNextAchievement() {
+      if (_achQueue.length === 0) { if (_achCallback) _achCallback(); return; }
+      const ach = _achQueue.shift();
+      document.getElementById('achievementIcon').textContent   = ach.icon;
+      document.getElementById('achievementName').textContent   = ach.name;
+      document.getElementById('achievementDesc').textContent   = ach.desc;
+      document.getElementById('achievementCounter').textContent =
+        _achQueue.length > 0 ? `(jeszcze ${_achQueue.length} ${_achQueue.length === 1 ? 'odznaka' : 'odznaki'})` : '';
+      document.getElementById('achievementBtn').onclick = _dismissAchievement;
+      document.getElementById('achievementOverlay').classList.add('active');
+    }
+
+    function _dismissAchievement() {
+      document.getElementById('achievementOverlay').classList.remove('active');
+      setTimeout(_showNextAchievement, 300);
+    }
+
+    let _hintOpen = false;
+    let _hintTimer = null;
+
+    function toggleHint() { _hintOpen ? closeHint() : openHint(); }
+
+    function openHint() {
+      _hintOpen = true;
+      document.getElementById('hintMsg').textContent = HINT_MSG;
+      const fab   = document.getElementById('fabHint');
+      const toast = document.getElementById('hintToast');
+      const bar   = document.getElementById('hintBar');
+      fab.classList.add('active');
+      toast.classList.remove('auto-close');
+      toast.classList.add('visible');
+      bar.style.transition = 'none';
+      bar.style.transform  = 'scaleX(0)';
+      void bar.offsetWidth;
+      toast.classList.add('auto-close');
+      clearTimeout(_hintTimer);
+      _hintTimer = setTimeout(closeHint, 5000);
+    }
+
+    function closeHint() {
+      _hintOpen = false;
+      clearTimeout(_hintTimer);
+      document.getElementById('fabHint').classList.remove('active');
+      const toast = document.getElementById('hintToast');
+      toast.classList.remove('visible', 'auto-close');
+    }
+
+    function showFeedbackToast(msg) {
+      if (_hintOpen) closeHint();
+      document.getElementById('hintMsg').textContent = msg;
+      const toast = document.getElementById('hintToast');
+      toast.classList.remove('auto-close');
+      toast.classList.add('visible');
+      clearTimeout(_hintTimer);
+      _hintTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
+    }
+
+    // ===== START =====
+    renderAll();
+  </script>
+  <script src="transitions.js"></script>
+</body>
+</html>

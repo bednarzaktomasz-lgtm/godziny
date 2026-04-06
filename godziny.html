@@ -192,6 +192,75 @@
 				-webkit-tap-highlight-color: transparent;
 			}
 			.star-overlay-map:hover { color: #f0f0f0; }
+
+			/* ---- Achievement Overlay ---- */
+			.achievement-overlay {
+				position: fixed;
+				inset: 0;
+				background: rgba(0,0,0,0);
+				z-index: 500;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				visibility: hidden;
+				transition: background 0.3s ease, visibility 0s 0.3s;
+				padding: clamp(16px, 3vmin, 32px);
+			}
+			.achievement-overlay.active {
+				background: rgba(0,0,0,0.92);
+				visibility: visible;
+				transition: background 0.3s ease, visibility 0s 0s;
+			}
+			.achievement-card {
+				background: #111;
+				border: 2px solid #ffd700;
+				border-radius: clamp(20px, 3.5vmin, 32px);
+				padding: clamp(24px, 4vmin, 48px);
+				text-align: center;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: clamp(8px, 1.5vmin, 14px);
+				max-width: min(360px, 90vw);
+				width: 100%;
+				opacity: 0;
+				transform: scale(0.9);
+				transition: opacity 0.3s ease, transform 0.3s ease;
+				position: relative;
+			}
+			.achievement-overlay.active .achievement-card { opacity: 1; transform: scale(1); }
+			@keyframes achGlow {
+				0%, 100% { opacity: 0.3; transform: scale(1); }
+				50%       { opacity: 0.6; transform: scale(1.08); }
+			}
+			.achievement-glow {
+				position: absolute;
+				inset: -5px;
+				border-radius: inherit;
+				border: 2px solid #ffd700;
+				animation: achGlow 1.8s ease-in-out infinite;
+				pointer-events: none;
+			}
+			.achievement-label     { font-size: clamp(0.65rem, 1.3vmin, 0.8rem); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #ffd700; }
+			.achievement-icon-big  { font-size: clamp(3rem, 7vmin, 5rem); line-height: 1; }
+			.achievement-name      { font-size: clamp(1.2rem, 2.8vmin, 1.8rem); font-weight: 700; color: #f0f0f0; }
+			.achievement-desc      { font-size: clamp(0.8rem, 1.5vmin, 1rem); color: #888; }
+			.achievement-counter   { font-size: clamp(0.7rem, 1.2vmin, 0.85rem); color: #555; min-height: 1.1em; }
+			.achievement-btn {
+				margin-top: clamp(4px, 1vmin, 8px);
+				width: 100%;
+				min-height: var(--btn-height);
+				background: #ffd700;
+				border: none;
+				border-radius: var(--btn-radius);
+				font-size: var(--btn-font);
+				font-weight: 700;
+				color: #000;
+				cursor: pointer;
+				transition: background 0.2s;
+				-webkit-tap-highlight-color: transparent;
+			}
+			.achievement-btn:hover { background: #ffe44d; }
 		</style>
 	</head>
 	<body>
@@ -213,13 +282,12 @@
 
 		<div class="result-bar">
 			<div class="feedback" id="feedback"></div>
-			<div class="score" id="score">0 / 0</div>
 		</div>
 
 		<div class="clock-wrap" id="clockContainer"></div>
 
 		<div class="content-area">
-			<div class="star-progress hidden" id="starProgress">
+			<div class="star-progress" id="starProgress">
 				<div class="spi-row">
 					<span class="spi-label">Poprawne</span>
 					<div class="spi-track"><div class="spi-fill" id="spCorrect"></div></div>
@@ -278,10 +346,26 @@
 			</div>
 		</div>
 
+		<!-- Achievement Overlay (Phase 6) -->
+		<div class="achievement-overlay" id="achievementOverlay">
+			<div class="achievement-card">
+				<div class="achievement-glow"></div>
+				<div class="achievement-label">Nowa odznaka!</div>
+				<div class="achievement-icon-big" id="achievementIcon">🥇</div>
+				<div class="achievement-name" id="achievementName">Pierwsze Kroki</div>
+				<div class="achievement-desc" id="achievementDesc">—</div>
+				<div class="achievement-counter" id="achievementCounter"></div>
+				<button class="achievement-btn" id="achievementBtn">Super! 🎉</button>
+			</div>
+		</div>
+
 		<script src="clock-renderer.js"></script>
 		<script src="game-state.js"></script>
 		<script src="question-logic.js"></script>
 		<script>
+			// Anti-rust check
+			if (typeof isRusty === 'function' && isRusty()) document.body.classList.add('rusty');
+
 			// ==================== URL Params & Expedition Mode ====================
 			const urlParams      = new URLSearchParams(window.location.search);
 			const expeditionNode = urlParams.get('node');
@@ -318,10 +402,8 @@
 			if (isExpedition) {
 				document.body.classList.add('expedition-mode');
 				document.getElementById('backBtn').href = 'mapa.html';
-				document.getElementById('starProgress').classList.remove('hidden');
 			}
 
-			// ==================== Load Global Settings ====================
 			const STORAGE_KEYS = {
 				activeModes: 'zegar_activeModes',
 				soundEnabled: 'zegar_soundEnabled',
@@ -368,7 +450,7 @@
 
 			// ==================== DOM & Game Variables ====================
 			const feedbackEl   = document.getElementById('feedback');
-			const scoreEl      = document.getElementById('score');
+
 			const answerButtons = [
 				document.getElementById('ans0'),
 				document.getElementById('ans1'),
@@ -468,14 +550,15 @@
 			}
 
 			// ==================== Progress Bar ====================
+			const correctTarget = isExpedition ? 8 : 12;
 			function updateProgressBar() {
-				const correctPct = Math.min(100, Math.round((session.total / 8) * 100));
+				const correctPct = Math.min(100, Math.round((session.total / correctTarget) * 100));
 				const streakPct  = Math.min(100, Math.round((session.bestStreak / 6) * 100));
 				document.getElementById('spCorrect').style.width = correctPct + '%';
 				document.getElementById('spStreak').style.width  = streakPct  + '%';
-				document.getElementById('spCorrectTxt').textContent = session.total + '/8';
+				document.getElementById('spCorrectTxt').textContent = session.total + '/' + correctTarget;
 				document.getElementById('spStreakTxt').textContent  = session.bestStreak + '/6';
-				if (session.total >= 8) document.getElementById('spCorrect').classList.add('done');
+				if (session.total >= correctTarget) document.getElementById('spCorrect').classList.add('done');
 				if (session.bestStreak >= 6) document.getElementById('spStreak').classList.add('done');
 			}
 
@@ -525,27 +608,38 @@
 					if (attempts === 0) {
 						totalAnswers++;
 						correctAnswers++;
-						scoreEl.textContent = correctAnswers + ' / ' + totalAnswers;
 
-						// Session tracking
-						session.streak++;
-						session.total++;
-						session.bestStreak = Math.max(session.bestStreak, session.streak);
-						if (isExpedition) updateProgressBar();
-
-						// Report to game state
+							// Session tracking
+							session.streak++;
+							session.total++;
+							session.bestStreak = Math.max(session.bestStreak, session.streak);
+							updateProgressBar();
+						let _answerAch = [];
 						if (isExpedition && expeditionNode) {
-							reportResult(expeditionNode, expeditionStar, true);
+							const r = reportResult(expeditionNode, expeditionStar, true);
+							if (r && r.newAchievements) _answerAch = r.newAchievements;
 						} else {
-							reportQuickGameResult(true);
+							const r = reportQuickGameResult(true);
+							if (r && r.newAchievements) _answerAch = r.newAchievements;
 						}
 
 						// Check star condition
-						if (isExpedition && !starAlreadyEarned && session.total >= 8 && session.bestStreak >= 6) {
+						if (isExpedition && !starAlreadyEarned && session.total >= correctTarget && session.bestStreak >= 6) {
 							starAlreadyEarned = true;
-							markStarCompleted(expeditionNode, expeditionStar, session.bestStreak);
-							setTimeout(showStarOverlay, 2000);
+							const sr = markStarCompleted(expeditionNode, expeditionStar, session.bestStreak);
+							const allNew = [..._answerAch];
+							if (sr && sr.newAchievements) {
+								sr.newAchievements.forEach(a => { if (!allNew.find(p => p.id === a.id)) allNew.push(a); });
+							}
+							setTimeout(() => {
+								if (allNew.length > 0) showAchievementQueue(allNew, showStarOverlay);
+								else showStarOverlay();
+							}, 2000);
 							return;
+						}
+						// Non-star answer: show achievements if any earned
+						if (_answerAch.length > 0) {
+							setTimeout(() => showAchievementQueue(_answerAch, null), 1500);
 						}
 					}
 					setTimeout(setNewQuestion, 2000);
@@ -556,13 +650,11 @@
 
 					if (attempts === 0) {
 						totalAnswers++;
-						scoreEl.textContent = correctAnswers + ' / ' + totalAnswers;
-						attempts = 1;
+							attempts = 1;
 
-						// Session: streak reset on first wrong attempt
-						session.streak = 0;
-						if (isExpedition) updateProgressBar();
-
+							// Session: streak reset on first wrong attempt
+							session.streak = 0;
+							updateProgressBar();
 						// Report wrong
 						if (isExpedition && expeditionNode) {
 							reportResult(expeditionNode, expeditionStar, false);
@@ -606,6 +698,37 @@
 				}
 
 				document.getElementById('starOverlay').classList.add('active');
+			}
+
+			// ==================== Achievement Overlay ====================
+			let _achQueue = [], _achCallback = null;
+
+			function showAchievementQueue(badges, callback) {
+				_achQueue    = badges.slice();
+				_achCallback = callback || null;
+				_showNextAchievement();
+			}
+
+			function _showNextAchievement() {
+				if (_achQueue.length === 0) {
+					if (_achCallback) _achCallback();
+					return;
+				}
+				const ach = _achQueue.shift();
+				document.getElementById('achievementIcon').textContent   = ach.icon;
+				document.getElementById('achievementName').textContent   = ach.name;
+				document.getElementById('achievementDesc').textContent   = ach.desc;
+				document.getElementById('achievementCounter').textContent =
+					_achQueue.length > 0
+						? `(jeszcze ${_achQueue.length} ${_achQueue.length === 1 ? 'odznaka' : 'odznaki'})`
+						: '';
+				document.getElementById('achievementBtn').onclick = _dismissAchievement;
+				document.getElementById('achievementOverlay').classList.add('active');
+			}
+
+			function _dismissAchievement() {
+				document.getElementById('achievementOverlay').classList.remove('active');
+				setTimeout(_showNextAchievement, 300);
 			}
 
 			// ==================== FAB + Toast ====================

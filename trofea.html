@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trofea — Mistrz Czasu</title>
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    /* ---- Trofea page ---- */
+    .trophies-header {
+      padding: clamp(16px, 3vmin, 28px) 0 clamp(8px, 1.5vmin, 16px);
+      text-align: center;
+    }
+    .trophies-title {
+      font-size: clamp(1.4rem, 3.5vmin, 2.2rem);
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+    .trophies-subtitle {
+      font-size: clamp(0.8rem, 1.6vmin, 1rem);
+      color: #888;
+      margin-top: 4px;
+    }
+
+    /* ---- Badges grid ---- */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(clamp(140px, 30vw, 180px), 1fr));
+      gap: clamp(12px, 2vmin, 20px);
+      width: min(900px, 96vw);
+      margin: 0 auto;
+      padding: 0 clamp(12px, 2vw, 24px) clamp(32px, 5vmin, 56px);
+    }
+
+    .badge-card {
+      background: #111;
+      border: 2px solid #222;
+      border-radius: clamp(14px, 2.5vmin, 22px);
+      padding: clamp(16px, 2.5vmin, 24px) clamp(12px, 2vmin, 18px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(6px, 1vmin, 10px);
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .badge-card.earned {
+      border-color: #ffd700;
+      background: #131109;
+    }
+    .badge-card.earned:hover {
+      transform: translateY(-2px);
+      border-color: #ffe44d;
+    }
+
+    .badge-icon {
+      font-size: clamp(2.4rem, 6vmin, 3.8rem);
+      line-height: 1;
+      transition: filter 0.3s;
+    }
+    .badge-card:not(.earned) .badge-icon {
+      filter: grayscale(1) brightness(0.4);
+    }
+
+    .badge-name {
+      font-size: clamp(0.8rem, 1.7vmin, 1rem);
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+    .badge-card:not(.earned) .badge-name {
+      color: #555;
+    }
+
+    .badge-desc {
+      font-size: clamp(0.68rem, 1.3vmin, 0.82rem);
+      color: #888;
+      line-height: 1.4;
+    }
+    .badge-card:not(.earned) .badge-desc {
+      color: #444;
+    }
+
+    .badge-date {
+      font-size: clamp(0.65rem, 1.2vmin, 0.78rem);
+      color: #ffd700;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .badge-locked-label {
+      font-size: clamp(0.65rem, 1.2vmin, 0.78rem);
+      color: #444;
+      margin-top: 2px;
+    }
+
+    /* ---- Summary bar ---- */
+    .trophies-summary {
+      margin: clamp(8px, 1.5vmin, 14px) auto clamp(4px, 0.8vmin, 8px);
+      width: min(900px, 96vw);
+      padding: 0 clamp(12px, 2vw, 24px);
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1.5vmin, 12px);
+    }
+    .summary-bar-track {
+      flex: 1;
+      height: clamp(6px, 1vmin, 9px);
+      background: #222;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .summary-bar-fill {
+      height: 100%;
+      background: #ffd700;
+      border-radius: 5px;
+      transition: width 0.6s ease;
+    }
+    .summary-count {
+      font-size: clamp(0.75rem, 1.4vmin, 0.9rem);
+      color: #888;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .summary-count strong {
+      color: #ffd700;
+    }
+
+    /* ---- FAB + Toast ---- */
+    .fab-hint {
+      position: fixed;
+      bottom: 24px; right: 20px;
+      z-index: 300;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid #333;
+      color: #555;
+      font-size: 1.3rem; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    }
+    .fab-hint:hover { color: #f0f0f0; border-color: #555; }
+    .fab-hint.active { border-color: var(--accent); color: var(--accent); transform: rotate(15deg); }
+
+    .hint-toast {
+      position: fixed;
+      bottom: 84px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      z-index: 299;
+      width: min(360px, calc(100vw - 40px));
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex; align-items: flex-start; gap: 12px;
+      overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .hint-toast.visible { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .hint-toast-icon  { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .hint-toast-body  { flex: 1; }
+    .hint-toast-title { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .hint-toast-msg   { font-size: 0.88rem; color: #ccc; line-height: 1.5; }
+    .hint-toast-bar   {
+      position: absolute; bottom: 0; left: 0;
+      height: 3px; background: var(--accent); border-radius: 0 0 16px 16px;
+      width: 100%; transform-origin: left; transform: scaleX(0);
+    }
+    .hint-toast.auto-close .hint-toast-bar { transform: scaleX(1); transition: transform 5s linear; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a href="start.html" title="Wróć do menu">
+      <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </a>
+    <div class="topbar-right"></div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="trophies-header">
+    <div class="trophies-title">🏆 Trofea</div>
+    <div class="trophies-subtitle" id="trophiesSubtitle">Zbierz wszystkie odznaki!</div>
+  </div>
+
+  <!-- PROGRESS SUMMARY -->
+  <div class="trophies-summary">
+    <div class="summary-count"><strong id="earnedCount">0</strong> / 9</div>
+    <div class="summary-bar-track">
+      <div class="summary-bar-fill" id="summaryFill" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- BADGES GRID -->
+  <div class="badges-grid" id="badgesGrid"></div>
+
+  <!-- FAB ? -->
+  <button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
+
+  <!-- Hint Toast -->
+  <div class="hint-toast" id="hintToast">
+    <span class="hint-toast-icon">💡</span>
+    <div class="hint-toast-body">
+      <div class="hint-toast-title">Jak to działa?</div>
+      <div class="hint-toast-msg">Zdobywaj odznaki grając na mapie, w Szybkiej Grze i w Garderobie. Odznaki nie są przyznawane wstecz — graj dalej!</div>
+    </div>
+    <div class="hint-toast-bar" id="hintBar"></div>
+  </div>
+
+  <script src="game-state.js"></script>
+  <script>
+    // ===== PROFILE CHECK =====
+    (function() {
+      const p = typeof getActiveProfile === 'function' ? getActiveProfile() : null;
+      if (!p) { location.replace('start.html'); }
+    })();
+
+    // ===== RENDER BADGES =====
+    function renderBadges() {
+      const { details, earned } = getAchievements();
+      const earnedCount = earned.length;
+
+      document.getElementById('earnedCount').textContent = earnedCount;
+      document.getElementById('summaryFill').style.width = Math.round((earnedCount / 9) * 100) + '%';
+
+      const subtitle = document.getElementById('trophiesSubtitle');
+      if (earnedCount === 9) {
+        subtitle.textContent = '🎉 Masz wszystkie odznaki! Jesteś prawdziwym Mistrzem Czasu!';
+      } else if (earnedCount === 0) {
+        subtitle.textContent = 'Zdobądź pierwszą odznakę — zacznij grę!';
+      } else {
+        subtitle.textContent = `Świetna robota! Zostało ${9 - earnedCount} ${9 - earnedCount === 1 ? 'odznaka' : 'odznaki'} do zdobycia.`;
+      }
+
+      const grid = document.getElementById('badgesGrid');
+      grid.innerHTML = '';
+
+      for (const ach of details) {
+        const isEarned = ach.earnedAt !== null;
+        const card = document.createElement('div');
+        card.className = 'badge-card' + (isEarned ? ' earned' : '');
+
+        const dateStr = isEarned
+          ? formatDate(ach.earnedAt)
+          : null;
+
+        card.innerHTML = `
+          <div class="badge-icon">${ach.icon}</div>
+          <div class="badge-name">${ach.name}</div>
+          <div class="badge-desc">${ach.desc}</div>
+          ${isEarned
+            ? `<div class="badge-date">✓ ${dateStr}</div>`
+            : `<div class="badge-locked-label">🔒 Jeszcze nie zdobyta</div>`
+          }
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    function formatDate(isoDate) {
+      if (!isoDate) return '';
+      const [y, m, d] = isoDate.split('-');
+      return `${d}.${m}.${y}`;
+    }
+
+    renderBadges();
+
+    // ===== FAB + Toast =====
+    let _hintOpen = false, _hintTimer = null;
+
+    function toggleHint() { _hintOpen ? closeHint() : openHint(); }
+
+    function openHint() {
+      _hintOpen = true;
+      const fab   = document.getElementById('fabHint');
+      const toast = document.getElementById('hintToast');
+      const bar   = document.getElementById('hintBar');
+      fab.classList.add('active');
+      toast.classList.remove('auto-close');
+      toast.classList.add('visible');
+      bar.style.transition = 'none';
+      bar.style.transform  = 'scaleX(0)';
+      void bar.offsetWidth;
+      toast.classList.add('auto-close');
+      clearTimeout(_hintTimer);
+      _hintTimer = setTimeout(closeHint, 5000);
+    }
+
+    function closeHint() {
+      _hintOpen = false;
+      clearTimeout(_hintTimer);
+      document.getElementById('fabHint').classList.remove('active');
+      document.getElementById('hintToast').classList.remove('visible', 'auto-close');
+    }
+  </script>
+  <script src="transitions.js"></script>
+</body>
+</html>

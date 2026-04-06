@@ -287,3 +287,9 @@
 .clock .ghost-minute polygon {
   fill: #16a34a !important;
 }
+
+/* Anty-rdza — efekt gdy gracz nie grał od >1 dnia */
+.rusty .clock {
+  filter: sepia(0.45) saturate(0.55);
+  transition: filter 0.5s ease;
+}

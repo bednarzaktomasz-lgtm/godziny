@@ -417,22 +417,22 @@ Implementacja: na starcie gry `?node` odczytany z URL → `activeModes` ustawion
 - Po zakupie przedmiot pojawia się jako odblokowany, ale aktywny zostaje poprzedni do momentu ręcznego założenia
 
 ### Kroki:
-- [ ] **4.1** `garderoba.html`: dwie sekcje — Tła (4 karty) + Kolory Wskazówek (3 karty); każda karta: podgląd, nazwa, cena/"Załóż"/"Aktywne", stan locked/unlocked/active
-- [ ] **4.2** SHOP_ITEMS: solid=0 (darmowe), spiral=500, grid=1000, tech=2000; white=0, blue=300, red=800
-- [ ] **4.3** `purchaseItem(category, itemId)` — sprawdza Sekundy, odblokuje, odejmuje, zapisuje
-- [ ] **4.4** `equipItem(category, itemId)` — zmienia aktywny styl (tylko wśród odblokowanych)
-- [ ] **4.5** Animowany podgląd `ClockRenderer` na żywo w garderobie (aktualizuje się przy zmianie aktywnego stylu)
+- [x] **4.1** `garderoba.html`: dwie sekcje — Tła (4 karty) + Kolory Wskazówek (3 karty); każda karta: podgląd, nazwa, cena/"Załóż"/"Aktywne", stan locked/unlocked/active
+- [x] **4.2** SHOP_ITEMS: solid=0 (darmowe), spiral=500, grid=1000, tech=2000; white=0, blue=300, red=800
+- [x] **4.3** `purchaseItem(category, itemId)` — sprawdza Sekundy, odblokuje, odejmuje, zapisuje
+- [x] **4.4** `equipItem(category, itemId)` — zmienia aktywny styl (tylko wśród odblokowanych)
+- [x] **4.5** Animowany podgląd `ClockRenderer` na żywo w garderobie (aktualizuje się przy zmianie aktywnego stylu)
 - [ ] **4.6** Tryby gry czytają z `wardrobe` zamiast `zegar_*` localStorage
 - [ ] **4.7** `ustawienia.html` — usunąć sekcje Tła i Kolory Wskazówek (przeniesione), zostaje: style cyfr, format 12/24h, dźwięk, podpowiedź
 
 ### Pliki: nowy `garderoba.html`; modyfikacja `game-state.js`, `ustawienia.html`, `start.html`, tryby gry
 
 ### Weryfikacja:
-- [ ] Zakup odblokuje przedmiot, nie zakłada automatycznie
-- [ ] "Załóż" zmienia aktywny styl (tylko odblokowany)
-- [ ] Podgląd zegara aktualizuje się na żywo przy założeniu
-- [ ] Zakup zmniejsza Sekundy
-- [ ] Brak zakupu bez funduszy
+- [x] Zakup odblokuje przedmiot, nie zakłada automatycznie
+- [x] "Załóż" zmienia aktywny styl (tylko odblokowany)
+- [x] Podgląd zegara aktualizuje się na żywo przy założeniu
+- [x] Zakup zmniejsza Sekundy
+- [x] Brak zakupu bez funduszy
 - [ ] Styl widoczny we wszystkich trybach
 - [ ] Per profil
 
@@ -460,21 +460,21 @@ po ukończeniu sesji:
 - Znika po ukończeniu pierwszej sesji (tej która równocześnie rozpoczyna nowy streak)
 
 ### Kroki:
-- [ ] **5.1** `updateStreak(state)` — wywoływana po ukończeniu sesji; logika jak wyżej
-- [ ] **5.2** Kalendarz 28 dni na dashboardzie, zielone aktywne dni (z `activityCalendar`), napis "Dzień X podróży"
-- [ ] **5.3** Anty-rdza: sprawdzenie `lastDate` przy ładowaniu każdej strony; jeśli >48h — klasa `.rusty` na `<body>` → CSS `filter` na `ClockRenderer`; znika po `updateStreak()` w tej samej sesji
-- [ ] **5.4** Streak counter (liczba + ikona ognia 🔥) na dashboardzie (`start.html`)
+- [x] **5.1** `updateStreak(state)` — wywoływana po ukończeniu sesji; logika jak wyżej
+- [x] **5.2** Kalendarz 28 dni na dashboardzie, zielone aktywne dni (z `activityCalendar`), napis "Dzień X podróży"
+- [x] **5.3** Anty-rdza: sprawdzenie `lastDate` przy ładowaniu każdej strony; jeśli >48h — klasa `.rusty` na `<body>` → CSS `filter` na `ClockRenderer`; znika po `updateStreak()` w tej samej sesji
+- [x] **5.4** Streak counter (liczba + ikona ognia 🔥) na dashboardzie (`start.html`)
 
 ### Pliki: modyfikacja `game-state.js`, `start.html`, `clock-styles.css` (klasa `.rusty` dla tarcz)
 
 ### Weryfikacja:
-- [ ] Streak rośnie tylko przy pierwszej sesji danego dnia
-- [ ] Kolejne sesje tego samego dnia nie zmieniają streaka
-- [ ] Przerwa >1 dzień → reset do 1 (nie do 0 — dzień w którym grasz = 1)
-- [ ] Kalendarz podświetla aktywne dni
-- [ ] Sepia po 48h na wszystkich tarczach
-- [ ] Sepia znika po ukończeniu pierwszej sesji
-- [ ] `nauka.html` nie wpływa na streak
+- [x] Streak rośnie tylko przy pierwszej sesji danego dnia
+- [x] Kolejne sesje tego samego dnia nie zmieniają streaka
+- [x] Przerwa >1 dzień → reset do 1 (nie do 0 — dzień w którym grasz = 1)
+- [x] Kalendarz podświetla aktywne dni
+- [x] Sepia po 48h na wszystkich tarczach
+- [x] Sepia znika po ukończeniu pierwszej sesji
+- [x] `nauka.html` nie wpływa na streak
 - [ ] Per profil
 
 ---
@@ -482,18 +482,39 @@ po ukończeniu sesji:
 ## FAZA 6: Odznaki i Trofea
 > *Wymaga Faz 4+5*
 
+### Warunki odznak
+
+| Odznaka | Warunek |
+|---------|---------|
+| 🥇 Pierwsze Kroki | Pierwsza zdobyta gwiazdka (jakakolwiek) |
+| 🏝️ Wyspiarz | Ukończona dowolna jedna wyspa (3 gwiazdki na jednym węźle) |
+| ⏱️ Kwadransowy Król | Wszystkie 3 gwiazdki na węźle `quarters` |
+| 🏛️ Rzymski Ekspert | Cała pętla 2 ukończona (5 węzłów × 3 gwiazdki: roman-*) |
+| 👑 Mistrz Czasu | Wszystkie 20 wysp × 3 gwiazdki |
+| 🔥 Seria 7 | Streak ≥ 7 dni pod rząd |
+| 🌟 Seria 30 | Streak ≥ 30 dni pod rząd |
+| 🎨 Koneser | Wszystkie style tarcz odblokowane w Garderobie (4 tła + 3 kolory) |
+| 💯 Setka | 100 poprawnych odpowiedzi łącznie (`stats.totalCorrect >= 100`) |
+
+### Decyzje UX:
+- **Galeria** — osobna strona `trofea.html`, przycisk z dolnego paska dashboardu
+- **Powiadomienie przy zdobyciu** — pełny overlay przerywający grę (nie toast); gracz musi kliknąć "Super!" żeby wrócić
+
 ### Kroki:
-- [ ] **6.1** 9 odznak: Pierwsze Kroki, Wyspiarz, Kwadransowy Król, Rzymski Ekspert, Mistrz Czasu, Seria 7, Seria 30, Koneser, Setka
-- [ ] **6.2** `checkAchievements(state)` po każdym reportResult
-- [ ] **6.3** Toast/popup przy zdobyciu
-- [ ] **6.4** Galeria trofeów (`trofea.html` lub sekcja dashboardu)
+- [x] **6.1** Definicja `ACHIEVEMENTS` (id, nazwa, opis, ikona, warunek jako funkcja `(state) => bool`)
+- [x] **6.2** `checkAchievements(state)` — sprawdza wszystkie niezdobyte odznaki, zwraca listę nowo zdobytych; wywoływana po każdym `reportResult()`, `purchaseItem()`, `updateStreak()`. **Brak obsługi retroaktywnej** — gracze zawsze zaczynają od zera (czysta pamięć przeglądarki)
+- [x] **6.3** Overlay przy zdobyciu: pełnoekranowy, animowany, przycisk "Super!" → powrót do gry; jeśli wiele odznak jednocześnie — pokazuj kolejno
+- [x] **6.4** `trofea.html` — siatka wszystkich 9 odznak: zdobyte (kolorowe + data) / niezdobyte (szare + "???" lub podpowiedź warunku)
+- [x] **6.5** Przycisk "Trofea" w dolnym pasku `start.html` → `trofea.html`
 
 ### Pliki: nowy `trofea.html`; modyfikacja `game-state.js`, `start.html`
 
 ### Weryfikacja:
-- [ ] Popup odznaki przy zdobyciu
-- [ ] Galeria z poprawnymi statusami
-- [ ] Per profil
+- [x] Overlay pojawia się przy zdobyciu odznaki w trakcie gry
+- [x] Wiele odznak jednocześnie → kolejne overlaye
+- [x] Galeria pokazuje poprawne stany (zdobyte/niezdobyte)
+- [x] Daty zdobycia zapisane w `achievements[]`
+- [x] Per profil
 
 ---
 
@@ -559,12 +580,12 @@ FAZA 1 (profile + dane) ──► FAZA 2 (dashboard) ──► FAZA 3 (integracj
 | 1. Profile + Dane | ✅ Ukończona | 29.03.2026 | — |
 | 2. Dashboard UI | ✅ Ukończona | 30.03.2026 | Mapa 4×5 z Untitled-3.html; hub + szybka-gra + wyzwanie |
 | 3. Integracja Trybów | ✅ Ukończona | 31.03.2026 | Protokół nawigacyjny ▶/← Mapa; sandbox 12+6; pasek postępu zastępuje #score |
-| 4. Garderoba | ⬜ Nie rozpoczęta | — | — |
-| 5. Streak/Kalendarz | ⬜ Nie rozpoczęta | — | — |
-| 6. Odznaki | ⬜ Nie rozpoczęta | — | — |
+| 4. Garderoba | ✅ Ukończona | 27.04.2026 | garderoba.html; purchaseItem/equipItem; podgląd live ClockRenderer; 4+3 przedmioty |
+| 5. Streak/Kalendarz | ✅ Ukończona | 27.04.2026 | updateStreak/isRusty; kalendarz 28 dni; anty-rdza na wszystkich tarczach |
+| 6. Odznaki | ✅ Ukończona | 06.04.2026 | ACHIEVEMENTS ×9; overlay kolejkowy; trofea.html; per profil |
 | 7. Spaced Repetition | ⬜ Nie rozpoczęta | — | — |
 
 ---
 
 *Plan utworzony: 29.03.2026*
-*Ostatnia aktualizacja: 29.03.2026 — Faza 1 ukończona; Faza 2 przeprojektowana (hub 3 kart, mapa.html, szybka-gra.html); kolejność trudności zmieniona na Wybierz→Wpisz→Ustaw*
+*Ostatnia aktualizacja: 06.04.2026 — Faza 6 ukończona: 9 odznak, overlay, trofea.html*
