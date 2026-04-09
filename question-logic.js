@@ -21,7 +21,7 @@
  * @returns {{ hour: number, minute: number }}
  */
 function generateQuestion(nodeConfig, attemptHistory) {
-  const minutes = nodeConfig.minutes || [0];
+  const minutes = nodeConfig.exclusiveMinutes || nodeConfig.minutes || [0];
   const is24h   = nodeConfig.hourFormat === '24';
   const maxHour = is24h ? 23 : 12;
   const recent  = (attemptHistory || []).slice(-3);

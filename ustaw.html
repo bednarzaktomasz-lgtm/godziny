@@ -358,31 +358,34 @@
 		const isExpedition   = !!expeditionNode && expeditionStar >= 1;
 
 		// NODE_CONFIG — definicja węzłów
+		// minutes        — pełna pula dla trybu sandbox / pola ustawień
+		// exclusiveMinutes — tylko minuty charakterystyczne dla tej wyspy (tryb Wyprawa)
+		const _nonFive = Array.from({length:60},(_,i)=>i).filter(m => m % 5 !== 0);
 		const NODE_CONFIG = {
-			'full-hours':     { minutes: [0],                                              dialType: 'arabic', label: 'Wyspa Pełnych Godzin',      icon: '🏝️' },
-			'quarters':       { minutes: [0,15,30,45],                                     dialType: 'arabic', label: 'Zatoka Kwadransów',          icon: '🌊' },
-			'half-past':      { minutes: [0,30],                                           dialType: 'arabic', label: 'Góry Wpół do',               icon: '🏔️' },
-			'every-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'arabic', label: 'Dolina Co Pięć Minut',        icon: '🌿' },
-			'every-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'arabic', label: 'Morze Każdej Minuty',         icon: '🌊' },
-			'roman-full':     { minutes: [0],                                              dialType: 'roman',  label: 'Wyspa Cyfr Rzymskich',        icon: '🏛️' },
-			'roman-quarters': { minutes: [0,15,30,45],                                     dialType: 'roman',  label: 'Forum Kwadransów',            icon: '🗿' },
-			'roman-half':     { minutes: [0,30],                                           dialType: 'roman',  label: 'Koloseum Wpół do',            icon: '⚔️' },
-			'roman-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'roman',  label: 'Akwedukt Minut',              icon: '🌁' },
-			'roman-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'roman',  label: 'Labirynt Caesara',            icon: '🔱' },
-			'blank-full':     { minutes: [0],                                              dialType: 'blank',  label: 'Wyspa Ciszy',                 icon: '🌑' },
-			'blank-quarters': { minutes: [0,15,30,45],                                     dialType: 'blank',  label: 'Mglisty Przylądek',           icon: '🌫️' },
-			'blank-half':     { minutes: [0,30],                                           dialType: 'blank',  label: 'Dolina Cienia',               icon: '🌒' },
-			'blank-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              dialType: 'blank',  label: 'Pustynia Bez Znaków',         icon: '🏜️' },
-			'blank-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 dialType: 'blank',  label: 'Mroczne Bezdroża',            icon: '🌑' },
-			'24h-full':       { minutes: [0],                                              hourFormat: '24',   label: 'Brama Południa',              icon: '🌃' },
-			'24h-quarters':   { minutes: [0,15,30,45],                                     hourFormat: '24',   label: 'Wieża Zegarowa',              icon: '🗼' },
-			'24h-half':       { minutes: [0,30],                                           hourFormat: '24',   label: 'Kanał Wpół do',               icon: '🌉' },
-			'24h-five':       { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              hourFormat: '24',   label: 'Metro Nocne',                 icon: '🚇' },
-			'24h-minute':     { minutes: Array.from({length:60},(_,i)=>i),                 hourFormat: '24',   label: 'Labirynt 24h',                icon: '🌐' },
+			'full-hours':     { minutes: [0],                                              exclusiveMinutes: [0],                       dialType: 'arabic', label: 'Wyspa Pełnych Godzin',      icon: '🏝️' },
+			'quarters':       { minutes: [0,15,30,45],                                     exclusiveMinutes: [15,45],                   dialType: 'arabic', label: 'Zatoka Kwadransów',          icon: '🌊' },
+			'half-past':      { minutes: [0,30],                                           exclusiveMinutes: [30],                      dialType: 'arabic', label: 'Góry Wpół do',               icon: '🏔️' },
+			'every-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              exclusiveMinutes: [5,10,20,25,35,40,50,55],  dialType: 'arabic', label: 'Dolina Co Pięć Minut',        icon: '🌿' },
+			'every-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 exclusiveMinutes: _nonFive,                  dialType: 'arabic', label: 'Morze Każdej Minuty',         icon: '🌊' },
+			'roman-full':     { minutes: [0],                                              exclusiveMinutes: [0],                       dialType: 'roman',  label: 'Wyspa Cyfr Rzymskich',        icon: '🏛️' },
+			'roman-quarters': { minutes: [0,15,30,45],                                     exclusiveMinutes: [15,45],                   dialType: 'roman',  label: 'Forum Kwadransów',            icon: '🗿' },
+			'roman-half':     { minutes: [0,30],                                           exclusiveMinutes: [30],                      dialType: 'roman',  label: 'Koloseum Wpół do',            icon: '⚔️' },
+			'roman-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              exclusiveMinutes: [5,10,20,25,35,40,50,55],  dialType: 'roman',  label: 'Akwedukt Minut',              icon: '🌁' },
+			'roman-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 exclusiveMinutes: _nonFive,                  dialType: 'roman',  label: 'Labirynt Caesara',            icon: '🔱' },
+			'blank-full':     { minutes: [0],                                              exclusiveMinutes: [0],                       dialType: 'blank',  label: 'Wyspa Ciszy',                 icon: '🌑' },
+			'blank-quarters': { minutes: [0,15,30,45],                                     exclusiveMinutes: [15,45],                   dialType: 'blank',  label: 'Mglisty Przylądek',           icon: '🌫️' },
+			'blank-half':     { minutes: [0,30],                                           exclusiveMinutes: [30],                      dialType: 'blank',  label: 'Dolina Cienia',               icon: '🌒' },
+			'blank-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              exclusiveMinutes: [5,10,20,25,35,40,50,55],  dialType: 'blank',  label: 'Pustynia Bez Znaków',         icon: '🏜️' },
+			'blank-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 exclusiveMinutes: _nonFive,                  dialType: 'blank',  label: 'Mroczne Bezdroża',            icon: '🌑' },
+			'24h-full':       { minutes: [0],                                              exclusiveMinutes: [0],                       hourFormat: '24',   label: 'Brama Południa',              icon: '🌃' },
+			'24h-quarters':   { minutes: [0,15,30,45],                                     exclusiveMinutes: [15,45],                   hourFormat: '24',   label: 'Wieża Zegarowa',              icon: '🗼' },
+			'24h-half':       { minutes: [0,30],                                           exclusiveMinutes: [30],                      hourFormat: '24',   label: 'Kanał Wpół do',               icon: '🌉' },
+			'24h-five':       { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              exclusiveMinutes: [5,10,20,25,35,40,50,55],  hourFormat: '24',   label: 'Metro Nocne',                 icon: '🚇' },
+			'24h-minute':     { minutes: Array.from({length:60},(_,i)=>i),                 exclusiveMinutes: _nonFive,                  hourFormat: '24',   label: 'Labirynt 24h',                icon: '🌐' },
 		};
 
 		const nodeConf          = isExpedition ? (NODE_CONFIG[expeditionNode] || null) : null;
-		const expeditionMinutes = nodeConf ? nodeConf.minutes : null;
+		const expeditionMinutes = nodeConf ? (nodeConf.exclusiveMinutes || nodeConf.minutes) : null;
 
 		if (isExpedition) {
 			document.body.classList.add('expedition-mode');
@@ -509,7 +512,19 @@
 			osc.start(audioContext.currentTime);
 			osc.stop(audioContext.currentTime + duration / 1000);
 		}
-		function playSuccess() { playBeep(880, 150); }
+		function playSuccess() {
+			if (!soundEnabled) return;
+			initAudioContext();
+			[440, 660].forEach((freq, i) => {
+				const osc = audioContext.createOscillator(), g = audioContext.createGain();
+				osc.connect(g); g.connect(audioContext.destination);
+				osc.frequency.value = freq; osc.type = 'sine';
+				const t = audioContext.currentTime + i * 0.13;
+				g.gain.setValueAtTime(0.1, t);
+				g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+				osc.start(t); osc.stop(t + 0.18);
+			});
+		}
 		function playError()   { playBeep(220, 300); }
 
 		// ==================== Time Helpers ====================
