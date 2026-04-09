@@ -559,6 +559,39 @@ const ACHIEVEMENTS = [
       }),
   },
   {
+    id:   'arabic-master',
+    icon: '🌍',
+    name: 'Mistrz Arabskich Cyfr',
+    desc: 'Ukończ całą pętlę cyfr arabskich (5 wysp)',
+    check: s => ['full-hours','quarters','half-past','every-five','every-minute']
+      .every(id => {
+        const n = s.nodes[id];
+        return n && n.star1.completed && n.star2.completed && n.star3.completed;
+      }),
+  },
+  {
+    id:   'blank-conqueror',
+    icon: '🕷️',
+    name: 'Zdobywca Ciemności',
+    desc: 'Ukończ całą pętlę bez cyfr (5 wysp)',
+    check: s => ['blank-full','blank-quarters','blank-half','blank-five','blank-minute']
+      .every(id => {
+        const n = s.nodes[id];
+        return n && n.star1.completed && n.star2.completed && n.star3.completed;
+      }),
+  },
+  {
+    id:   '24h-chrononaut',
+    icon: '🌌',
+    name: 'Chrononauta',
+    desc: 'Ukończ całą pętlę 24h (5 wysp)',
+    check: s => ['24h-full','24h-quarters','24h-half','24h-five','24h-minute']
+      .every(id => {
+        const n = s.nodes[id];
+        return n && n.star1.completed && n.star2.completed && n.star3.completed;
+      }),
+  },
+  {
     id:   'master',
     icon: '👑',
     name: 'Mistrz Czasu',
@@ -594,6 +627,27 @@ const ACHIEVEMENTS = [
     name: 'Setka',
     desc: '100 poprawnych odpowiedzi łącznie',
     check: s => s.stats.totalCorrect >= 100,
+  },
+  {
+    id:   'tricent',
+    icon: '🚀',
+    name: 'Trzysta!',
+    desc: '300 poprawnych odpowiedzi łącznie',
+    check: s => s.stats.totalCorrect >= 300,
+  },
+  {
+    id:   'sexcent',
+    icon: '⚡',
+    name: 'Sześćsetka',
+    desc: '600 poprawnych odpowiedzi łącznie',
+    check: s => s.stats.totalCorrect >= 600,
+  },
+  {
+    id:   'millennium',
+    icon: '👑',
+    name: 'Tysiącznik',
+    desc: '1000 poprawnych odpowiedzi łącznie',
+    check: s => s.stats.totalCorrect >= 1000,
   },
 ];
 

@@ -194,7 +194,7 @@
 
   <!-- PROGRESS SUMMARY -->
   <div class="trophies-summary">
-    <div class="summary-count"><strong id="earnedCount">0</strong> / 9</div>
+    <div class="summary-count"><strong id="earnedCount">0</strong> / <span id="totalCount"></span></div>
     <div class="summary-bar-track">
       <div class="summary-bar-fill" id="summaryFill" style="width: 0%"></div>
     </div>
@@ -228,17 +228,20 @@
     function renderBadges() {
       const { details, earned } = getAchievements();
       const earnedCount = earned.length;
+      const totalCount = ACHIEVEMENTS.length;
 
       document.getElementById('earnedCount').textContent = earnedCount;
-      document.getElementById('summaryFill').style.width = Math.round((earnedCount / 9) * 100) + '%';
+      document.getElementById('totalCount').textContent = totalCount;
+      document.getElementById('summaryFill').style.width = Math.round((earnedCount / totalCount) * 100) + '%';
 
       const subtitle = document.getElementById('trophiesSubtitle');
-      if (earnedCount === 9) {
+      if (earnedCount === totalCount) {
         subtitle.textContent = '🎉 Masz wszystkie odznaki! Jesteś prawdziwym Mistrzem Czasu!';
       } else if (earnedCount === 0) {
         subtitle.textContent = 'Zdobądź pierwszą odznakę — zacznij grę!';
       } else {
-        subtitle.textContent = `Świetna robota! Zostało ${9 - earnedCount} ${9 - earnedCount === 1 ? 'odznaka' : 'odznaki'} do zdobycia.`;
+        const remaining = totalCount - earnedCount;
+        subtitle.textContent = `Świetna robota! Zostało ${remaining} ${remaining === 1 ? 'odznaka' : 'odznak'} do zdobycia.`;
       }
 
       const grid = document.getElementById('badgesGrid');

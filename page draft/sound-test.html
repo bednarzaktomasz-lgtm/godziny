@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Test Dźwięków</title>
+	<style>
+		*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+		:root {
+			--accent: #bb86fc;
+			--accent2: #03dac6;
+			--ok: #16a34a;
+			--err: #cf6679;
+			--bg: #000;
+			--card: #0d0d0d;
+			--border: #222;
+			--text: #f0f0f0;
+			--muted: #888;
+			--btn-r: 14px;
+		}
+		body {
+			background: var(--bg);
+			color: var(--text);
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			min-height: 100dvh;
+			padding: 24px 16px 48px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 24px;
+		}
+		h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); letter-spacing: 0.03em; }
+		p.subtitle { font-size: 0.85rem; color: var(--muted); text-align: center; }
+
+		/* ── Karty ─────────────────────────────── */
+		.card {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 20px;
+			padding: 20px;
+			width: min(520px, 100%);
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+		.card-title {
+			font-size: 0.78rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--muted);
+		}
+
+		/* ── Presety ─────────────────────────────── */
+		.presets-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+		}
+		.preset-btn {
+			background: #111;
+			border: 1px solid var(--border);
+			border-radius: var(--btn-r);
+			padding: 14px 12px;
+			color: var(--text);
+			cursor: pointer;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			text-align: left;
+			transition: border-color 0.15s, background 0.15s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.preset-btn:hover { border-color: #444; background: #161616; }
+		.preset-btn.active { border-color: var(--accent); }
+		.preset-btn .pname { font-size: 0.88rem; font-weight: 700; }
+		.preset-btn .pdesc { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+		.preset-btn .pplay {
+			margin-top: 6px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			color: var(--accent);
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+
+		/* ── Separator ─────────────────────────────── */
+		.sep { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+		/* ── Suwaki ─────────────────────────────── */
+		.slider-group { display: flex; flex-direction: column; gap: 10px; }
+		.slider-row { display: flex; flex-direction: column; gap: 4px; }
+		.slider-labels {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+		}
+		.slider-labels .slabel { font-size: 0.8rem; color: var(--muted); }
+		.slider-labels .sval   {
+			font-size: 0.9rem;
+			font-weight: 700;
+			color: var(--text);
+			font-variant-numeric: tabular-nums;
+			min-width: 3.5em;
+			text-align: right;
+		}
+		input[type=range] {
+			-webkit-appearance: none;
+			width: 100%;
+			height: 6px;
+			border-radius: 3px;
+			background: var(--border);
+			outline: none;
+			cursor: pointer;
+		}
+		input[type=range]::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			width: 22px;
+			height: 22px;
+			border-radius: 50%;
+			background: var(--accent);
+			cursor: pointer;
+			border: 2px solid #000;
+		}
+		input[type=range]::-moz-range-thumb {
+			width: 22px; height: 22px;
+			border-radius: 50%;
+			background: var(--accent);
+			cursor: pointer;
+			border: 2px solid #000;
+		}
+
+		/* ── Typ oscylatora ─────────────────────────────── */
+		.osc-row {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+		.osc-btn {
+			flex: 1;
+			min-width: 60px;
+			padding: 8px 4px;
+			background: #111;
+			border: 1px solid var(--border);
+			border-radius: var(--btn-r);
+			color: var(--muted);
+			font-size: 0.8rem;
+			font-weight: 700;
+			cursor: pointer;
+			text-align: center;
+			transition: all 0.15s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.osc-btn.active { border-color: var(--accent); color: var(--accent); background: #1a0d2e; }
+
+		/* ── Tryb dźwięku (single / chord / arp) ── */
+		.mode-row { display: flex; gap: 8px; }
+		.mode-btn {
+			flex: 1;
+			padding: 9px 4px;
+			background: #111;
+			border: 1px solid var(--border);
+			border-radius: var(--btn-r);
+			color: var(--muted);
+			font-size: 0.78rem;
+			font-weight: 700;
+			cursor: pointer;
+			text-align: center;
+			transition: all 0.15s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.mode-btn.active { border-color: var(--accent2); color: var(--accent2); background: #001a18; }
+
+		/* Drugi ton (tylko dla chord/arp) */
+		#tone2Section { display: none; }
+		#tone2Section.visible { display: flex; flex-direction: column; gap: 10px; }
+
+		/* ── Play custom ─────────────────────────────── */
+		.play-custom-btn {
+			width: 100%;
+			padding: 16px;
+			background: #1a0d2e;
+			border: 2px solid var(--accent);
+			border-radius: var(--btn-r);
+			color: var(--accent);
+			font-size: 1rem;
+			font-weight: 700;
+			cursor: pointer;
+			transition: background 0.15s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.play-custom-btn:hover { background: #2a1a3e; }
+		.play-custom-btn:active { background: #3a2a4e; }
+
+		/* ── Porównaj ze starymi ─────────────────────────────── */
+		.compare-row { display: flex; gap: 10px; }
+		.cmp-btn {
+			flex: 1;
+			padding: 12px;
+			background: #111;
+			border: 1px solid var(--border);
+			border-radius: var(--btn-r);
+			color: var(--text);
+			font-size: 0.82rem;
+			font-weight: 700;
+			cursor: pointer;
+			text-align: center;
+			transition: background 0.15s;
+			-webkit-tap-highlight-color: transparent;
+		}
+		.cmp-btn:hover { background: #1a1a1a; }
+		.cmp-btn.click-btn  { color: #888; }
+		.cmp-btn.error-btn  { color: var(--err); border-color: #3a1a1e; }
+		.cmp-btn.custom-btn { color: var(--ok); border-color: #0a2a1a; }
+
+		/* ── Kod eksportu ─────────────────────────────── */
+		.export-box {
+			background: #080808;
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			padding: 12px 14px;
+			font-family: 'Courier New', monospace;
+			font-size: 0.72rem;
+			color: var(--accent2);
+			white-space: pre;
+			overflow-x: auto;
+			line-height: 1.6;
+		}
+		.copy-btn {
+			align-self: flex-end;
+			padding: 8px 16px;
+			background: #111;
+			border: 1px solid var(--border);
+			border-radius: var(--btn-r);
+			color: var(--muted);
+			font-size: 0.78rem;
+			cursor: pointer;
+			transition: all 0.15s;
+		}
+		.copy-btn:hover { color: var(--text); border-color: #444; }
+		.copy-btn.copied { color: var(--ok); border-color: var(--ok); }
+	</style>
+</head>
+<body>
+
+<h1>🔊 Tester Dźwięków</h1>
+<p class="subtitle">Testuj presety lub buduj własny dźwięk suwakami</p>
+
+<!-- PRESETY -->
+<div class="card">
+	<div class="card-title">Presety — kliknij żeby odsłuchać</div>
+	<div class="presets-grid" id="presetsGrid"></div>
+</div>
+
+<!-- BUDUJ WŁASNY -->
+<div class="card">
+	<div class="card-title">Buduj własny dźwięk</div>
+
+	<div class="slider-group">
+		<div class="slider-row">
+			<div class="slider-labels">
+				<span class="slabel">Głośność</span>
+				<span class="sval" id="valVol">0.10</span>
+			</div>
+			<input type="range" id="sVol" min="0.01" max="0.5" step="0.01" value="0.10">
+		</div>
+		<div class="slider-row">
+			<div class="slider-labels">
+				<span class="slabel">Częstotliwość tonu 1 (Hz)</span>
+				<span class="sval" id="valF1">440 Hz</span>
+			</div>
+			<input type="range" id="sF1" min="110" max="1200" step="1" value="440">
+		</div>
+		<div class="slider-row">
+			<div class="slider-labels">
+				<span class="slabel">Czas trwania (ms)</span>
+				<span class="sval" id="valDur">180 ms</span>
+			</div>
+			<input type="range" id="sDur" min="50" max="800" step="10" value="180">
+		</div>
+	</div>
+
+	<hr class="sep">
+
+	<div class="card-title">Typ fali</div>
+	<div class="osc-row" id="oscRow">
+		<button class="osc-btn active" data-osc="sine">sine</button>
+		<button class="osc-btn" data-osc="triangle">triangle</button>
+		<button class="osc-btn" data-osc="square">square</button>
+		<button class="osc-btn" data-osc="sawtooth">sawtooth</button>
+	</div>
+
+	<hr class="sep">
+
+	<div class="card-title">Tryb</div>
+	<div class="mode-row" id="modeRow">
+		<button class="mode-btn active" data-mode="single">Pojedynczy</button>
+		<button class="mode-btn" data-mode="chord">Akord</button>
+		<button class="mode-btn" data-mode="arp">Arpeggio</button>
+	</div>
+
+	<div id="tone2Section">
+		<div class="slider-row">
+			<div class="slider-labels">
+				<span class="slabel">Częstotliwość tonu 2 (Hz)</span>
+				<span class="sval" id="valF2">660 Hz</span>
+			</div>
+			<input type="range" id="sF2" min="110" max="1200" step="1" value="660">
+		</div>
+		<div id="arpDelayRow" class="slider-row" style="display:none">
+			<div class="slider-labels">
+				<span class="slabel">Odstęp między tonami (ms)</span>
+				<span class="sval" id="valArp">130 ms</span>
+			</div>
+			<input type="range" id="sArp" min="30" max="400" step="10" value="130">
+		</div>
+	</div>
+
+	<hr class="sep">
+
+	<button class="play-custom-btn" id="playCustomBtn">▶ Zagraj własny dźwięk</button>
+</div>
+
+<!-- PORÓWNAJ -->
+<div class="card">
+	<div class="card-title">Porównaj z pozostałymi dźwiękami aplikacji</div>
+	<div class="compare-row">
+		<button class="cmp-btn click-btn" id="cmpClick">🖱 Kliknięcie<br><small>440Hz 50ms</small></button>
+		<button class="cmp-btn error-btn" id="cmpError">❌ Błąd<br><small>220Hz 300ms</small></button>
+		<button class="cmp-btn custom-btn" id="cmpCustom">✓ Twój wybór<br><small>aktualny preset</small></button>
+	</div>
+</div>
+
+<!-- EKSPORT -->
+<div class="card">
+	<div class="card-title">Kod gotowy do wklejenia</div>
+	<div class="export-box" id="exportBox">// zagraj dźwięk żeby wygenerować kod</div>
+	<button class="copy-btn" id="copyBtn">Kopiuj</button>
+</div>
+
+<script>
+	let audioCtx = null;
+	function initAudio() {
+		if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		if (audioCtx.state === 'suspended') audioCtx.resume();
+	}
+
+	function playTone(freq, duration, vol, type, startOffset = 0) {
+		const osc = audioCtx.createOscillator();
+		const g   = audioCtx.createGain();
+		osc.connect(g); g.connect(audioCtx.destination);
+		osc.frequency.value = freq;
+		osc.type = type;
+		const t = audioCtx.currentTime + startOffset;
+		g.gain.setValueAtTime(vol, t);
+		g.gain.exponentialRampToValueAtTime(0.001, t + duration / 1000);
+		osc.start(t);
+		osc.stop(t + duration / 1000 + 0.01);
+	}
+
+	// ── Presety ─────────────────────────────────────────
+	const PRESETS = [
+		{
+			id: 'ping',
+			name: '🔔 Ping',
+			desc: 'Miękki dzwonek — 528Hz, długie wyciszenie',
+			play: () => playTone(528, 400, 0.12, 'sine'),
+			code: () => `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  const osc = audioContext.createOscillator(), g = audioContext.createGain();\n  osc.connect(g); g.connect(audioContext.destination);\n  osc.frequency.value = 528; osc.type = 'sine';\n  const t = audioContext.currentTime;\n  g.gain.setValueAtTime(0.12, t);\n  g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);\n  osc.start(t); osc.stop(t + 0.41);\n}`
+		},
+		{
+			id: 'marimba',
+			name: '🎵 Marimba',
+			desc: 'Trzy nuty w górę — wesołe i lekkie',
+			play: () => { [330, 440, 523].forEach((f, i) => playTone(f, 160, 0.12, 'sine', i * 0.1)); },
+			code: () => `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [330, 440, 523].forEach((freq, i) => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = 'sine';\n    const t = audioContext.currentTime + i * 0.1;\n    g.gain.setValueAtTime(0.12, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);\n    osc.start(t); osc.stop(t + 0.17);\n  });\n}`
+		},
+		{
+			id: 'chord',
+			name: '🎶 Akord',
+			desc: 'Dwa tony jednocześnie — "ding" zegara (523+659Hz)',
+			play: () => { [523, 659].forEach(f => playTone(f, 250, 0.09, 'sine')); },
+			code: () => `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [523, 659].forEach(freq => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = 'sine';\n    const t = audioContext.currentTime;\n    g.gain.setValueAtTime(0.09, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);\n    osc.start(t); osc.stop(t + 0.26);\n  });\n}`
+		},
+		{
+			id: 'chime',
+			name: '✨ Chime (obecny)',
+			desc: 'Dwa tony po sobie — 440Hz → 660Hz',
+			play: () => { [440, 660].forEach((f, i) => playTone(f, 180, 0.10, 'sine', i * 0.13)); },
+			code: () => `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [440, 660].forEach((freq, i) => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = 'sine';\n    const t = audioContext.currentTime + i * 0.13;\n    g.gain.setValueAtTime(0.1, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);\n    osc.start(t); osc.stop(t + 0.19);\n  });\n}`
+		},
+		{
+			id: 'soft_up',
+			name: '⬆ Soft Up',
+			desc: 'Spokojne glissando w górę — trójkąt',
+			play: () => { [392, 494, 587].forEach((f, i) => playTone(f, 120, 0.11, 'triangle', i * 0.09)); },
+			code: () => `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [392, 494, 587].forEach((freq, i) => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = 'triangle';\n    const t = audioContext.currentTime + i * 0.09;\n    g.gain.setValueAtTime(0.11, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);\n    osc.start(t); osc.stop(t + 0.13);\n  });\n}`
+		},
+		{
+			id: 'blip',
+			name: '💫 Blip',
+			desc: 'Krótki, wysoki i miękki — jak zatwierdzenie w UI',
+			play: () => { [660, 880].forEach((f, i) => playTone(f, 80, 0.09, 'sine', i * 0.07)); },
+			code: () => `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [660, 880].forEach((freq, i) => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = 'sine';\n    const t = audioContext.currentTime + i * 0.07;\n    g.gain.setValueAtTime(0.09, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);\n    osc.start(t); osc.stop(t + 0.09);\n  });\n}`
+		},
+	];
+
+	let activePreset = null;
+
+	// Buduj siatkę presetów
+	const grid = document.getElementById('presetsGrid');
+	PRESETS.forEach(p => {
+		const btn = document.createElement('button');
+		btn.className = 'preset-btn';
+		btn.dataset.id = p.id;
+		btn.innerHTML = `<span class="pname">${p.name}</span><span class="pdesc">${p.desc}</span><span class="pplay">▶ Odtwórz</span>`;
+		btn.addEventListener('click', () => {
+			initAudio();
+			p.play();
+			activePreset = p;
+			document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+			btn.classList.add('active');
+			updateExport(p.code());
+		});
+		grid.appendChild(btn);
+	});
+
+	// ── Suwaki ────────────────────────────────────────
+	const sVol  = document.getElementById('sVol');
+	const sF1   = document.getElementById('sF1');
+	const sDur  = document.getElementById('sDur');
+	const sF2   = document.getElementById('sF2');
+	const sArp  = document.getElementById('sArp');
+
+	sVol.addEventListener('input', () => { document.getElementById('valVol').textContent = parseFloat(sVol.value).toFixed(2); });
+	sF1.addEventListener('input',  () => { document.getElementById('valF1').textContent  = sF1.value + ' Hz'; });
+	sDur.addEventListener('input', () => { document.getElementById('valDur').textContent = sDur.value + ' ms'; });
+	sF2.addEventListener('input',  () => { document.getElementById('valF2').textContent  = sF2.value + ' Hz'; });
+	sArp.addEventListener('input', () => { document.getElementById('valArp').textContent = sArp.value + ' ms'; });
+
+	// ── Typ oscylatora ────────────────────────────────
+	let currentOsc = 'sine';
+	document.getElementById('oscRow').addEventListener('click', e => {
+		const btn = e.target.closest('.osc-btn');
+		if (!btn) return;
+		currentOsc = btn.dataset.osc;
+		document.querySelectorAll('.osc-btn').forEach(b => b.classList.remove('active'));
+		btn.classList.add('active');
+	});
+
+	// ── Tryb ────────────────────────────────────────
+	let currentMode = 'single';
+	document.getElementById('modeRow').addEventListener('click', e => {
+		const btn = e.target.closest('.mode-btn');
+		if (!btn) return;
+		currentMode = btn.dataset.mode;
+		document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+		btn.classList.add('active');
+		const t2 = document.getElementById('tone2Section');
+		const arpRow = document.getElementById('arpDelayRow');
+		if (currentMode === 'single') {
+			t2.classList.remove('visible');
+		} else {
+			t2.classList.add('visible');
+			arpRow.style.display = currentMode === 'arp' ? '' : 'none';
+		}
+	});
+
+	// ── Play custom ────────────────────────────────
+	document.getElementById('playCustomBtn').addEventListener('click', () => {
+		initAudio();
+		const vol  = parseFloat(sVol.value);
+		const f1   = parseInt(sF1.value);
+		const dur  = parseInt(sDur.value);
+		const f2   = parseInt(sF2.value);
+		const arpMs = parseInt(sArp.value);
+
+		if (currentMode === 'single') {
+			playTone(f1, dur, vol, currentOsc);
+		} else if (currentMode === 'chord') {
+			playTone(f1, dur, vol, currentOsc);
+			playTone(f2, dur, vol, currentOsc);
+		} else {
+			playTone(f1, dur, vol, currentOsc, 0);
+			playTone(f2, dur, vol, currentOsc, arpMs / 1000);
+		}
+
+		document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+		activePreset = null;
+		generateCustomCode(vol, f1, dur, f2, arpMs);
+	});
+
+	function generateCustomCode(vol, f1, dur, f2, arpMs) {
+		const volStr  = vol.toFixed(2);
+		const durSec  = (dur / 1000).toFixed(3);
+		let code = '';
+		if (currentMode === 'single') {
+			code = `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  const osc = audioContext.createOscillator(), g = audioContext.createGain();\n  osc.connect(g); g.connect(audioContext.destination);\n  osc.frequency.value = ${f1}; osc.type = '${currentOsc}';\n  const t = audioContext.currentTime;\n  g.gain.setValueAtTime(${volStr}, t);\n  g.gain.exponentialRampToValueAtTime(0.001, t + ${durSec});\n  osc.start(t); osc.stop(t + ${durSec} + 0.01);\n}`;
+		} else if (currentMode === 'chord') {
+			code = `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [${f1}, ${f2}].forEach(freq => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = '${currentOsc}';\n    const t = audioContext.currentTime;\n    g.gain.setValueAtTime(${volStr}, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + ${durSec});\n    osc.start(t); osc.stop(t + ${durSec} + 0.01);\n  });\n}`;
+		} else {
+			const arpSec = (arpMs / 1000).toFixed(3);
+			code = `function playSuccess() {\n  if (!soundEnabled) return;\n  initAudioContext();\n  [${f1}, ${f2}].forEach((freq, i) => {\n    const osc = audioContext.createOscillator(), g = audioContext.createGain();\n    osc.connect(g); g.connect(audioContext.destination);\n    osc.frequency.value = freq; osc.type = '${currentOsc}';\n    const t = audioContext.currentTime + i * ${arpSec};\n    g.gain.setValueAtTime(${volStr}, t);\n    g.gain.exponentialRampToValueAtTime(0.001, t + ${durSec});\n    osc.start(t); osc.stop(t + ${durSec} + 0.01);\n  });\n}`;
+		}
+		updateExport(code);
+	}
+
+	function updateExport(code) {
+		document.getElementById('exportBox').textContent = code;
+		const copyBtn = document.getElementById('copyBtn');
+		copyBtn.classList.remove('copied');
+		copyBtn.textContent = 'Kopiuj';
+	}
+
+	// ── Porównaj ────────────────────────────────────
+	document.getElementById('cmpClick').addEventListener('click', () => {
+		initAudio(); playTone(440, 50, 0.3, 'sine');
+	});
+	document.getElementById('cmpError').addEventListener('click', () => {
+		initAudio(); playTone(220, 300, 0.3, 'sine');
+	});
+	document.getElementById('cmpCustom').addEventListener('click', () => {
+		initAudio();
+		if (activePreset) {
+			activePreset.play();
+		} else {
+			document.getElementById('playCustomBtn').click();
+		}
+	});
+
+	// ── Kopiuj kod ────────────────────────────────────
+	document.getElementById('copyBtn').addEventListener('click', () => {
+		const code = document.getElementById('exportBox').textContent;
+		if (code.startsWith('//')) return;
+		navigator.clipboard.writeText(code).then(() => {
+			const btn = document.getElementById('copyBtn');
+			btn.textContent = '✓ Skopiowano';
+			btn.classList.add('copied');
+			setTimeout(() => { btn.textContent = 'Kopiuj'; btn.classList.remove('copied'); }, 2000);
+		});
+	});
+</script>
+</body>
+</html>

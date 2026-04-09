@@ -532,7 +532,13 @@
       if (s1 && s2 && s3) return 'done';
       if (s1 || s2 || s3) return 'current';
       if (idx === 0) return 'current';
-      const [prevS1] = getStarsDone(NODE_CONFIG[idx - 1].id);
+      const prev = NODE_CONFIG[idx - 1];
+      const [prevS1, prevS2, prevS3] = getStarsDone(prev.id);
+      // Granica pętli: pierwsza wyspa nowej pętli wymaga WSZYSTKICH 3 gwiazdek ostatniej wyspy poprzedniej pętli
+      if (NODE_CONFIG[idx].loop !== prev.loop) {
+        return (prevS1 && prevS2 && prevS3) ? 'current' : 'locked';
+      }
+      // W obrębie pętli: wystarczy pierwsza gwiazdka poprzedniej wyspy
       return prevS1 ? 'current' : 'locked';
     }
 
@@ -613,8 +619,8 @@
     function openPopup(nodeId) {
       const nodeConf = NODE_CONFIG.find(n => n.id === nodeId);
       if (!nodeConf) return;
-      const starsDone   = getStarsDone(nodeId);
-      const nextStarIdx = starsDone.findIndex(d => !d);
+      const nodeIdx   = NODE_CONFIG.findIndex(n => n.id === nodeId);
+      const starsDone = getStarsDone(nodeId);
 
       document.getElementById('popupIcon').textContent  = nodeConf.icon;
       document.getElementById('popupTitle').textContent = nodeConf.name;
@@ -623,8 +629,13 @@
       cont.innerHTML = '';
 
       starsDone.forEach((done, idx) => {
-        const isNext   = idx === nextStarIdx;
-        const isLocked = !done && !isNext;
+        // Gwiazdka idx jest dostępna gdy:
+        // - idx=0 (pierwsza gwiazdka zawsze dostępna na odblokowanej wyspie), LUB
+        // - poprzednia gwiazdka tej wyspy jest zdobyta ORAZ ta sama gwiazdka poprzedniej wyspy jest zdobyta
+        const prevIslandStars = nodeIdx > 0 ? getStarsDone(NODE_CONFIG[nodeIdx - 1].id) : [true, true, true];
+        const accessible = idx === 0 || (!!starsDone[idx - 1] && !!prevIslandStars[idx]);
+        const isNext   = !done && accessible;
+        const isLocked = !done && !accessible;
 
         const statusHtml = done
           ? `<span class="star-opt-status status-done">✓</span>`

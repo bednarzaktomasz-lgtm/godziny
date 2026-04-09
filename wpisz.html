@@ -594,11 +594,25 @@
 					'Poprawnych: ' + session.total + '  •  Najlepsza seria: ' + session.bestStreak;
 				const nextBtn = document.getElementById('starOverlayNext');
 				const mapLink = document.getElementById('starOverlayMap');
-				if (expeditionStar < 3) {
+
+				// Po ⭐⭐ (star 2) przejdź do ⭐⭐ na NASTĘPNEJ wyspie — tylko jeśli ta ma już ⭐
+				const nodeOrder = Object.keys(NODE_CONFIG);
+				const curIdx    = nodeOrder.indexOf(expeditionNode);
+				const nextId    = (curIdx !== -1 && curIdx < nodeOrder.length - 1) ? nodeOrder[curIdx + 1] : null;
+				const _getLoop  = c => c.hourFormat === '24' ? '24h' : (c.dialType || 'arabic');
+				const sameLoop  = nextId && _getLoop(NODE_CONFIG[nextId]) === _getLoop(NODE_CONFIG[expeditionNode]);
+				let nextHref = null;
+				if (sameLoop) {
+					const _s = loadGame();
+					const _n = _s && _s.nodes[nextId];
+					if (_n && _n.star1 && _n.star1.completed) {
+						nextHref = 'wpisz.html?node=' + nextId + '&star=2';
+					}
+				}
+
+				if (nextHref) {
 					nextBtn.style.display = '';
-					nextBtn.onclick = () => {
-						window.location.href = 'ustaw.html?node=' + expeditionNode + '&star=3';
-					};
+					nextBtn.onclick = () => { window.location.href = nextHref; };
 					mapLink.textContent = '← Mapa';
 				} else {
 					nextBtn.style.display = 'none';

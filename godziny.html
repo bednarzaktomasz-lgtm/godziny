@@ -703,12 +703,17 @@
 				const nextBtn = document.getElementById('starOverlayNext');
 				const mapLink = document.getElementById('starOverlayMap');
 
-				const nextPages = { 1: 'wpisz.html', 2: 'ustaw.html' };
-				if (expeditionStar < 3 && nextPages[expeditionStar]) {
+				// Po ⭐ (star 1) przejdź do ⭐ na NASTĘPNEJ wyspie (ta sama pętla)
+				const nodeOrder = Object.keys(NODE_CONFIG);
+				const curIdx    = nodeOrder.indexOf(expeditionNode);
+				const nextId    = (curIdx !== -1 && curIdx < nodeOrder.length - 1) ? nodeOrder[curIdx + 1] : null;
+				const _getLoop  = c => c.hourFormat === '24' ? '24h' : (c.dialType || 'arabic');
+				const sameLoop  = nextId && _getLoop(NODE_CONFIG[nextId]) === _getLoop(NODE_CONFIG[expeditionNode]);
+				const nextHref  = sameLoop ? 'godziny.html?node=' + nextId + '&star=1' : null;
+
+				if (nextHref) {
 					nextBtn.style.display = '';
-					nextBtn.onclick = () => {
-						window.location.href = nextPages[expeditionStar] + '?node=' + expeditionNode + '&star=' + (expeditionStar + 1);
-					};
+					nextBtn.onclick = () => { window.location.href = nextHref; };
 					mapLink.textContent = '← Mapa';
 				} else {
 					nextBtn.style.display = 'none';
