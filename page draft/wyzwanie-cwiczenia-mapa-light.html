@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Ćwiczeń — Wyzwanie Dnia (jasna)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #ffffff;
+      color: #1a1a1a;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      padding: clamp(24px, 4vw, 56px);
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #111111;
+    }
+    .subtitle {
+      font-size: clamp(0.78rem, 1.2vw, 0.92rem);
+      color: #666666;
+      margin-bottom: clamp(20px, 3vw, 40px);
+    }
+
+    /* ===== LEGENDA ===== */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 28px;
+      margin-bottom: clamp(20px, 3vw, 36px);
+      padding: 14px 18px;
+      background: #f7f7f7;
+      border: 1px solid #dddddd;
+      border-radius: 12px;
+    }
+    .legend-group { display: flex; flex-direction: column; gap: 5px; }
+    .legend-title { font-size: 0.68rem; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+    .legend-item  { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #444444; }
+    .leg-badge    { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+
+    /* Kolory pętli */
+    .loop-arabic  { background: rgba(59,130,246,0.10); color: #1d4ed8; border: 1px solid rgba(59,130,246,0.35); }
+    .loop-roman   { background: rgba(251,191,36,0.15); color: #92400e; border: 1px solid rgba(251,191,36,0.55); }
+    .loop-blank   { background: rgba(148,163,184,0.15); color: #475569; border: 1px solid rgba(148,163,184,0.45); }
+    .loop-24h     { background: rgba(16,185,129,0.10); color: #065f46; border: 1px solid rgba(16,185,129,0.35); }
+
+    /* Tryby odpowiedzi */
+    .m-choice   { background: rgba(59,130,246,0.08); color: #1d4ed8; border: 1px solid rgba(59,130,246,0.30); }
+    .m-keyboard { background: rgba(139,92,246,0.08); color: #6d28d9; border: 1px solid rgba(139,92,246,0.30); }
+    .m-tap      { background: rgba(249,115,22,0.08); color: #c2410c; border: 1px solid rgba(249,115,22,0.30); }
+
+    /* Poziom trudności */
+    .d-easy { background: rgba(22,163,74,0.08); color: #166534; border: 1px solid rgba(22,163,74,0.30); }
+    .d-hard { background: rgba(220,38,38,0.08); color: #991b1b; border: 1px solid rgba(220,38,38,0.30); }
+
+    /* Roman levels */
+    .roman-lvl { background: rgba(251,191,36,0.10); color: #92400e; border: 1px solid rgba(251,191,36,0.40); }
+
+    /* ===== TABELA ===== */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid #dddddd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: clamp(0.72rem, 1.2vw, 0.88rem);
+    }
+
+    thead th {
+      background: #f0f0f0;
+      color: #666666;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #dddddd;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #eeeeee;
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: #f5f5f5; }
+    tbody tr:last-child { border-bottom: none; }
+
+    /* Separatory pętli */
+    tbody tr.sep-arabic  td { border-top: 2px solid rgba(59,130,246,0.30); }
+    tbody tr.sep-roman   td { border-top: 2px solid rgba(251,191,36,0.45); }
+    tbody tr.sep-blank   td { border-top: 2px solid rgba(148,163,184,0.35); }
+    tbody tr.sep-24h     td { border-top: 2px solid rgba(16,185,129,0.30); }
+
+    td {
+      padding: 10px 14px;
+      vertical-align: top;
+    }
+
+    /* Kolumna indeksu */
+    td.col-idx {
+      text-align: center;
+      color: #cccccc;
+      font-size: 0.7rem;
+      font-weight: 700;
+      width: 38px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Nazwa węzła */
+    td.col-node { width: 170px; }
+    .node-key   { font-size: 0.7rem; color: #888888; font-family: 'Consolas', monospace; margin-bottom: 3px; }
+    .node-name  { font-weight: 600; color: #111111; }
+    .node-min   { font-size: 0.68rem; color: #888888; margin-top: 2px; }
+
+    /* Opis główny */
+    td.col-main { width: 160px; color: #555555; }
+    .main-mode  { font-weight: 600; color: #333333; margin-bottom: 3px; }
+
+    /* Kolumna demo-match */
+    td.col-match { width: 260px; }
+    .match-row   { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 4px; }
+    .match-note  { font-size: 0.68rem; color: #666666; margin-top: 2px; line-height: 1.4; }
+
+    /* Kolumna demo-roman */
+    td.col-roman { width: 210px; }
+    .roman-row   { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 4px; }
+    .roman-na    { color: #cccccc; font-size: 0.72rem; }
+    .roman-note  { font-size: 0.68rem; color: #666666; margin-top: 2px; line-height: 1.4; }
+
+    /* Kolumna uzasadnienie pedagogiczne */
+    td.col-why { color: #555555; font-size: 0.72rem; line-height: 1.5; }
+
+    /* Header grupy */
+    tr.group-header td {
+      background: #f0f0f0;
+      padding: 6px 14px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #999999;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Mapa Ćwiczeń — Wyzwanie Dnia</h1>
+<p class="subtitle">
+  Każdy wiersz = jeden indeks dzienny (hash daty % 20).<br>
+  Lewa strona: istniejąca ścieżka wyprawy · Prawa strona: proponowane ćwiczenie wstępne z demo-match i/lub demo-roman
+</p>
+
+<!-- ===== LEGENDA ===== -->
+<div class="legend">
+
+  <div class="legend-group">
+    <div class="legend-title">Pętla</div>
+    <div class="legend-item"><span class="leg-badge loop-arabic">Arabskie</span> cyfry 1–12, tarcza standardowa</div>
+    <div class="legend-item"><span class="leg-badge loop-roman">Rzymskie</span> I–XII, dzienny zegar</div>
+    <div class="legend-item"><span class="leg-badge loop-blank">Pusta</span> tarcza bez cyfr</div>
+    <div class="legend-item"><span class="leg-badge loop-24h">24h</span> format 13–24 + minuty</div>
+  </div>
+
+  <div class="legend-group">
+    <div class="legend-title">Tryb odpowiedzi (demo-match)</div>
+    <div class="legend-item"><span class="leg-badge m-choice">🔢 Wybór</span> 4 przyciski (2×2)</div>
+    <div class="legend-item"><span class="leg-badge m-keyboard">⌨️ Klawiatura</span> wpisz cyfrę</div>
+    <div class="legend-item"><span class="leg-badge m-tap">🎯 Zaznacz</span> kliknij pozycję na tarczy</div>
+  </div>
+
+  <div class="legend-group">
+    <div class="legend-title">Trudność (demo-match)</div>
+    <div class="legend-item"><span class="leg-badge d-easy">🟢 Łatwy</span> cyfra zostaje po poprawnej</div>
+    <div class="legend-item"><span class="leg-badge d-hard">🔴 Trudny</span> cyfra zanika po 2 s</div>
+  </div>
+
+  <div class="legend-group">
+    <div class="legend-title">demo-roman (poziom)</div>
+    <div class="legend-item"><span class="leg-badge roman-lvl">Poziom N</span> zakres dopasowywanych cyfr</div>
+    <div class="legend-item" style="font-size:0.72rem; color:#666666; max-width:220px">
+      1: I–III &nbsp;·&nbsp; 2: +V &nbsp;·&nbsp; 3: +VI–VIII &nbsp;·&nbsp; 4: +X &nbsp;·&nbsp;
+      5: +XI–XII &nbsp;·&nbsp; 6: pełna baza &nbsp;·&nbsp; 7: +IV &nbsp;·&nbsp; 8: +IX &nbsp;·&nbsp;
+      9: kontrast &nbsp;·&nbsp; 10: mistrz (I–XII)
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TABELA ===== -->
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Węzeł (klucz)</th>
+      <th>Tryb główny</th>
+      <th>demo-match (ćwiczenie wstępne)</th>
+      <th>demo-roman (poziom)</th>
+      <th>Uzasadnienie pedagogiczne</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- ======== PĘTLA 1: ARABSKIE ======== -->
+    <tr class="group-header sep-arabic">
+      <td colspan="6"><span class="leg-badge loop-arabic" style="font-size:0.65rem">Pętla 1</span> &nbsp; Cyfry ARABSKIE — budowanie orientacji na tarczy</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">0</td>
+      <td class="col-node">
+        <div class="node-key">full-hours</div>
+        <div class="node-name">Pełne godziny</div>
+        <div class="node-min">minuty: :00</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-arabic">Arabskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Arabskie (1–12)</strong><br>Uzupełnij zegar wybierając spośród 4 opcji. Każda cyfra pozostaje widoczna.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Pierwsze zetknięcie z tarczą. Wybór 4 opcji eliminuje stres — uczeń uczy się POZYCJI cyfr, nie wartości (te zna).</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">1</td>
+      <td class="col-node">
+        <div class="node-key">quarters</div>
+        <div class="node-name">Kwadranse</div>
+        <div class="node-min">minuty: :00 :15 :30 :45</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-arabic">Arabskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Minuty (:00 :05…)</strong><br>Utrwalenie: 12→:00, 3→:15, 6→:30, 9→:45 poprzez uzupełnianie tarczy minutowej.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Kwadranse to skoki o 15 min — uczeń musi powiązać POZYCJĘ wskazówki minutowej z wartością minut. Wybór minutowy łagodnie to wprowadza.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">2</td>
+      <td class="col-node">
+        <div class="node-key">half-past</div>
+        <div class="node-name">Wpół do</div>
+        <div class="node-min">minuty: :00 :30</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-arabic">Arabskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-keyboard">⌨️ Klawiatura</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Arabskie (1–12)</strong><br>Wpisz z klawiatury — pierwszy wysiłek aktywnego przypominania pozycji (nie tylko wyboru).</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Po zapoznaniu z pozycjami (wybór) czas na <em>recall</em>: klawiatura wymaga aktywnego przypomnienia cyfry bez podpowiedzi.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">3</td>
+      <td class="col-node">
+        <div class="node-key">every-five</div>
+        <div class="node-name">Co 5 minut</div>
+        <div class="node-min">minuty: :00–:55 co 5</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-arabic">Arabskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Minuty (:05…:55)</strong><br>Uzupełnij wszystkie 12 pól minutowych (5, 10, 15…) — pełna siatka minut.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Najtrudniejszy krok arabski: każda pozycja wskazówki = inna liczba minut. Ćwiczenie buduje tę tabliczkę mnożenia przez 5.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">4</td>
+      <td class="col-node">
+        <div class="node-key">every-minute</div>
+        <div class="node-name">Każda minuta</div>
+        <div class="node-min">minuty: :00–:59</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-arabic">Arabskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-keyboard">⌨️ Klawiatura</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Minuty (:05…:55)</strong><br>Wpisz wartość minutową z klawiatury — utrwalenie przed sesją z pełnym zakresem minut.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Każda minuta wymaga przeliczenia pozycji na wartość. Klawiatura (recall) zamiast wyboru = wyższy próg utrwalenia przed wyzwaniem.</td>
+    </tr>
+
+    <!-- ======== PĘTLA 2: RZYMSKIE ======== -->
+    <tr class="group-header sep-roman">
+      <td colspan="6"><span class="leg-badge loop-roman" style="font-size:0.65rem">Pętla 2</span> &nbsp; Cyfry RZYMSKIE — stopniowe odkrycie systemu</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">5</td>
+      <td class="col-node">
+        <div class="node-key">roman-full</div>
+        <div class="node-name">Pełne godziny (R)</div>
+        <div class="node-min">minuty: :00</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-roman">Rzymskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Rzymskie (I–XII)</strong><br>Uzupełnij zegar wybierając właściwą cyfrę rzymską dla każdej pozycji.</div>
+      </td>
+      <td class="col-roman">
+        <div class="roman-row">
+          <span class="leg-badge roman-lvl">Poziom 1</span>
+          <span class="leg-badge roman-lvl">Poziom 2</span>
+        </div>
+        <div class="roman-note">Pool: I, II, III → +V<br>Nowy symbol V, zasada: kolejne po prawej dodają się.</div>
+      </td>
+      <td class="col-why">Pierwsze zetknięcie z rzymskimi. demo-roman wprowadza symbole stopniowo (3 cyfry naraz), demo-match utrwala je na tarczy zegara.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">6</td>
+      <td class="col-node">
+        <div class="node-key">roman-quarters</div>
+        <div class="node-name">Kwadranse (R)</div>
+        <div class="node-min">minuty: :00 :15 :30 :45</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-roman">Rzymskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Rzymskie (I–XII)</strong><br>Wybór 4 opcji — utrwalenie po lekcji o zasadzie addytywnej (VI, VII, VIII).</div>
+      </td>
+      <td class="col-roman">
+        <div class="roman-row">
+          <span class="leg-badge roman-lvl">Poziom 3</span>
+        </div>
+        <div class="roman-note">Pool: I, II, III, V, VI, VII, VIII<br>Wskazówka: "symbol po prawej V dodaje się".</div>
+      </td>
+      <td class="col-why">Poziom 3 wprowadza addytywność (VI=V+I). Uczeń rozumie logikę, zanim spotka ją na zegarze w trybie czytania godzin.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">7</td>
+      <td class="col-node">
+        <div class="node-key">roman-half</div>
+        <div class="node-name">Wpół do (R)</div>
+        <div class="node-min">minuty: :00 :30</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-roman">Rzymskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-keyboard">⌨️ Klawiatura</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Arabskie (1–12)</strong><br>Zegar z cyframi RZYMSKIMI → wpisz z klawiatury odpowiednik arabski. Kierunek odwrotny!</div>
+      </td>
+      <td class="col-roman">
+        <div class="roman-row">
+          <span class="leg-badge roman-lvl">Poziom 4</span>
+          <span class="leg-badge roman-lvl">Poziom 5</span>
+        </div>
+        <div class="roman-note">Pool: +X, +XI, XII<br>Nowy symbol X = 10, analogia Xi/XII.</div>
+      </td>
+      <td class="col-why">Odwrócony kierunek (roman→arabic) to trudniejszy recall. Levels 4–5 wprowadzają X — kluczowy symbol przed większymi godzinami.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">8</td>
+      <td class="col-node">
+        <div class="node-key">roman-five</div>
+        <div class="node-name">Co 5 minut (R)</div>
+        <div class="node-min">minuty: :00–:55 co 5</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-roman">Rzymskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-hard">🔴 Trudny</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Rzymskie (I–XII)</strong><br>Cyfra zanika po 2 s — trzeba zapamiętać rozmieszczenie.</div>
+      </td>
+      <td class="col-roman">
+        <div class="roman-row">
+          <span class="leg-badge roman-lvl">Poziom 7</span>
+        </div>
+        <div class="roman-note">Pool: I, II, III, <strong>IV</strong>, V<br>💡 Odkrycie subtrakcji: IV = 5−1 = 4.</div>
+      </td>
+      <td class="col-why">Level 7 = przełomowy moment: reguła odejmowania (IV). Tryb trudny w demo-match dodaje presję pamięciową — razem budują pewność przed minutowym wyzwaniem.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">9</td>
+      <td class="col-node">
+        <div class="node-key">roman-minute</div>
+        <div class="node-name">Każda minuta (R)</div>
+        <div class="node-min">minuty: :00–:59</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-roman">Rzymskie</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-keyboard">⌨️ Klawiatura</span>
+          <span class="leg-badge d-hard">🔴 Trudny</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Rzymskie (I–XII)</strong><br>Wpisz arabski odpowiednik z klawiatury + cyfry znikają. Szczyt trudności przed mistrzostwem.</div>
+      </td>
+      <td class="col-roman">
+        <div class="roman-row">
+          <span class="leg-badge roman-lvl">Poziom 9</span>
+          <span class="leg-badge roman-lvl">Poziom 10</span>
+        </div>
+        <div class="roman-note">Poziom 9: kontrast IV/IX<br>Poziom 10: pełny zakres I–XII.</div>
+      </td>
+      <td class="col-why">Poziom 10 = mistrz. Klawiatura+trudny = maksymalny recall. Utrwalenie przed najtrudniejszą sesją minutową z tarczą rzymską.</td>
+    </tr>
+
+    <!-- ======== PĘTLA 3: PUSTA TARCZA ======== -->
+    <tr class="group-header sep-blank">
+      <td colspan="6"><span class="leg-badge loop-blank" style="font-size:0.65rem">Pętla 3</span> &nbsp; PUSTA tarcza — internalizacja pozycji bez wizualnych podpowiedzi</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">10</td>
+      <td class="col-node">
+        <div class="node-key">blank-full</div>
+        <div class="node-name">Pełne godziny (∅)</div>
+        <div class="node-min">minuty: :00</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-blank">Pusta tarcza</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-tap">🎯 Zaznacz</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Arabskie (1–12)</strong><br>Pytanie na ekranie: "Gdzie jest 7?" → kliknij pozycję na tarczy BEZ cyfr.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Tryb Zaznacz = odwrotność dotychczasowego (zamiast "co tu jest?" → "gdzie to jest?"). Łatwy: liczby arabskie jako pytanie — znany fundament.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">11</td>
+      <td class="col-node">
+        <div class="node-key">blank-quarters</div>
+        <div class="node-name">Kwadranse (∅)</div>
+        <div class="node-min">minuty: :00 :15 :30 :45</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-blank">Pusta tarcza</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-tap">🎯 Zaznacz</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Minuty (:05…:55)</strong><br>"Gdzie jest :15?" → kliknij pozycję 3 na pustej tarczy. Kwadransy bez pomocników.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Minuty na pustej tarczy = wymagające. Kwadranse (4 pozycje) to łagodne wejście w puste minuty.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">12</td>
+      <td class="col-node">
+        <div class="node-key">blank-half</div>
+        <div class="node-name">Wpół do (∅)</div>
+        <div class="node-min">minuty: :00 :30</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-blank">Pusta tarcza</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-tap">🎯 Zaznacz</span>
+          <span class="leg-badge d-hard">🔴 Trudny</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Arabskie (1–12)</strong><br>Cyfry znikają po 2 s od poprawnego wskazania — buduj mapę z pamięci.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Trudny tryb zanikania + puste pytanie = czysto mentalna mapa zegara. Dopiero po tym można pewnie czytać godziny bez jakichkolwiek cyfr.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">13</td>
+      <td class="col-node">
+        <div class="node-key">blank-five</div>
+        <div class="node-name">Co 5 minut (∅)</div>
+        <div class="node-min">minuty: :00–:55 co 5</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-blank">Pusta tarcza</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-tap">🎯 Zaznacz</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Minuty (:05…:55)</strong><br>Pełna siatka minut co 5 — "Gdzie jest :40?" → kliknij pozycję 8 na pustej tarczy.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Wszystkie 12 pozycji minutowych na pustej tarczy to intensywne ćwiczenie przeliczania. Łatwy (bez zanikania) by nie przeciążyć przed sekcją główną.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">14</td>
+      <td class="col-node">
+        <div class="node-key">blank-minute</div>
+        <div class="node-name">Każda minuta (∅)</div>
+        <div class="node-min">minuty: :00–:59</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-blank">Pusta tarcza</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-tap">🎯 Zaznacz</span>
+          <span class="leg-badge d-hard">🔴 Trudny</span>
+        </div>
+        <div class="match-note">Tryb: <strong>Minuty (:05…:55)</strong><br>Pełna siatka minut + zanikanie. Szczyt trudności pętli pustej tarczy.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Trudny+minuty+pusta tarcza = najtrudniejsze ćwiczenie wstępne. Po nim każda minutowa godzina z cyframi jest łatwiejsza.</td>
+    </tr>
+
+    <!-- ======== PĘTLA 4: FORMAT 24H ======== -->
+    <tr class="group-header sep-24h">
+      <td colspan="6"><span class="leg-badge loop-24h" style="font-size:0.65rem">Pętla 4</span> &nbsp; FORMAT 24h — po-południe i wieczór (13–24)</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">15</td>
+      <td class="col-node">
+        <div class="node-key">24h-full</div>
+        <div class="node-name">Pełne godziny (24h)</div>
+        <div class="node-min">minuty: :00</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-24h">24h</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>24h (13–24)</strong><br>Uzupełnij zegar wybiając wartości 13–24. Pierwsze zetknięcie z po-południowym zakresem.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Liczby 13–24 to "nowe" symbole jak rzymskie. Wybór (nie klawiatura) pozwala oswoić się bez presji.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">16</td>
+      <td class="col-node">
+        <div class="node-key">24h-quarters</div>
+        <div class="node-name">Kwadranse (24h)</div>
+        <div class="node-min">minuty: :00 :15 :30 :45</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-24h">24h</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>24h (13–24)</strong> + <strong>Minuty (:00–:55)</strong><br>Dwa ćwiczenia: najpierw godziny 24h, potem minuty — podwójne przygotowanie.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Kwadranse z formatem 24h = dwie nowe wiedze naraz. Rozbite na dwa ćwiczenia sekwencyjne zmniejsza obciążenie pamięci roboczej.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">17</td>
+      <td class="col-node">
+        <div class="node-key">24h-half</div>
+        <div class="node-name">Wpół do (24h)</div>
+        <div class="node-min">minuty: :00 :30</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-24h">24h</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-keyboard">⌨️ Klawiatura</span>
+          <span class="leg-badge d-easy">🟢 Łatwy</span>
+        </div>
+        <div class="match-note">Tryb: <strong>24h (13–24)</strong><br>Wpisz godzinę 24h z klawiatury — aktywny recall zamiast wyboru.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Klawiatura = wyższy próg Wpisanie "17" jest trudniejsze niż wybranie spośród czterech. Łatwy poziom (liczby zostają) by nie frustrować.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">18</td>
+      <td class="col-node">
+        <div class="node-key">24h-five</div>
+        <div class="node-name">Co 5 minut (24h)</div>
+        <div class="node-min">minuty: :00–:55 co 5</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-24h">24h</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-choice">🔢 Wybór</span>
+          <span class="leg-badge d-hard">🔴 Trudny</span>
+        </div>
+        <div class="match-note">Tryb: <strong>24h (13–24)</strong><br>Cyfry znikają — trzeba zapamiętać rozmieszczenie 13–24 bez podpowiedzi.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Trudny tryb (zanikanie) wymusza zapamiętanie całego zakresu 24h. Wybór (nie klawiatura) balansuje trudność zanikania.</td>
+    </tr>
+
+    <tr>
+      <td class="col-idx">19</td>
+      <td class="col-node">
+        <div class="node-key">24h-minute</div>
+        <div class="node-name">Każda minuta (24h)</div>
+        <div class="node-min">minuty: :00–:59</div>
+      </td>
+      <td class="col-main">
+        <div class="main-mode">📖 Czytaj zegar</div>
+        <span class="leg-badge loop-24h">24h</span>
+      </td>
+      <td class="col-match">
+        <div class="match-row">
+          <span class="leg-badge m-keyboard">⌨️ Klawiatura</span>
+          <span class="leg-badge d-hard">🔴 Trudny</span>
+        </div>
+        <div class="match-note">Tryb: <strong>24h (13–24)</strong><br>Wpisz + zanikanie. Szczyt całej ścieżki: pełna internalizacja formatu 24h.</div>
+      </td>
+      <td class="col-roman"><span class="roman-na">—</span></td>
+      <td class="col-why">Klawiatura + trudny + 24h = absolutne mistrzostwo. Uczeń, który przechodzi to ćwiczenie, jest w pełni gotowy na minutowy zegar 24h.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div style="margin-top: 28px; padding: 16px 20px; background:#f7f7f7; border:1px solid #dddddd; border-radius:12px; font-size:0.75rem; color:#555555; line-height:1.7">
+  <strong style="color:#333333">Ogólna zasada pedagogiczna progresji:</strong><br>
+  <span style="color:#555555">Wybór → Klawiatura → Zaznacz</span> (trudność odpowiedzi) &nbsp;×&nbsp;
+  <span style="color:#555555">Łatwy → Trudny</span> (pamięciowe obciążenie) &nbsp;×&nbsp;
+  <span style="color:#555555">Arabskie → Minuty → Rzymskie → Puste → 24h</span> (nowa wiedza symboliczna)<br>
+  demo-roman pojawia się tylko w pętli 2, bo tylko tam cyfry są <em>nowym systemem symbolicznym</em> wymagającym oddzielnej nauki przed zastosowaniem na zegarze.
+</div>
+
+</body>
+</html>
