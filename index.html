@@ -489,7 +489,7 @@
     const _xp = getXpProgress(_save);
     document.getElementById('levelLabel').textContent   = `Poz. ${_xp.level}`;
     document.getElementById('xpFill').style.width       = _xp.pct + '%';
-    document.getElementById('xpLabel').textContent      = `${_save.xp} / ${_xp.xpPerLevel} XP`;
+    document.getElementById('xpLabel').textContent      = `${_xp.xp} / ${_xp.nextLevelXp} XP`;
     document.getElementById('secondsBadge').textContent = `⏳ ${_save.seconds}`;
 
     // Wyprawa progress

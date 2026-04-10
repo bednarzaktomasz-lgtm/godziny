@@ -413,10 +413,9 @@ function getXpProgress(state) {
   const xpPerLevel = 500;
   const xp         = (state && state.xp) || 0;
   const level      = Math.max(1, Math.floor(xp / xpPerLevel) + 1);
-  const levelStart = (level - 1) * xpPerLevel;
-  const levelXp    = xp - levelStart;
-  const pct        = Math.min(100, Math.round((levelXp / xpPerLevel) * 100));
-  return { level, levelXp, xpPerLevel, pct };
+  const nextLevelXp = level * xpPerLevel;    // wymagane XP do następnego poziomu
+  const pct         = Math.min(100, Math.round((xp / nextLevelXp) * 100));
+  return { level, xp, nextLevelXp, pct };
 }
 
 // ─── Passa / Anty-rdza ───────────────────────────────────────────────────
