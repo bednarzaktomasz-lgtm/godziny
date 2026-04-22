@@ -387,15 +387,39 @@
     .path-end {
       position: relative; z-index: 1;
       margin-top: calc(var(--node-gap) / 2);
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      padding-bottom: 32px;
     }
     .path-end-dot {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: #0d0d0d; border: 3px solid #222;
+      width: clamp(90px, 22vmin, 140px);
+      height: clamp(90px, 22vmin, 140px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 36%, #fffbe0 0%, #ffd700 45%, #b8860b 100%);
+      border: 4px solid #ffd700;
+      box-shadow: 0 0 28px 8px rgba(255,215,0,0.35), 0 0 6px 2px rgba(255,215,0,0.6);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; color: #555;
+      font-size: clamp(3rem, 8vmin, 5.5rem);
     }
-    .path-end-label { font-size: clamp(0.75rem, 1.4vmin, 0.9rem); color: #555; }
+    .path-end-label {
+      font-size: clamp(1rem, 2.2vmin, 1.3rem);
+      font-weight: 700;
+      color: #ffd700;
+      text-shadow: 0 0 12px rgba(255,215,0,0.5);
+      letter-spacing: 0.04em;
+    }
+    .path-end-trail {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0;
+    }
+    .path-end-trail-line {
+      width: 3px;
+      height: 50vh;
+      background: linear-gradient(to bottom, #333 0%, transparent 100%);
+    }
+    .path-end-trail-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #333;
+    }
   </style>
 </head>
 <body>
@@ -619,6 +643,12 @@
       endEl.className = 'path-end';
       endEl.innerHTML = `<div class="path-end-dot">🏆</div><div class="path-end-label">Mistrz Czasu</div>`;
       container.appendChild(endEl);
+
+      // Trail — linia + kropka pod pucharem, by można było zescrollować puchar na środek
+      const trailEl = document.createElement('div');
+      trailEl.className = 'path-end-trail';
+      trailEl.innerHTML = `<div class="path-end-trail-line"></div><div class="path-end-trail-dot"></div>`;
+      container.appendChild(trailEl);
     }
 
     // ===== STAR POPUP =====

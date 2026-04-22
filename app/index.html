@@ -437,7 +437,7 @@
       </div>
     </div>
     <div class="topbar-right">
-      <div class="stars-badge" id="starsBadge">⭐ 0 / 60</div>
+      <div class="stars-badge" id="starsBadge">⭐ 0 / 75</div>
       <div class="seconds-badge" id="secondsBadge">⏳ 0</div>
       <a href="ustawienia.html" class="icon-btn settings-icon" title="Ustawienia">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="100%" height="100%">
@@ -571,8 +571,8 @@
       if (n.star2 && n.star2.completed) totalStars++;
       if (n.star3 && n.star3.completed) totalStars++;
     }
-    document.getElementById('starsBadge').textContent = `⭐ ${totalStars} / 60`;
-    document.getElementById('wyprawaStatus').textContent = `${totalStars} / 60 gwiazdek`;
+    document.getElementById('starsBadge').textContent = `⭐ ${totalStars} / 75`;
+    document.getElementById('wyprawaStatus').textContent = `${totalStars} / 75 gwiazdek`;
 
     // Greeting
     const _hour = new Date().getHours();

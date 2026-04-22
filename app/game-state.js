@@ -277,6 +277,14 @@ function importProfile(file) {
         data.profiles.push(newProfile);
         _writeProfilesRoot(data);
         localStorage.setItem(_saveKey(newId), JSON.stringify(newSave));
+        // Importuj dodatkowe klucze localStorage (np. poziomy minigier)
+        if (parsed.localStorageExtras && typeof parsed.localStorageExtras === 'object') {
+          for (const [rawKey, value] of Object.entries(parsed.localStorageExtras)) {
+            // Zastąp placeholder ID oryginalnego profilu nowym ID
+            const key = rawKey.replace(parsed.profile.id, newId);
+            localStorage.setItem(key, String(value));
+          }
+        }
         resolve(newProfile);
       } catch {
         reject(new Error('Nie można odczytać pliku JSON.'));

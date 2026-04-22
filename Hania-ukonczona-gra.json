@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "profile": {
+    "id": "hania-test-001",
+    "name": "Hania",
+    "avatar": "girl-2",
+    "createdAt": 1713744000000
+  },
+  "save": {
+    "version": 1,
+    "profileId": "hania-test-001",
+    "lastVisit": 1745280000000,
+    "xp": 12500,
+    "seconds": 8250,
+    "level": 25,
+    "streak": { "current": 30, "best": 30, "lastDate": "2026-04-22" },
+    "nodes": {
+      "full-hours":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "quarters":       { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "half-past":      { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "every-five":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "every-minute":   { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "roman-full":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "roman-quarters": { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "roman-half":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "roman-five":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "roman-minute":   { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "blank-full":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "blank-quarters": { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "blank-half":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "blank-five":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "blank-minute":   { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "pm-full":        { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "pm-quarters":    { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "pm-half":        { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "pm-five":        { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "pm-minute":      { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "24h-full":       { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "24h-quarters":   { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "24h-half":       { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "24h-five":       { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } },
+      "24h-minute":     { "star1": { "completed": true, "score": 10, "streak": 8 }, "star2": { "completed": true, "score": 9, "streak": 7 }, "star3": { "completed": true, "score": 8, "streak": 6 } }
+    },
+    "wardrobe": {
+      "unlockedBgs":        ["solid", "spiral", "grid", "tech"],
+      "unlockedHandColors": ["white", "blue", "red", "orange", "pink", "lime"],
+      "activeBg":           "spiral",
+      "activeHandColor":    "blue"
+    },
+    "stats": {
+      "totalCorrect":        1200,
+      "totalAttempts":       1350,
+      "errorLog":            {},
+      "quickGameTodayCount": 5,
+      "quickGameLastDate":   "2026-04-22"
+    },
+    "activityCalendar": {
+      "2026-03-24": 12, "2026-03-25": 15, "2026-03-26": 10, "2026-03-27": 18,
+      "2026-03-28": 14, "2026-03-29": 20, "2026-03-30": 16, "2026-03-31": 13,
+      "2026-04-01": 19, "2026-04-02": 11, "2026-04-03": 17, "2026-04-04": 15,
+      "2026-04-05": 22, "2026-04-06": 14, "2026-04-07": 18, "2026-04-08": 12,
+      "2026-04-09": 20, "2026-04-10": 16, "2026-04-11": 13, "2026-04-12": 19,
+      "2026-04-13": 15, "2026-04-14": 17, "2026-04-15": 21, "2026-04-16": 14,
+      "2026-04-17": 18, "2026-04-18": 16, "2026-04-19": 20, "2026-04-20": 15,
+      "2026-04-21": 19, "2026-04-22": 12
+    },
+    "achievements": [
+      { "id": "first-star",        "earnedAt": "2026-03-24" },
+      { "id": "first-island",      "earnedAt": "2026-03-24" },
+      { "id": "quarters-king",     "earnedAt": "2026-03-25" },
+      { "id": "arabic-master",     "earnedAt": "2026-03-28" },
+      { "id": "roman-expert",      "earnedAt": "2026-04-02" },
+      { "id": "blank-conqueror",   "earnedAt": "2026-04-07" },
+      { "id": "pm-master",         "earnedAt": "2026-04-14" },
+      { "id": "24h-chrononaut",    "earnedAt": "2026-04-19" },
+      { "id": "master",            "earnedAt": "2026-04-19" },
+      { "id": "streak-7",          "earnedAt": "2026-03-30" },
+      { "id": "streak-14",         "earnedAt": "2026-04-06" },
+      { "id": "connoisseur",       "earnedAt": "2026-04-10" },
+      { "id": "century",           "earnedAt": "2026-03-27" },
+      { "id": "tricent",           "earnedAt": "2026-04-03" },
+      { "id": "sexcent",           "earnedAt": "2026-04-12" },
+      { "id": "millennium",        "earnedAt": "2026-04-20" }
+    ],
+    "localStorageExtras": {
+      "mistrzCzasu_romanLevel_hania-test-001":      "9",
+      "mistrzCzasu_romanBonusLevel_hania-test-001": "13"
+    }
+  }
+}

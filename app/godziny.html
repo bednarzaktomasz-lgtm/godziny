@@ -414,6 +414,11 @@
 				'blank-half':     { minutes: [0,30],                                           exclusiveMinutes: _EXCL_HALF,        dialType: 'blank',  label: 'Dolina Cienia',               icon: '🌒' },
 				'blank-five':     { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              exclusiveMinutes: _EXCL_EVERY_FIVE,  dialType: 'blank',  label: 'Pustynia Bez Znaków',         icon: '🏜️' },
 				'blank-minute':   { minutes: Array.from({length:60},(_,i)=>i),                 exclusiveMinutes: _EXCL_EVERY_MIN,   dialType: 'blank',  label: 'Mroczne Bezdroża',            icon: '🌑' },
+				'pm-full':        { minutes: [0],                                              exclusiveMinutes: [0],               hourFormat: '24',   hourMin: 13, label: 'Popołudniowy Port',            icon: '🌆' },
+				'pm-quarters':    { minutes: [0,15,30,45],                                     exclusiveMinutes: _EXCL_QUARTERS,    hourFormat: '24',   hourMin: 13, label: 'Zachód Kwadransów',            icon: '🌇' },
+				'pm-half':        { minutes: [0,30],                                           exclusiveMinutes: _EXCL_HALF,        hourFormat: '24',   hourMin: 13, label: 'Nocne Wpół do',               icon: '🌃' },
+				'pm-five':        { minutes: [0,5,10,15,20,25,30,35,40,45,50,55],              exclusiveMinutes: _EXCL_EVERY_FIVE,  hourFormat: '24',   hourMin: 13, label: 'Nocna Przystań',              icon: '🌙' },
+				'pm-minute':      { minutes: Array.from({length:60},(_,i)=>i),                 exclusiveMinutes: _EXCL_EVERY_MIN,   hourFormat: '24',   hourMin: 13, label: 'Gwiezdne Minuty',             icon: '🌠' },
 				'24h-full':       { minutes: [0],                                              exclusiveMinutes: [0],               hourFormat: '24',   label: 'Brama Południa',              icon: '🌃' },
 				'24h-quarters':   { minutes: [0,15,30,45],                                     exclusiveMinutes: _EXCL_QUARTERS,    hourFormat: '24',   label: 'Wieża Zegarowa',              icon: '🗼' },
 				'24h-half':       { minutes: [0,30],                                           exclusiveMinutes: _EXCL_HALF,        hourFormat: '24',   label: 'Kanał Wpół do',               icon: '🌉' },
@@ -572,6 +577,11 @@
 			}
 
 			function randomHour() {
+				if (nodeConf && nodeConf.hourMin) {
+					const lo = nodeConf.hourMin;
+					const hi = nodeConf.hourMax || 24;
+					return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+				}
 				return hourFormat === '24'
 					? Math.floor(Math.random() * 23) + 1
 					: Math.floor(Math.random() * 12) + 1;

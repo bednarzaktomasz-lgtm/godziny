@@ -23,12 +23,13 @@
 function generateQuestion(nodeConfig, attemptHistory) {
   const minutes = nodeConfig.exclusiveMinutes || nodeConfig.minutes || [0];
   const is24h   = nodeConfig.hourFormat === '24';
-  const maxHour = is24h ? 23 : 12;
+  const minHour = nodeConfig.hourMin || 1;
+  const maxHour = nodeConfig.hourMax || (is24h ? 23 : 12);
   const recent  = (attemptHistory || []).slice(-3);
 
   // Próbuj do 50 razy znaleźć pytanie nie będące powtórką
   for (let tries = 0; tries < 50; tries++) {
-    const hour   = Math.floor(Math.random() * maxHour) + 1;
+    const hour   = Math.floor(Math.random() * (maxHour - minHour + 1)) + minHour;
     const minute = minutes[Math.floor(Math.random() * minutes.length)];
 
     const isDuplicate = recent.some(a => a.hour === hour && a.minute === minute);
@@ -38,7 +39,7 @@ function generateQuestion(nodeConfig, attemptHistory) {
   }
 
   // Fallback — ignoruj historię (zdarza się gdy pula pytań jest bardzo mała)
-  const hour   = Math.floor(Math.random() * maxHour) + 1;
+  const hour   = Math.floor(Math.random() * (maxHour - minHour + 1)) + minHour;
   const minute = minutes[Math.floor(Math.random() * minutes.length)];
   return { hour, minute };
 }
