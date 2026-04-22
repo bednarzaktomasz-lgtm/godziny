@@ -650,6 +650,46 @@ const ACHIEVEMENTS = [
     desc: '1000 poprawnych odpowiedzi łącznie',
     check: s => s.stats.totalCorrect >= 1000,
   },
+  {
+    id:   'roman-clock-master',
+    icon: '🏛️',
+    name: 'Mistrz Cyfr Zegara',
+    desc: 'Ukończ wszystkie 10 poziomów Cyfr Rzymskich (I–XII)',
+    check: s => {
+      const key = `mistrzCzasu_romanLevel_${s.profileId}`;
+      return parseInt(localStorage.getItem(key) || '0', 10) >= 9;
+    },
+  },
+  {
+    id:   'roman-grand-master',
+    icon: '🏺',
+    name: 'Wielki Mistrz Liczb',
+    desc: 'Ukończ wszystkie 14 poziomów Wielkich Liczb (L, C, D, M)',
+    check: s => {
+      const key = `mistrzCzasu_romanBonusLevel_${s.profileId}`;
+      return parseInt(localStorage.getItem(key) || '0', 10) >= 13;
+    },
+  },
+  {
+    id:   'weekday-master',
+    icon: '📆',
+    name: 'Pan Tygodnia',
+    desc: 'Ukończ wszystkie 6 poziomów Dni Tygodnia bezbłędnie',
+    check: s => {
+      const key = `mistrzCzasu_kalDniLevel_${s.profileId}`;
+      return parseInt(localStorage.getItem(key) || '0', 10) >= 5;
+    },
+  },
+  {
+    id:   'calendar-master',
+    icon: '📅',
+    name: 'Mistrz Kalendarza',
+    desc: 'Ukończ wszystkie 12 poziomów Miesięcy Roku bezbłędnie',
+    check: s => {
+      const key = `mistrzCzasu_kalMiesLevel_${s.profileId}`;
+      return parseInt(localStorage.getItem(key) || '0', 10) >= 11;
+    },
+  },
 ];
 
 /**

@@ -34,6 +34,16 @@
       font-weight: 600;
     }
     .nav-btn.no-reward .reward-note { color: #555; }
+    .nav-btn.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: grayscale(0.5);
+    }
+    .nav-btn.locked .lock-icon {
+      font-size: clamp(0.7rem, 1.4vmin, 0.88rem);
+      color: #555;
+    }
     .nav-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -102,18 +112,33 @@
       <span class="reward-note">+5 ⏳ za poprawną</span>
     </a>
 
-    <a href="roman-pairs-bonus.html" class="nav-btn" id="romanBonusBtn" style="display:none"
-       data-hint="BONUS: cyfry rzymskie wykraczające poza zegar — L, C, D, M i liczby złożone. 14 poziomów. Odblokowane po ukończeniu podstaw.">
+    <a href="roman-pairs-bonus.html" class="nav-btn locked" id="romanBonusBtn"
+       data-hint="BONUS: cyfry rzymskie poza zegarem — L, C, D, M i liczby złożone. 14 poziomów. Odblokowane po ukończeniu wszystkich 10 poziomów Cyfr Rzymskich.">
       <span class="icon">🏺</span>
       Wielkie Liczby
       <span class="reward-note">+5 ⏳ za poprawną</span>
+      <span class="lock-icon">🔒 ukończ Cyfry Rzymskie</span>
+    </a>
+
+    <a href="kalendarz-dni.html" class="nav-btn"
+       data-hint="Ułóż dni tygodnia w prawidłowej kolejności — od poniedziałku. 6 poziomów, każdy dodaje kolejny dzień.">
+      <span class="icon">📆</span>
+      Dni Tygodnia
+      <span class="reward-note">+5 ⏳ za rundę</span>
+    </a>
+
+    <a href="kalendarz-miesiace.html" class="nav-btn"
+       data-hint="Ułóż miesiące roku w prawidłowej kolejności — od stycznia. 12 poziomów, każdy dodaje kolejny miesiąc.">
+      <span class="icon">📅</span>
+      Miesiące Roku
+      <span class="reward-note">+5 ⏳ za rundę</span>
     </a>
 
   </div>
 
   <script src="game-state.js"></script>
   <script>
-    // Odkryj bonus po ukończeniu wszystkich 10 poziomów roman-pairs
+    // Odblokuj bonus po ukończeniu wszystkich 10 poziomów roman-pairs
     (function checkRomanBonus() {
       const profile = (typeof getActiveProfile === 'function') ? getActiveProfile() : null;
       const key = profile
@@ -121,7 +146,11 @@
         : 'mistrzCzasu_romanLevel_guest';
       if (parseInt(localStorage.getItem(key) || '0', 10) >= 9) {
         const btn = document.getElementById('romanBonusBtn');
-        if (btn) btn.style.display = '';
+        if (btn) {
+          btn.classList.remove('locked');
+          const lock = btn.querySelector('.lock-icon');
+          if (lock) lock.remove();
+        }
       }
     })();
 

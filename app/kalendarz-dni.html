@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dni Tygodnia — Mistrz Czasu</title>
+  <link rel="stylesheet" href="layout.css" />
+  <style>
+    /* ===== KALENDARZ-DNI — page-specific styles ===== */
+
+    .feedback-bar { display: none !important; }
+
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      width: min(480px, 92vw);
+      margin-top: 0 !important;
+      gap: var(--gap);
+    }
+
+    /* Kolumna kart do ułożenia */
+    .seq-col {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(6px, 1.4vmin, 12px);
+      width: min(480px, 92vw);
+    }
+
+    /* Karta dnia */
+    .day-card {
+      background: #111;
+      border: 2px solid #222;
+      border-radius: var(--btn-radius);
+      color: #f0f0f0;
+      font-size: clamp(1rem, 2.6vmin, 1.6rem);
+      font-weight: 700;
+      height: clamp(48px, 7vmin, 72px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(8px, 1.5vmin, 14px);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+    }
+
+    .day-card:hover:not(.placed):not(.wrong-anim) {
+      background: #1a1a1a;
+      border-color: #333;
+    }
+
+    /* Numer pozycji (odznaka) — pojawia się po poprawnym kliknięciu */
+    .day-card .pos-badge {
+      position: absolute;
+      left: clamp(10px, 2vmin, 18px);
+      font-size: clamp(0.65rem, 1.3vmin, 0.85rem);
+      color: #16a34a;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.2s;
+      min-width: 1.6em;
+      text-align: center;
+    }
+
+    .day-card.placed {
+      border-color: #16a34a;
+      background: rgba(22, 163, 74, 0.12);
+      color: #16a34a;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .day-card.placed .pos-badge {
+      opacity: 1;
+    }
+
+    .day-card.wrong-anim {
+      border-color: #dc2626;
+      background: rgba(220, 38, 38, 0.15);
+      animation: shake-card 0.35s ease-out;
+    }
+
+    @keyframes shake-card {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-7px); }
+      50%       { transform: translateX(7px); }
+      80%       { transform: translateX(-4px); }
+    }
+
+    @keyframes pop-placed {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .day-card.pop-placed {
+      animation: pop-placed 0.28s ease-out forwards;
+    }
+
+    /* Wskaźnik "Następny:" */
+    .next-hint {
+      font-size: clamp(0.72rem, 1.4vmin, 0.9rem);
+      color: #555;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    /* ===== Overlay awansu i ukończenia ===== */
+    .finish-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: clamp(16px, 3vmin, 32px);
+      padding: clamp(16px, 4vmin, 40px);
+    }
+
+    .finish-overlay.open { display: flex; }
+
+    .finish-box {
+      background: #111;
+      border: 2px solid #333;
+      border-radius: var(--btn-radius);
+      padding: clamp(24px, 5vmin, 56px) clamp(20px, 6vmin, 64px);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(12px, 2.5vmin, 24px);
+      width: min(440px, 90vw);
+    }
+
+    .finish-emoji { font-size: clamp(2.4rem, 8vmin, 5rem); }
+
+    .finish-title {
+      font-size: clamp(1.2rem, 3.5vmin, 2.2rem);
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    .finish-sub {
+      font-size: clamp(0.85rem, 2vmin, 1.3rem);
+      color: #888;
+    }
+
+    .levelup-tip {
+      font-size: clamp(0.85rem, 1.8vmin, 1.1rem);
+      color: #bb86fc;
+      background: rgba(187, 134, 252, 0.08);
+      border: 1px solid rgba(187, 134, 252, 0.25);
+      border-radius: var(--btn-radius);
+      padding: clamp(10px, 2vmin, 18px) clamp(12px, 2.5vmin, 22px);
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    .btn-next {
+      background: rgba(187, 134, 252, 0.15);
+      border: 2px solid #bb86fc;
+      border-radius: var(--btn-radius);
+      color: #f0f0f0;
+      font-size: var(--btn-font);
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0 clamp(24px, 5vmin, 48px);
+      height: var(--btn-height);
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%;
+    }
+    .btn-next:hover { background: rgba(187, 134, 252, 0.28); }
+
+    .btn-play-again {
+      background: #111;
+      border: 2px solid #333;
+      border-radius: var(--btn-radius);
+      color: #f0f0f0;
+      font-size: var(--btn-font);
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0 clamp(24px, 5vmin, 48px);
+      height: var(--btn-height);
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%;
+    }
+    .btn-play-again:hover { background: #1a1a1a; border-color: #bb86fc; }
+
+    /* ===== Pasek postępu ===== */
+    .star-progress {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(5px, 1vmin, 8px);
+      width: min(480px, 92vw);
+      padding: clamp(8px, 1.3vmin, 14px) clamp(10px, 1.5vmin, 16px);
+      background: #0d0d0d;
+      border: 1px solid #222;
+      border-radius: var(--btn-radius);
+    }
+
+    .spi-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 1vmin, 10px);
+    }
+
+    .spi-label {
+      font-size: clamp(0.65rem, 1.3vmin, 0.85rem);
+      color: #888;
+      width: clamp(68px, 11vmin, 90px);
+      flex-shrink: 0;
+    }
+
+    .spi-track {
+      flex: 1;
+      height: clamp(6px, 1vmin, 8px);
+      background: #222;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .spi-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: #bb86fc;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .spi-fill.done { background: #16a34a !important; transition: none; }
+
+    .spi-count {
+      font-size: clamp(0.65rem, 1.3vmin, 0.85rem);
+      color: #888;
+      min-width: 2.5em;
+      text-align: right;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .level-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(6px, 1vmin, 10px);
+      margin-bottom: clamp(2px, 0.5vmin, 4px);
+    }
+
+    .level-badge-name {
+      font-size: clamp(0.75rem, 1.5vmin, 0.95rem);
+      color: #bb86fc;
+      font-weight: 600;
+    }
+
+    .level-badge-num {
+      font-size: clamp(0.65rem, 1.3vmin, 0.82rem);
+      color: #555;
+    }
+
+    /* ===== FAB + Toast ===== */
+    .fab-hint {
+      position: fixed;
+      bottom: 24px; right: 20px;
+      z-index: 300;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid #333;
+      color: #555;
+      font-size: 1.3rem; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    }
+    .fab-hint:hover { color: #f0f0f0; border-color: #555; }
+    .fab-hint.active { border-color: var(--accent-color); color: var(--accent-color); transform: rotate(15deg); }
+
+    .hint-toast {
+      position: fixed;
+      bottom: 84px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      z-index: 299;
+      width: min(360px, calc(100vw - 40px));
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex; align-items: flex-start; gap: 12px;
+      overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .hint-toast.visible { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .hint-toast-icon  { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .hint-toast-body  { flex: 1; }
+    .hint-toast-title { font-size: 0.72rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .hint-toast-msg   { font-size: 0.88rem; color: #ccc; line-height: 1.5; }
+    .hint-toast-bar   {
+      position: absolute; bottom: 0; left: 0;
+      height: 3px; background: var(--accent-color); border-radius: 0 0 16px 16px;
+      width: 100%; transform-origin: left; transform: scaleX(0);
+    }
+    .hint-toast.auto-close .hint-toast-bar {
+      transform: scaleX(1);
+      transition: transform 10s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- A. Topbar -->
+  <div class="topbar">
+    <a href="szybka-gra.html" title="Wróć do Szybkiej Gry">
+      <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </a>
+    <div class="topbar-right">
+      <span class="session-seconds" id="sessionSeconds" style="display:none">⏳ +0</span>
+    </div>
+  </div>
+
+  <!-- D. Pasek postępu -->
+  <div class="star-progress">
+    <div class="level-badge">
+      <span class="level-badge-name" id="levelName">Poziom 1 — Dwa dni</span>
+      <span class="level-badge-num" id="levelNum">1 / 6</span>
+    </div>
+    <div class="spi-row" style="min-height: clamp(18px, 2.5vmin, 28px)">
+      <span class="feedback" id="feedback" style="min-height: 0; font-size: clamp(0.75rem, 1.6vmin, 1rem)"></span>
+    </div>
+    <div class="spi-row">
+      <span class="spi-label">Ułożone</span>
+      <div class="spi-track"><div class="spi-fill" id="spPlaced"></div></div>
+      <span class="spi-count" id="spPlacedTxt">0/2</span>
+    </div>
+    <div class="spi-row">
+      <span class="spi-label">Dokładność</span>
+      <div class="spi-track"><div class="spi-fill" id="spAccuracy" style="background: #f0c040"></div></div>
+      <span class="spi-count" id="spAccuracyTxt">—</span>
+    </div>
+  </div>
+
+  <!-- E. Główna zawartość -->
+  <div class="content-area">
+    <div class="next-hint" id="nextHint">Kliknij dni w kolejności: od poniedziałku ▼</div>
+    <div class="seq-col" id="seqCol">
+      <!-- wypełniane przez JS -->
+    </div>
+  </div>
+
+  <!-- F. Overlay: awans na nowy level -->
+  <div class="finish-overlay" id="levelUpOverlay">
+    <div class="finish-box">
+      <div class="finish-emoji" id="luEmoji">⭐</div>
+      <div class="finish-title" id="luTitle">Poziom 2!</div>
+      <div class="finish-sub" id="luSub"></div>
+      <div class="levelup-tip" id="luTip" style="display:none"></div>
+      <button class="btn-next" id="luNextBtn">Dalej ▶</button>
+    </div>
+  </div>
+
+  <!-- G. Overlay: ukończono wszystkie levele -->
+  <div class="finish-overlay" id="finishOverlay">
+    <div class="finish-box">
+      <div class="finish-emoji">🗓️</div>
+      <div class="finish-title">Mistrz Tygodnia!</div>
+      <div class="finish-sub" id="finishSub"></div>
+      <button class="btn-play-again" id="playAgainBtn">Od początku</button>
+    </div>
+  </div>
+
+  <!-- FAB ? -->
+  <button class="fab-hint" id="fabHint" onclick="toggleHint()">?</button>
+
+  <!-- Hint Toast -->
+  <div class="hint-toast" id="hintToast">
+    <span class="hint-toast-icon">💡</span>
+    <div class="hint-toast-body">
+      <div class="hint-toast-title">Jak to działa?</div>
+      <div class="hint-toast-msg">Kliknij nazwy dni w prawidłowej kolejności — od poniedziałku do ostatniego dnia na liście. Bezbłędna runda = awans na wyższy poziom. Błąd = zacznij od nowa.</div>
+    </div>
+    <div class="hint-toast-bar" id="hintBar"></div>
+  </div>
+
+  <script src="game-state.js"></script>
+  <script>
+    // ===== DANE =====
+
+    const ALL_DAYS = [
+      'Poniedziałek',
+      'Wtorek',
+      'Środa',
+      'Czwartek',
+      'Piątek',
+      'Sobota',
+      'Niedziela',
+    ];
+
+    const LEVELS = [
+      { id: 1, label: 'Dwa dni',     count: 2, tip: null },
+      { id: 2, label: 'Trzy dni',    count: 3, tip: 'Środa to środek tygodnia roboczego — po Wt, przed Czw.' },
+      { id: 3, label: 'Cztery dni',  count: 4, tip: 'Czwartek — czwarty dzień, już po połowie tygodnia.' },
+      { id: 4, label: 'Pięć dni',    count: 5, tip: 'Piątek zamyka tydzień pracy — ostatni dzień roboczy.' },
+      { id: 5, label: 'Sześć dni',   count: 6, tip: 'Sobota to pierwszy dzień weekendu.' },
+      { id: 6, label: 'Pełny tydzień', count: 7, tip: null },
+    ];
+
+    // ===== KLUCZ STORAGE =====
+
+    function getLevelKey() {
+      const profile = (typeof getActiveProfile === 'function') ? getActiveProfile() : null;
+      return profile
+        ? `mistrzCzasu_kalDniLevel_${profile.id}`
+        : 'mistrzCzasu_kalDniLevel_guest';
+    }
+
+    // ===== AUDIO =====
+
+    let audioCtx = null;
+    const soundEnabled = localStorage.getItem('zegar_soundEnabled') !== 'false';
+
+    function initAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playBeep(frequency, duration) {
+      if (!soundEnabled) return;
+      initAudioContext();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = frequency;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration / 1000);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + duration / 1000);
+    }
+
+    function playSuccess() {
+      if (!soundEnabled) return;
+      initAudioContext();
+      [440, 660].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.frequency.value = freq; osc.type = 'sine';
+        const t = audioCtx.currentTime + i * 0.13;
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+        osc.start(t); osc.stop(t + 0.18);
+      });
+    }
+
+    function playError() { playBeep(220, 300); }
+    function playClick() { playBeep(440, 50); }
+
+    // ===== LICZNIK SEKUND SESJI =====
+
+    let sessionSeconds = 0;
+
+    function updateSessionSeconds(delta) {
+      sessionSeconds += delta;
+      const el = document.getElementById('sessionSeconds');
+      el.textContent = '⏳ +' + sessionSeconds;
+      el.style.display = 'inline-block';
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
+
+    // ===== STAN =====
+
+    let currentLevel = Math.min(
+      parseInt(localStorage.getItem(getLevelKey()) || '0', 10),
+      LEVELS.length - 1
+    );
+    let nextIdx      = 0;   // który dzień jest oczekiwany (indeks w puli)
+    let attempts     = 0;
+    let perfectRound = true;
+    let locked       = false;
+
+    // ===== DOM =====
+
+    const seqCol       = document.getElementById('seqCol');
+    const feedbackEl   = document.getElementById('feedback');
+    const nextHintEl   = document.getElementById('nextHint');
+    const finishOverlay  = document.getElementById('finishOverlay');
+    const finishSub      = document.getElementById('finishSub');
+    const levelUpOverlay = document.getElementById('levelUpOverlay');
+    const luEmoji        = document.getElementById('luEmoji');
+    const luTitle        = document.getElementById('luTitle');
+    const luSub          = document.getElementById('luSub');
+    const luTip          = document.getElementById('luTip');
+    const spPlaced       = document.getElementById('spPlaced');
+    const spPlacedTxt    = document.getElementById('spPlacedTxt');
+    const spAccuracy     = document.getElementById('spAccuracy');
+    const spAccuracyTxt  = document.getElementById('spAccuracyTxt');
+    const levelName      = document.getElementById('levelName');
+    const levelNum       = document.getElementById('levelNum');
+
+    // ===== HELPERS =====
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // ===== PASEK POSTĘPU =====
+
+    function updateProgressBar() {
+      const goal = LEVELS[currentLevel].count;
+      const pct  = (nextIdx / goal) * 100;
+      spPlaced.style.width    = pct + '%';
+      spPlacedTxt.textContent = `${nextIdx}/${goal}`;
+      if (nextIdx === goal) spPlaced.classList.add('done');
+
+      if (attempts > 0) {
+        const acc = Math.round((nextIdx / attempts) * 100);
+        spAccuracy.style.width    = acc + '%';
+        spAccuracyTxt.textContent = acc + '%';
+        if (acc === 100 && nextIdx === goal) spAccuracy.classList.add('done');
+      }
+    }
+
+    function updateLevelBadge() {
+      const lv = LEVELS[currentLevel];
+      levelName.textContent = `Poziom ${lv.id} — ${lv.label}`;
+      levelNum.textContent  = `${lv.id} / ${LEVELS.length}`;
+    }
+
+    function updateNextHint() {
+      const pool = ALL_DAYS.slice(0, LEVELS[currentLevel].count);
+      if (nextIdx < pool.length) {
+        nextHintEl.textContent = `Następny: ${nextIdx + 1}. ${pool[nextIdx]}`;
+        nextHintEl.style.color = '#555';
+      }
+    }
+
+    // ===== BUDOWANIE SIATKI =====
+
+    function buildGrid() {
+      const count = LEVELS[currentLevel].count;
+      const pool  = ALL_DAYS.slice(0, count);
+
+      seqCol.innerHTML = '';
+
+      shuffle(pool).forEach(day => {
+        const el = document.createElement('button');
+        el.className = 'day-card';
+        el.dataset.day = day;
+
+        const badge = document.createElement('span');
+        badge.className = 'pos-badge';
+        badge.textContent = '';
+        el.appendChild(badge);
+
+        el.appendChild(document.createTextNode(day));
+        el.addEventListener('click', () => onCardClick(el));
+        seqCol.appendChild(el);
+      });
+
+      nextIdx      = 0;
+      attempts     = 0;
+      perfectRound = true;
+      locked       = false;
+
+      feedbackEl.textContent = '';
+      feedbackEl.className   = 'feedback';
+      spPlaced.style.width   = '0%';
+      spPlaced.classList.remove('done');
+      spAccuracy.style.width = '0%';
+      spAccuracy.classList.remove('done');
+      spAccuracyTxt.textContent = '—';
+
+      updateLevelBadge();
+      updateProgressBar();
+      updateNextHint();
+    }
+
+    // ===== KLIKNIĘCIE KARTY =====
+
+    function onCardClick(el) {
+      if (locked) return;
+      if (el.classList.contains('placed')) return;
+
+      attempts++;
+      playClick();
+
+      if (typeof reportQuickGameResult === 'function') {
+        // raportuj wynik po zakończeniu rundy, nie per kliknięcie
+      }
+
+      const pool     = ALL_DAYS.slice(0, LEVELS[currentLevel].count);
+      const expected = pool[nextIdx];
+      const clicked  = el.dataset.day;
+
+      if (clicked === expected) {
+        // Poprawne kliknięcie
+        const badge = el.querySelector('.pos-badge');
+        badge.textContent = (nextIdx + 1) + '.';
+        el.classList.add('placed', 'pop-placed');
+        el.addEventListener('animationend', () => el.classList.remove('pop-placed'), { once: true });
+
+        nextIdx++;
+        feedbackEl.textContent = `✓ ${clicked}`;
+        feedbackEl.className   = 'feedback ok';
+        updateProgressBar();
+
+        if (nextIdx === pool.length) {
+          // Raportuj do szybkiej gry
+          if (typeof reportQuickGameResult === 'function') {
+            const r = reportQuickGameResult(true);
+            if (r && r.secondsAdded) updateSessionSeconds(5);
+          }
+          playSuccess();
+          setTimeout(onRoundComplete, 500);
+        } else {
+          updateNextHint();
+        }
+      } else {
+        // Błędne kliknięcie
+        perfectRound = false;
+        el.classList.add('wrong-anim');
+        el.addEventListener('animationend', () => el.classList.remove('wrong-anim'), { once: true });
+        playError();
+
+        if (typeof reportQuickGameResult === 'function') {
+          reportQuickGameResult(false);
+        }
+
+        feedbackEl.textContent = `✗ Nie — teraz powinno być: ${expected}`;
+        feedbackEl.className   = 'feedback bad';
+        updateProgressBar();
+      }
+    }
+
+    // ===== PO UKOŃCZENIU RUNDY =====
+
+    function onRoundComplete() {
+      if (perfectRound) {
+        const prevLevel = currentLevel;
+        currentLevel = Math.min(currentLevel + 1, LEVELS.length - 1);
+        localStorage.setItem(getLevelKey(), currentLevel);
+
+        if (prevLevel === LEVELS.length - 1) {
+          finishSub.textContent = 'Wszystkie 6 poziomów zaliczone bezbłędnie!';
+          finishOverlay.classList.add('open');
+        } else {
+          showLevelUp(prevLevel, currentLevel);
+        }
+      } else {
+        feedbackEl.textContent = 'Prawie! Spróbuj bez błędu.';
+        feedbackEl.className   = 'feedback bad';
+        setTimeout(buildGrid, 900);
+      }
+    }
+
+    // ===== OVERLAY AWANSU =====
+
+    function showLevelUp(from, to) {
+      const next      = LEVELS[to];
+      const completed = LEVELS[from];
+      luEmoji.textContent = from < 4 ? '⭐' : '🌟';
+      luTitle.textContent = `Poziom ${next.id} — ${next.label}!`;
+      luSub.textContent   = `Bezbłędnie! Nowy dzień w puli: ${ALL_DAYS[next.count - 1]}.`;
+      if (completed.tip) {
+        luTip.textContent   = completed.tip;
+        luTip.style.display = 'block';
+      } else {
+        luTip.style.display = 'none';
+      }
+      levelUpOverlay.classList.add('open');
+    }
+
+    document.getElementById('luNextBtn').addEventListener('click', () => {
+      levelUpOverlay.classList.remove('open');
+      buildGrid();
+    });
+
+    // ===== RESTART =====
+
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      currentLevel = 0;
+      localStorage.setItem(getLevelKey(), 0);
+      finishOverlay.classList.remove('open');
+      buildGrid();
+    });
+
+    // ===== FAB + TOAST =====
+
+    let _hintOpen  = false;
+    let _hintTimer = null;
+
+    function toggleHint() { _hintOpen ? closeHint() : openHint(); }
+
+    function openHint() {
+      _hintOpen = true;
+      const fab   = document.getElementById('fabHint');
+      const toast = document.getElementById('hintToast');
+      const bar   = document.getElementById('hintBar');
+      fab.classList.add('active');
+      toast.classList.remove('auto-close');
+      toast.classList.add('visible');
+      bar.style.transition = 'none';
+      bar.style.transform  = 'scaleX(0)';
+      void bar.offsetWidth;
+      toast.classList.add('auto-close');
+      clearTimeout(_hintTimer);
+      _hintTimer = setTimeout(closeHint, 10000);
+    }
+
+    function closeHint() {
+      _hintOpen = false;
+      clearTimeout(_hintTimer);
+      document.getElementById('fabHint').classList.remove('active');
+      const toast = document.getElementById('hintToast');
+      toast.classList.remove('visible', 'auto-close');
+    }
+
+    // ===== START =====
+
+    buildGrid();
+  </script>
+  <script src="transitions.js"></script>
+</body>
+</html>
