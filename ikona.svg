@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<!-- Tło: Zaokrąglony kwadrat z gradientem -->
+<defs>
+<linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" style="stop-color:#1e4b7a;stop-opacity:1" />
+<stop offset="100%" style="stop-color:#0d2a4a;stop-opacity:1" />
+</linearGradient><!-- Gradient dla segmentów pierścienia -->
+<linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" style="stop-color:#4a76a8;stop-opacity:1" />
+  <stop offset="50%" style="stop-color:#e8c18d;stop-opacity:1" />
+  <stop offset="100%" style="stop-color:#d48c54;stop-opacity:1" />
+</linearGradient>
+
+<!-- Maska dla klepsydry, aby wypełnić ją "piaskiem" -->
+<clipPath id="hourglassClip">
+  <path d="M180 140 L332 140 L332 165 C332 180 300 230 265 256 C300 282 332 332 332 347 L332 372 L180 372 L180 347 C180 332 212 282 247 256 C212 230 180 180 180 165 Z" />
+</clipPath>
+</defs><!-- Główny kształt ikony --><rect width="460" height="460" x="26" y="26" rx="100" ry="100" fill="url(#bgGradient)" /><!-- Pierścień segmentowy --><g fill="none" stroke-width="24" stroke-linecap="butt">
+<!-- Rysowanie segmentów pierścienia za pomocą dash-array dla uproszczenia geometrii łuku -->
+<circle cx="256" cy="256" r="150" stroke="url(#ringGradient)" stroke-dasharray="74 5" stroke-dashoffset="25" />
+</g><!-- Klepsydra - Obrys --><path d="M180 140 H332 M180 372 H332" stroke="white" stroke-width="12" stroke-linecap="round" fill="none" />
+<path d="M180 140 L332 140 L332 165 C332 185 290 240 256 256 C222 240 180 185 180 165 L180 140 M180 372 L332 372 L332 347 C332 327 290 272 256 256 C222 272 180 327 180 347 L180 372"
+stroke="white" stroke-width="12" stroke-linejoin="round" fill="none" /><!-- Piasek w klepsydrze (Góra) --><path d="M195 155 Q256 240 317 155 Z" fill="#c49e6d" /><!-- Piasek w klepsydrze (Dół) --><path d="M200 355 Q256 310 312 355 L320 365 H192 Z" fill="#c49e6d" /></svg>

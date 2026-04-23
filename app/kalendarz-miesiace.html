@@ -411,19 +411,21 @@
       'Grudzień',
     ];
 
+    // Etap 1: styczeń–czerwiec (5 poziomów)
+    // Etap 2: lipiec–grudzień  (5 poziomów)
+    // Etap 3: cały rok         (1 poziom — finał)
     const LEVELS = [
-      { id:  1, label: 'Dwa miesiące',      count:  2, tip: null },
-      { id:  2, label: 'Trzy miesiące',     count:  3, tip: 'Marzec — trzeci miesiąc, początek wiosny.' },
-      { id:  3, label: 'Cztery miesiące',   count:  4, tip: 'Kwiecień — czwarty miesiąc, wiosna w pełni.' },
-      { id:  4, label: 'Pięć miesięcy',     count:  5, tip: 'Maj — piąty miesiąc, najcieplejszy wiosenny.' },
-      { id:  5, label: 'Sześć miesięcy',    count:  6, tip: 'Czerwiec — szósty miesiąc, początek lata.' },
-      { id:  6, label: 'Siedem miesięcy',   count:  7, tip: 'Lipiec — siódmy, środek roku i lata.' },
-      { id:  7, label: 'Osiem miesięcy',    count:  8, tip: 'Sierpień — ósmy miesiąc, ostatni letni.' },
-      { id:  8, label: 'Dziewięć miesięcy', count:  9, tip: 'Wrzesień — dziewiąty, początek jesieni i roku szkolnego.' },
-      { id:  9, label: 'Dziesięć miesięcy', count: 10, tip: 'Październik — dziesiąty, głęboka jesień.' },
-      { id: 10, label: 'Jedenaście miesięcy', count: 11, tip: 'Listopad — jedenasty, czas szarugi.' },
-      { id: 11, label: 'Pełny rok',         count: 12, tip: null },
-      { id: 12, label: 'Mistrz Kalendarza', count: 12, tip: null },
+      { id:  1, label: 'Dwa miesiące',    count: 2, offset: 0, etap: 1, tip: null },
+      { id:  2, label: 'Trzy miesiące',   count: 3, offset: 0, etap: 1, tip: 'Marzec — trzeci miesiąc, początek wiosny.' },
+      { id:  3, label: 'Cztery miesiące', count: 4, offset: 0, etap: 1, tip: 'Kwiecień — czwarty miesiąc, wiosna w pełni.' },
+      { id:  4, label: 'Pięć miesięcy',   count: 5, offset: 0, etap: 1, tip: 'Maj — piąty miesiąc, najcieplejszy wiosenny.' },
+      { id:  5, label: 'Styczeń–Czerwiec', count: 6, offset: 0, etap: 1, tip: 'Czerwiec — szósty miesiąc, koniec wiosny.' },
+      { id:  6, label: 'Dwa miesiące',    count: 2, offset: 6, etap: 2, tip: null },
+      { id:  7, label: 'Trzy miesiące',   count: 3, offset: 6, etap: 2, tip: 'Wrzesień — dziewiąty miesiąc, start roku szkolnego.' },
+      { id:  8, label: 'Cztery miesiące', count: 4, offset: 6, etap: 2, tip: 'Październik — dziesiąty, głęboka jesień.' },
+      { id:  9, label: 'Pięć miesięcy',   count: 5, offset: 6, etap: 2, tip: 'Listopad — jedenasty, czas szarugi.' },
+      { id: 10, label: 'Lipiec–Grudzień', count: 6, offset: 6, etap: 2, tip: 'Grudzień — dwunasty miesiąc, koniec roku.' },
+      { id: 11, label: 'Pełny rok',       count: 12, offset: 0, etap: 3, tip: null },
     ];
 
     // ===== KLUCZ STORAGE =====
@@ -551,12 +553,16 @@
 
     function updateLevelBadge() {
       const lv = LEVELS[currentLevel];
-      levelName.textContent = `Poziom ${lv.id} — ${lv.label}`;
+      const etapLabel = lv.etap === 1 ? 'Etap 1 (I–VI)'
+                      : lv.etap === 2 ? 'Etap 2 (VII–XII)'
+                      : 'Finał';
+      levelName.textContent = `${etapLabel} · Poz. ${lv.id} — ${lv.label}`;
       levelNum.textContent  = `${lv.id} / ${LEVELS.length}`;
     }
 
     function updateNextHint() {
-      const pool = ALL_MONTHS.slice(0, LEVELS[currentLevel].count);
+      const lv   = LEVELS[currentLevel];
+      const pool = ALL_MONTHS.slice(lv.offset, lv.offset + lv.count);
       if (nextIdx < pool.length) {
         nextHintEl.textContent = `Następny: ${nextIdx + 1}. ${pool[nextIdx]}`;
         nextHintEl.style.color = '#555';
@@ -566,8 +572,8 @@
     // ===== BUDOWANIE SIATKI =====
 
     function buildGrid() {
-      const count = LEVELS[currentLevel].count;
-      const pool  = ALL_MONTHS.slice(0, count);
+      const lv    = LEVELS[currentLevel];
+      const pool  = ALL_MONTHS.slice(lv.offset, lv.offset + lv.count);
 
       seqCol.innerHTML = '';
 
@@ -613,7 +619,8 @@
       attempts++;
       playClick();
 
-      const pool     = ALL_MONTHS.slice(0, LEVELS[currentLevel].count);
+      const lv2      = LEVELS[currentLevel];
+      const pool     = ALL_MONTHS.slice(lv2.offset, lv2.offset + lv2.count);
       const expected = pool[nextIdx];
       const clicked  = el.dataset.day;
 
@@ -663,7 +670,7 @@
         localStorage.setItem(getLevelKey(), currentLevel);
 
         if (prevLevel === LEVELS.length - 1) {
-          finishSub.textContent = 'Wszystkie 12 poziomów zaliczone bezbłędnie!';
+          finishSub.textContent = 'Wszystkie 11 poziomów zaliczone bezbłędnie — jesteś Mistrzem Kalendarza!';
           finishOverlay.classList.add('open');
         } else {
           showLevelUp(prevLevel, currentLevel);
@@ -680,14 +687,25 @@
     function showLevelUp(from, to) {
       const next      = LEVELS[to];
       const completed = LEVELS[from];
-      luEmoji.textContent = from < 5 ? '⭐' : from < 9 ? '🌟' : '💎';
+
+      if (next.etap === 1)      luEmoji.textContent = '⭐';
+      else if (next.etap === 2) luEmoji.textContent = '🌟';
+      else                      luEmoji.textContent = '💎';
+
       luTitle.textContent = `Poziom ${next.id} — ${next.label}!`;
 
-      // Dla poziomu 11 (pełny rok → powtórka mistrza) nie pokazujemy nowego miesiąca
-      if (next.count > completed.count) {
-        luSub.textContent = `Bezbłędnie! Nowy miesiąc w puli: ${ALL_MONTHS[next.count - 1]}.`;
+      if (completed.etap === 1 && next.etap === 2) {
+        // Przejście do Etapu 2
+        luSub.textContent = 'Etap 1 zaliczony! Czas na lipiec–grudzień.';
+      } else if (completed.etap === 2 && next.etap === 3) {
+        // Przejście do finału
+        luSub.textContent = 'Etap 2 zaliczony! Czas na finał — cały rok!';
+      } else if (next.count > completed.count) {
+        // Nowy miesiąc w tym samym etapie
+        const pool = ALL_MONTHS.slice(next.offset, next.offset + next.count);
+        luSub.textContent = `Bezbłędnie! Nowy miesiąc w puli: ${pool[pool.length - 1]}.`;
       } else {
-        luSub.textContent = 'Bezbłędnie! Czas na ostateczną próbę — pełny rok.';
+        luSub.textContent = 'Bezbłędnie!';
       }
 
       if (completed.tip) {
