@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mistrz Czasu</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f97316" />
   <link rel="stylesheet" href="layout.css" />
   <style>
     /* ===== START HUB — page-specific styles ===== */
@@ -699,5 +701,20 @@
     buildCalendar();
   </script>
   <script src="transitions.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            // Nowa wersja zainstalowana i aktywna — przeładuj stronę
+            if (newSW.state === 'activated') {
+              window.location.reload();
+            }
+          });
+        });
+      });
+    }
+  </script>
 </body>
 </html>
