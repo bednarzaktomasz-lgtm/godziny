@@ -702,7 +702,11 @@
       if (perfectRound) {
         const prevLevel = currentLevel;
         currentLevel = Math.min(currentLevel + 1, LEVELS.length - 1);
-        localStorage.setItem(getRomanLevelKey(), currentLevel);
+        // Zapisuj tylko jeśli nowy poziom jest wyższy — chroń wartość >= 9 przed restartem
+        const stored = parseInt(localStorage.getItem(getRomanLevelKey()) || '0', 10);
+        if (currentLevel > stored) {
+          localStorage.setItem(getRomanLevelKey(), currentLevel);
+        }
 
         if (prevLevel === LEVELS.length - 1) {
           finishSub.textContent = 'Wszystkie 10 poziomów zaliczone bezbłędnie!';
@@ -744,7 +748,8 @@
 
     document.getElementById('playAgainBtn').addEventListener('click', () => {
       currentLevel = 0;
-      localStorage.setItem(getRomanLevelKey(), 0);
+      // Nie nadpisuj localStorage — zachowaj najwyższy osiągnięty poziom
+      // (potrzebny do odblokowania Wielkich Liczb w szybka-gra.html)
       finishOverlay.classList.remove('open');
       buildGrid();
     });

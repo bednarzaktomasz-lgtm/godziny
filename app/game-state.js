@@ -233,8 +233,20 @@ function exportProfile(id) {
   } catch {
     save = createDefaultState(id);
   }
+  // Zbierz dodatkowe klucze per profil (poziomy minigier)
+  const extraKeys = [
+    `mistrzCzasu_romanLevel_${id}`,
+    `mistrzCzasu_romanBonusLevel_${id}`,
+    `mistrzCzasu_kalDniLevel_${id}`,
+    `mistrzCzasu_kalMiesLevel_${id}`,
+  ];
+  const localStorageExtras = {};
+  for (const key of extraKeys) {
+    const val = localStorage.getItem(key);
+    if (val !== null) localStorageExtras[key] = val;
+  }
   const blob = new Blob(
-    [JSON.stringify({ version: SCHEMA_VERSION, profile, save }, null, 2)],
+    [JSON.stringify({ version: SCHEMA_VERSION, profile, save, localStorageExtras }, null, 2)],
     { type: 'application/json' }
   );
   const url = URL.createObjectURL(blob);
